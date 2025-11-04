@@ -1,8 +1,8 @@
 using System;
 using knkwebapi_v2.Models;
 
-namespace knkwebapi_v2.Repositories;
-
+namespace knkwebapi_v2.Repositories
+{
     public interface ICategoryRepository
     {
         Task<IEnumerable<Category>> GetAllAsync();
@@ -11,3 +11,4 @@ namespace knkwebapi_v2.Repositories;
         Task UpdateCategoryAsync(Category category);
         Task DeleteCategoryAsync(int id);
     }
+}

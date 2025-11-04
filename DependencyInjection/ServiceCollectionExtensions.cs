@@ -20,6 +20,10 @@ namespace knkwebapi_v2.DependencyInjection
             // explicit registrations (recommended for clarity)
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IDomainRepository, DomainRepository>();
+            services.AddScoped<IDomainService, DomainService>();
 
             // convention-based registrations for other services/repositories in the same assembly
             var asm = Assembly.GetExecutingAssembly();
