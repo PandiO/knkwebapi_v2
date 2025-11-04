@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using knkwebapi_v2.Models;
 using knkwebapi_v2.Services;
+using knkwebapi_v2.Dtos;
 
 namespace KnKWebAPI.Controllers
 {
@@ -34,13 +34,13 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SaveProgress([FromBody] FormSubmissionProgress progress)
+        public async Task<IActionResult> SaveProgress([FromBody] FormSubmissionProgressDto progressDto)
         {
-            if (progress == null) return BadRequest();
+            if (progressDto == null) return BadRequest();
             try
             {
-                var created = await _service.SaveProgressAsync(progress);
-                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+                var created = await _service.SaveProgressAsync(progressDto);
+                return CreatedAtAction(nameof(GetById), new { id = int.Parse(created.Id!) }, created);
             }
             catch (ArgumentException ex)
             {
@@ -49,12 +49,12 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateProgress(int id, [FromBody] FormSubmissionProgress progress)
+        public async Task<IActionResult> UpdateProgress(int id, [FromBody] FormSubmissionProgressDto progressDto)
         {
-            if (progress == null) return BadRequest();
+            if (progressDto == null) return BadRequest();
             try
             {
-                var updated = await _service.UpdateProgressAsync(id, progress);
+                var updated = await _service.UpdateProgressAsync(id, progressDto);
                 return Ok(updated);
             }
             catch (KeyNotFoundException)

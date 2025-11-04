@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using knkwebapi_v2.Models;
 using knkwebapi_v2.Services;
+using knkwebapi_v2.Dtos;
 
 namespace KnKWebAPI.Controllers
 {
@@ -34,13 +34,13 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] FormField field)
+        public async Task<IActionResult> Create([FromBody] FormFieldDto fieldDto)
         {
-            if (field == null) return BadRequest();
+            if (fieldDto == null) return BadRequest();
             try
             {
-                var created = await _service.CreateAsync(field);
-                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+                var created = await _service.CreateAsync(fieldDto);
+                return CreatedAtAction(nameof(GetById), new { id = int.Parse(created.Id!) }, created);
             }
             catch (ArgumentException ex)
             {
@@ -49,12 +49,12 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] FormField field)
+        public async Task<IActionResult> Update(int id, [FromBody] FormFieldDto fieldDto)
         {
-            if (field == null) return BadRequest();
+            if (fieldDto == null) return BadRequest();
             try
             {
-                await _service.UpdateAsync(id, field);
+                await _service.UpdateAsync(id, fieldDto);
                 return NoContent();
             }
             catch (KeyNotFoundException)

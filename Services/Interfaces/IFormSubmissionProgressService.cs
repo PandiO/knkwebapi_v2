@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using knkwebapi_v2.Models;
+using knkwebapi_v2.Dtos;
 
 namespace knkwebapi_v2.Services
 {
     public interface IFormSubmissionProgressService
     {
-        Task<IEnumerable<FormSubmissionProgress>> GetByUserIdAsync(int userId);
-        Task<FormSubmissionProgress?> GetByIdAsync(int id);
-        Task<FormSubmissionProgress> SaveProgressAsync(FormSubmissionProgress progress);
-        Task<FormSubmissionProgress> UpdateProgressAsync(int id, FormSubmissionProgress progress);
+        Task<IEnumerable<FormSubmissionProgressDto>> GetByUserIdAsync(int userId);
+        Task<FormSubmissionProgressDto?> GetByIdAsync(int id);
+        Task<FormSubmissionProgressDto> SaveProgressAsync(FormSubmissionProgressDto progress);
+        Task<FormSubmissionProgressDto> UpdateProgressAsync(int id, FormSubmissionProgressDto progress);
         Task DeleteAsync(int id);
     }
 }

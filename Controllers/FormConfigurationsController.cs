@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using knkwebapi_v2.Models;
 using knkwebapi_v2.Services;
+using knkwebapi_v2.Dtos;
 
 namespace KnKWebAPI.Controllers
 {
     [ApiController]
-    [Route("api/form-configurations")]
+    [Route("api/[controller]")]
     public class FormConfigurationsController : ControllerBase
     {
         private readonly IFormConfigurationService _service;
@@ -49,13 +49,13 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] FormConfiguration config)
+        public async Task<IActionResult> Create([FromBody] FormConfigurationDto configDto)
         {
-            if (config == null) return BadRequest();
+            if (configDto == null) return BadRequest();
             try
             {
-                var created = await _service.CreateAsync(config);
-                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+                var created = await _service.CreateAsync(configDto);
+                return CreatedAtAction(nameof(GetById), new { id = int.Parse(created.Id!) }, created);
             }
             catch (ArgumentException ex)
             {
@@ -64,12 +64,12 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] FormConfiguration config)
+        public async Task<IActionResult> Update(int id, [FromBody] FormConfigurationDto configDto)
         {
-            if (config == null) return BadRequest();
+            if (configDto == null) return BadRequest();
             try
             {
-                await _service.UpdateAsync(id, config);
+                await _service.UpdateAsync(id, configDto);
                 return NoContent();
             }
             catch (KeyNotFoundException)

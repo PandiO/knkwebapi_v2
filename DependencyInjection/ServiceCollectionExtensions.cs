@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Services;
+using AutoMapper;
 
 namespace knkwebapi_v2.DependencyInjection
 {
@@ -50,6 +51,9 @@ namespace knkwebapi_v2.DependencyInjection
                     }
                 }
             }
+
+            // AutoMapper profiles in this assembly
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
             return services;
         }

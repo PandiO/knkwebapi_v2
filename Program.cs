@@ -2,6 +2,9 @@ using knkwebapi_v2.Properties;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using knkwebapi_v2.DependencyInjection; // added for DI extensions
+using System;
+using System.Linq;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +20,20 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        // Add converter for enums to be serialized/deserialized as strings
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
+// Bind Kestrel to URLs from config or default to LAN-accessible HTTP
+var urlConfig = builder.Configuration["ASPNETCORE_URLS"] ?? builder.Configuration["Urls"];
+if (!string.IsNullOrWhiteSpace(urlConfig))
+{
+    builder.WebHost.UseUrls(urlConfig);
+}
+else
+{
+    builder.WebHost.UseUrls("http://0.0.0.0:5000");
+}
 
 string? connectionString = builder.Configuration.GetConnectionString("MySqlDbConnection");
 builder.Services.AddDbContext<KnKDbContext>(options =>
@@ -52,7 +68,14 @@ app.UseCors();
 app.MapRazorPages();
 app.UseRouting();
 
-app.UseHttpsRedirection();
+// Only redirect to HTTPS if an HTTPS listener is configured
+var configuredUrls = (urlConfig ?? string.Empty)
+    .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+bool hasHttpsListener = configuredUrls.Any(u => u.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
+if (hasHttpsListener)
+{
+    app.UseHttpsRedirection();
+}
 app.MapControllers();
 
 app.Run();
