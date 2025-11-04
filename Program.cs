@@ -1,6 +1,7 @@
 using knkwebapi_v2.Properties;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using knkwebapi_v2.DependencyInjection; // added for DI extensions
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,8 @@ string? connectionString = builder.Configuration.GetConnectionString("MySqlDbCon
 builder.Services.AddDbContext<KnKDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
+// Register app services/repositories in one place
+builder.Services.AddApplicationServices(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {
