@@ -24,6 +24,14 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IDomainRepository, DomainRepository>();
             services.AddScoped<IDomainService, DomainService>();
+            services.AddScoped<IFormConfigurationRepository, FormConfigurationRepository>();
+            services.AddScoped<IFormConfigurationService, FormConfigurationService>();
+            services.AddScoped<IFormStepRepository, FormStepRepository>();
+            services.AddScoped<IFormStepService, FormStepService>();
+            services.AddScoped<IFormFieldRepository, FormFieldRepository>();
+            services.AddScoped<IFormFieldService, FormFieldService>();
+            services.AddScoped<IFormSubmissionProgressRepository, FormSubmissionProgressRepository>();
+            services.AddScoped<IFormSubmissionProgressService, FormSubmissionProgressService>();
 
             // convention-based registrations for other services/repositories in the same assembly
             var asm = Assembly.GetExecutingAssembly();

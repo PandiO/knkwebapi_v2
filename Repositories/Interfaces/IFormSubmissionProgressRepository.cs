@@ -1,0 +1,15 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using knkwebapi_v2.Models;
+
+namespace knkwebapi_v2.Repositories
+{
+    public interface IFormSubmissionProgressRepository
+    {
+        Task<IEnumerable<FormSubmissionProgress>> GetByUserIdAsync(int userId);
+        Task<FormSubmissionProgress?> GetByIdAsync(int id);
+        Task AddAsync(FormSubmissionProgress progress);
+        Task UpdateAsync(FormSubmissionProgress progress);
+        Task DeleteAsync(int id);
+    }
+}
