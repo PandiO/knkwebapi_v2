@@ -135,7 +135,7 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("formConfigurationId")]
         public string FormConfigurationId { get; set; } = null!;
         [JsonPropertyName("userId")]
-        public string UserId { get; set; } = null!;
+        public string? UserId { get; set; } = null!;
         [JsonPropertyName("entityId")]
         public string? EntityId { get; set; }
         [JsonPropertyName("currentStepIndex")]

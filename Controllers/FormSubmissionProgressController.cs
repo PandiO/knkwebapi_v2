@@ -8,7 +8,7 @@ using knkwebapi_v2.Dtos;
 namespace KnKWebAPI.Controllers
 {
     [ApiController]
-    [Route("api/form-submission-progress")]
+    [Route("api/[controller]")]
     public class FormSubmissionProgressController : ControllerBase
     {
         private readonly IFormSubmissionProgressService _service;
@@ -36,7 +36,7 @@ namespace KnKWebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> SaveProgress([FromBody] FormSubmissionProgressDto progressDto)
         {
-            if (progressDto == null) return BadRequest();
+            if (progressDto == null) return BadRequest("Request body is required.");
             try
             {
                 var created = await _service.SaveProgressAsync(progressDto);
@@ -44,7 +44,12 @@ namespace KnKWebAPI.Controllers
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (add ILogger if needed)
+                return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
             }
         }
 

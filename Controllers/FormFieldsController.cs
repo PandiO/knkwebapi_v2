@@ -8,7 +8,7 @@ using knkwebapi_v2.Dtos;
 namespace KnKWebAPI.Controllers
 {
     [ApiController]
-    [Route("api/form-fields")]
+    [Route("api/[controller]")]
     public class FormFieldsController : ControllerBase
     {
         private readonly IFormFieldService _service;

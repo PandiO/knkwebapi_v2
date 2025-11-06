@@ -8,7 +8,7 @@ using knkwebapi_v2.Dtos;
 namespace KnKWebAPI.Controllers
 {
     [ApiController]
-    [Route("api/form-steps")]
+    [Route("api/[controller]")]
     public class FormStepsController : ControllerBase
     {
         private readonly IFormStepService _service;

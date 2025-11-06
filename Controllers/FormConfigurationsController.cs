@@ -33,7 +33,7 @@ namespace KnKWebAPI.Controllers
             return Ok(config);
         }
 
-        [HttpGet("by-entity/{entityName}")]
+        [HttpGet("{entityName}")]
         public async Task<IActionResult> GetByEntityName(string entityName, [FromQuery] bool defaultOnly = false)
         {
             var config = await _service.GetByEntityNameAsync(entityName, defaultOnly);
@@ -41,7 +41,7 @@ namespace KnKWebAPI.Controllers
             return Ok(config);
         }
 
-        [HttpGet("by-entity/{entityName}/all")]
+        [HttpGet("{entityName}/all")]
         public async Task<IActionResult> GetByEntityNameAll(string entityName)
         {
             var configs = await _service.GetByEntityNameAllAsync(entityName);
@@ -70,7 +70,9 @@ namespace KnKWebAPI.Controllers
             try
             {
                 await _service.UpdateAsync(id, configDto);
-                return NoContent();
+                // Return the updated resource instead of 204
+                var updated = await _service.GetByIdAsync(id);
+                return Ok(updated);
             }
             catch (KeyNotFoundException)
             {

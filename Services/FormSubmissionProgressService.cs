@@ -39,6 +39,14 @@ namespace knkwebapi_v2.Services
             if (string.IsNullOrWhiteSpace(progress.UserId)) throw new ArgumentException("UserId is required.", nameof(progress));
             if (string.IsNullOrWhiteSpace(progress.FormConfigurationId)) throw new ArgumentException("FormConfigurationId is required.", nameof(progress));
 
+            // Validate UserId can be parsed to int
+            if (!int.TryParse(progress.UserId, out var userId) || userId <= 0)
+                throw new ArgumentException("UserId must be a valid positive integer.", nameof(progress));
+            
+            // Validate FormConfigurationId can be parsed to int
+            if (!int.TryParse(progress.FormConfigurationId, out var configId) || configId <= 0)
+                throw new ArgumentException("FormConfigurationId must be a valid positive integer.", nameof(progress));
+
             var entity = _mapper.Map<FormSubmissionProgress>(progress);
             await _repo.AddAsync(entity);
             return _mapper.Map<FormSubmissionProgressDto>(entity);

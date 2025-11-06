@@ -55,7 +55,9 @@ namespace KnKWebAPI.Controllers
             try
             {
                 await _service.UpdateAsync(id, domain);
-                return NoContent();
+                // Return the updated entity instead of 204
+                var updated = await _service.GetByIdAsync(id);
+                return Ok(updated);
             }
             catch (KeyNotFoundException)
             {
