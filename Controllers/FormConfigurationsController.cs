@@ -34,7 +34,7 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpGet("{entityName}")]
-        public async Task<IActionResult> GetByEntityName(string entityName, [FromQuery] bool defaultOnly = false)
+        public async Task<IActionResult> GetByEntityName(string entityName, [FromBody] bool defaultOnly = false)
         {
             var config = await _service.GetByEntityNameAsync(entityName, defaultOnly);
             if (config == null) return NotFound();
@@ -46,6 +46,13 @@ namespace KnKWebAPI.Controllers
         {
             var configs = await _service.GetByEntityNameAllAsync(entityName);
             return Ok(configs);
+        }
+
+        [HttpGet("entity-names")]
+        public async Task<IActionResult> GetEntityNames()
+        {
+            var entityNames = await _service.GetEntityNamesAsync();
+            return Ok(entityNames);
         }
 
         [HttpPost]

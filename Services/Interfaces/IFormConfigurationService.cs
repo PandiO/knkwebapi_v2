@@ -10,6 +10,7 @@ namespace knkwebapi_v2.Services
         Task<FormConfigurationDto?> GetByIdAsync(int id);
         Task<FormConfigurationDto?> GetByEntityNameAsync(string entityName, bool defaultOnly = false);
         Task<IEnumerable<FormConfigurationDto>> GetByEntityNameAllAsync(string entityName);
+        Task<IEnumerable<string>> GetEntityNamesAsync();
         Task<FormConfigurationDto> CreateAsync(FormConfigurationDto config);
         Task UpdateAsync(int id, FormConfigurationDto config);
         Task DeleteAsync(int id);

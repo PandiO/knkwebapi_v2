@@ -92,5 +92,10 @@ namespace knkwebapi_v2.Services
 
             await _repo.DeleteAsync(id);
         }
+
+        public Task<IEnumerable<string>> GetEntityNamesAsync()
+        {
+            return _repo.GetEntityNamesAsync();
+        }
     }
 }

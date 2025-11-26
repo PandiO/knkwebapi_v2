@@ -89,5 +89,13 @@ namespace knkwebapi_v2.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<IEnumerable<string>> GetEntityNamesAsync()
+        {
+            return await _context.FormConfigurations
+                .Select(fc => fc.EntityName)
+                .Distinct()
+                .ToListAsync();
+        }
     }
 }
