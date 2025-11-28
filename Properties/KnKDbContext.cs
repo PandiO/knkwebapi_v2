@@ -110,7 +110,7 @@ public partial class KnKDbContext : DbContext
         
         // Indexes for performance
         modelBuilder.Entity<FormConfiguration>()
-            .HasIndex(fc => fc.EntityName);
+            .HasIndex(fc => fc.EntityTypeName);
         
         modelBuilder.Entity<FormConfiguration>()
             .HasIndex(fc => fc.ConfigurationGuid)

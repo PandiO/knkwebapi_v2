@@ -8,9 +8,10 @@ namespace knkwebapi_v2.Repositories
     {
         Task<IEnumerable<FormConfiguration>> GetAllAsync();
         Task<FormConfiguration?> GetByIdAsync(int id);
-        Task<FormConfiguration?> GetByEntityNameAsync(string entityName, bool defaultOnly = false);
-        Task<IEnumerable<FormConfiguration>> GetByEntityNameAllAsync(string entityName);
-        Task<IEnumerable<string>> GetEntityNamesAsync();
+        Task<IEnumerable<FormConfiguration>> GetAllByEntityTypeNameAsync(string entityName, bool defaultOnly = false);
+        Task<IEnumerable<FormConfiguration>> GetAllByEntityTypeNameAllAsync(string entityName);
+        Task<FormConfiguration?> GetDefaultByEntityTypeNameAsync(string entityName);
+        Task<IEnumerable<string>> GetEntityTypeNamesAsync();
         Task AddAsync(FormConfiguration config);
         Task UpdateAsync(FormConfiguration config);
         Task DeleteAsync(int id);

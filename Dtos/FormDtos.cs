@@ -108,8 +108,8 @@ namespace knkwebapi_v2.Dtos
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
-        [JsonPropertyName("entityName")]
-        public string EntityName { get; set; } = null!;
+        [JsonPropertyName("entityTypeName")]
+        public string EntityTypeName { get; set; } = null!;
         [JsonPropertyName("configurationName")]
         public string ConfigurationName { get; set; } = null!;
         [JsonPropertyName("description")]
@@ -136,6 +136,8 @@ namespace knkwebapi_v2.Dtos
         public string FormConfigurationId { get; set; } = null!;
         [JsonPropertyName("userId")]
         public string? UserId { get; set; } = null!;
+        [JsonPropertyName("entityTypeName")]
+        public string EntityTypeName { get; set; } = null!;
         [JsonPropertyName("entityId")]
         public string? EntityId { get; set; }
         [JsonPropertyName("currentStepIndex")]
@@ -158,5 +160,46 @@ namespace knkwebapi_v2.Dtos
         public FormConfigurationDto? Configuration { get; set; }
         [JsonPropertyName("childProgresses")]
         public List<FormSubmissionProgressDto>? ChildProgresses { get; set; }
+    }
+
+    public class FormSubmissionProgressOverviewDto
+    {
+        [JsonPropertyName("totalProgresses")]
+        public int TotalProgresses { get; set; }
+        [JsonPropertyName("inProgressCount")]
+        public int InProgressCount { get; set; }
+        [JsonPropertyName("completedCount")]
+        public int CompletedCount { get; set; }
+        [JsonPropertyName("abandonedCount")]
+        public int AbandonedCount { get; set; }
+    }
+
+    /// <summary>
+    /// This DTO provides a summary view of a form submission progress,
+    /// optimized for listing multiple progresses without detailed data.
+    /// It is not intended to include full step data or configuration details.
+    /// </summary>
+    public class FormSubmissionProgressSummaryDto
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
+        [JsonPropertyName("formConfigurationId")]
+        public string FormConfigurationId { get; set; } = null!;
+        [JsonPropertyName("formConfigurationName")]
+        public string FormConfigurationName { get; set; } = null!;
+        [JsonPropertyName("userId")]
+        public string? UserId { get; set; }
+        [JsonPropertyName("entityTypeName")]
+        public string? EntityTypeName { get; set; }
+        [JsonPropertyName("parentProgressId")]
+        public string? ParentProgressId { get; set; }
+        [JsonPropertyName("currentStepIndex")]
+        public int CurrentStepIndex { get; set; }
+        [JsonPropertyName("status")]
+        public FormSubmissionStatus Status { get; set; }
+        [JsonPropertyName("createdAt")]
+        public string? CreatedAt { get; set; }
+        [JsonPropertyName("updatedAt")]
+        public string? UpdatedAt { get; set; }
     }
 }

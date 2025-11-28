@@ -16,6 +16,21 @@ namespace knkwebapi_v2.Repositories
             _context = context;
         }
 
+        public async Task<IEnumerable<FormSubmissionProgress>> GetByEntityTypeNameAsync(string entityTypeName, int? userId)
+        {
+            var query = _context.FormSubmissionProgresses
+                .Include(p => p.FormConfiguration)
+                .Include(p => p.ParentProgress)
+                .Where(p => p.FormConfiguration.EntityTypeName == entityTypeName);
+
+            if (userId.HasValue)
+            {
+                query = query.Where(p => p.UserId == userId.Value);
+            }
+
+            return await query.ToListAsync();
+        }
+        
         public async Task<IEnumerable<FormSubmissionProgress>> GetByUserIdAsync(int userId)
         {
             return await _context.FormSubmissionProgresses

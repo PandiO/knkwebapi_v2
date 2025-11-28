@@ -34,24 +34,32 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpGet("{entityName}")]
-        public async Task<IActionResult> GetByEntityName(string entityName, [FromBody] bool defaultOnly = false)
+        public async Task<IActionResult> GetAllByEntityTypeName(string entityName, bool defaultOnly = false)
         {
-            var config = await _service.GetByEntityNameAsync(entityName, defaultOnly);
-            if (config == null) return NotFound();
-            return Ok(config);
+            if (defaultOnly)
+            {
+                var config = await _service.GetDefaultByEntityTypeNameAsync(entityName);
+                if (config == null) return NotFound();
+                return Ok(config);
+            } else
+            {
+                var config = await _service.GetAllByEntityTypeNameAsync(entityName, defaultOnly);
+                if (config == null) return NotFound();
+                return Ok(config);
+            }
         }
 
         [HttpGet("{entityName}/all")]
-        public async Task<IActionResult> GetByEntityNameAll(string entityName)
+        public async Task<IActionResult> GetAllByEntityTypeNameAll(string entityName)
         {
-            var configs = await _service.GetByEntityNameAllAsync(entityName);
+            var configs = await _service.GetAllByEntityTypeNameAllAsync(entityName);
             return Ok(configs);
         }
 
         [HttpGet("entity-names")]
         public async Task<IActionResult> GetEntityNames()
         {
-            var entityNames = await _service.GetEntityNamesAsync();
+            var entityNames = await _service.GetEntityTypeNamesAsync();
             return Ok(entityNames);
         }
 

@@ -19,6 +19,20 @@ namespace knkwebapi_v2.Services
             _mapper = mapper;
         }
 
+        public async Task<IEnumerable<FormSubmissionProgressDto>> GetByEntityTypeNameAsync(string entityTypeName, int? userId)
+        {
+            if (string.IsNullOrWhiteSpace(entityTypeName)) return new List<FormSubmissionProgressDto>();
+            var list = await _repo.GetByEntityTypeNameAsync(entityTypeName, userId);
+            return _mapper.Map<IEnumerable<FormSubmissionProgressDto>>(list);
+        }
+
+        public async Task<IEnumerable<FormSubmissionProgressSummaryDto>> GetSummaryByEntityTypeNameAsync(string entityTypeName, int? userId)
+        {
+            if (string.IsNullOrWhiteSpace(entityTypeName)) return new List<FormSubmissionProgressSummaryDto>();
+            var list = await _repo.GetByEntityTypeNameAsync(entityTypeName, userId);
+            return _mapper.Map<IEnumerable<FormSubmissionProgressSummaryDto>>(list);
+        }
+
         public async Task<IEnumerable<FormSubmissionProgressDto>> GetByUserIdAsync(int userId)
         {
             if (userId <= 0) return new List<FormSubmissionProgressDto>();
@@ -46,7 +60,10 @@ namespace knkwebapi_v2.Services
             // Validate FormConfigurationId can be parsed to int
             if (!int.TryParse(progress.FormConfigurationId, out var configId) || configId <= 0)
                 throw new ArgumentException("FormConfigurationId must be a valid positive integer.", nameof(progress));
-
+            if (progress != null)
+            {
+                progress.UpdatedAt = DateTime.UtcNow.ToString("o");
+            }
             var entity = _mapper.Map<FormSubmissionProgress>(progress);
             await _repo.AddAsync(entity);
             return _mapper.Map<FormSubmissionProgressDto>(entity);
@@ -65,6 +82,7 @@ namespace knkwebapi_v2.Services
             existing.CurrentStepDataJson = incoming.CurrentStepDataJson;
             existing.AllStepsDataJson = incoming.AllStepsDataJson;
             existing.Status = incoming.Status;
+            existing.UpdatedAt = DateTime.UtcNow;
             if (string.Equals(incoming.Status, "Completed", StringComparison.OrdinalIgnoreCase))
             {
                 existing.CompletedAt = DateTime.UtcNow;

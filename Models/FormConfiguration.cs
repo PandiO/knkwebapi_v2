@@ -19,16 +19,18 @@ namespace knkwebapi_v2.Models
         /// Useful when syncing configurations between environments or for auditing.
         /// </summary>
         public Guid ConfigurationGuid { get; set; } = Guid.NewGuid();
+
+        public string Name { get; set; } = null!;
         
         /// <summary>
         /// The name of the domain entity this configuration is for (e.g., "Shop", "User", "Structure").
-        /// Multiple configurations can exist for the same EntityName (e.g., "Basic Shop Form", "Advanced Shop Form").
+        /// Multiple configurations can exist for the same EntityTypeName (e.g., "Basic Shop Form", "Advanced Shop Form").
         /// </summary>
-        public string EntityName { get; set; } = null!;
+        public string EntityTypeName { get; set; } = null!;
         
         /// <summary>
         /// Indicates if this is the default configuration to use when creating/editing this entity type.
-        /// Only one configuration per EntityName should have IsDefault = true.
+        /// Only one configuration per EntityTypeName should have IsDefault = true.
         /// When the frontend requests a form for "Shop", it will get the default one unless a specific config ID is requested.
         /// </summary>
         public bool IsDefault { get; set; } = false;

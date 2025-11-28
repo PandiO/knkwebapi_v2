@@ -125,7 +125,8 @@ namespace knkwebapi_v2.Mapping
             // FormConfiguration
             CreateMap<FormConfigurationDto, FormConfiguration>()
                 .ForMember(d => d.Id, o => o.MapFrom(s => ToInt(s.Id)))
-                .ForMember(d => d.EntityName, o => o.MapFrom(s => s.EntityName))
+                .ForMember(d => d.Name, o => o.MapFrom(s => s.ConfigurationName))
+                .ForMember(d => d.EntityTypeName, o => o.MapFrom(s => s.EntityTypeName))
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.Description ?? s.ConfigurationName))
                 .ForMember(d => d.IsDefault, o => o.MapFrom(s => s.IsDefault))
                 .ForMember(d => d.Steps, o => o.MapFrom(s => s.Steps.OrderBy(st => st.Order)))
@@ -144,8 +145,8 @@ namespace knkwebapi_v2.Mapping
 
             CreateMap<FormConfiguration, FormConfigurationDto>()
                 .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.ToString()))
-                .ForMember(d => d.EntityName, o => o.MapFrom(s => s.EntityName))
-                .ForMember(d => d.ConfigurationName, o => o.MapFrom(s => s.Description ?? s.EntityName))
+                .ForMember(d => d.EntityTypeName, o => o.MapFrom(s => s.EntityTypeName))
+                .ForMember(d => d.ConfigurationName, o => o.MapFrom(s => s.Name))
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.Description))
                 .ForMember(d => d.IsDefault, o => o.MapFrom(s => s.IsDefault))
                 .ForMember(d => d.StepOrderJson, o => o.MapFrom(s => s.StepOrderJson))
@@ -159,6 +160,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.Id, o => o.MapFrom(s => ToInt(s.Id)))
                 .ForMember(d => d.FormConfigurationId, o => o.MapFrom(s => ToInt(s.FormConfigurationId)!))
                 .ForMember(d => d.UserId, o => o.MapFrom(s => ToInt(s.UserId)!))
+                // .ForMember(d => d.FormConfiguration.EntityTypeName, o => o.MapFrom(s => s.EntityTypeName))
                 .ForMember(d => d.CurrentStepIndex, o => o.MapFrom(s => s.CurrentStepIndex))
                 .ForMember(d => d.CurrentStepDataJson, o => o.MapFrom(s => string.IsNullOrWhiteSpace(s.CurrentStepDataJson) ? "{}" : s.CurrentStepDataJson))
                 .ForMember(d => d.AllStepsDataJson, o => o.MapFrom(s => string.IsNullOrWhiteSpace(s.AllStepsDataJson) ? "{}" : s.AllStepsDataJson))
@@ -174,6 +176,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.ToString()))
                 .ForMember(d => d.FormConfigurationId, o => o.MapFrom(s => s.FormConfigurationId.ToString()))
                 .ForMember(d => d.UserId, o => o.MapFrom(s => s.UserId.ToString()))
+                .ForMember(d => d.EntityTypeName, o => o.MapFrom(s => s.FormConfiguration != null ? s.FormConfiguration.EntityTypeName : string.Empty))    
                 .ForMember(d => d.CurrentStepIndex, o => o.MapFrom(s => s.CurrentStepIndex))
                 .ForMember(d => d.CurrentStepDataJson, o => o.MapFrom(s => s.CurrentStepDataJson))
                 .ForMember(d => d.AllStepsDataJson, o => o.MapFrom(s => s.AllStepsDataJson))
@@ -184,6 +187,18 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.CompletedAt, o => o.MapFrom(s => s.CompletedAt.HasValue ? s.CompletedAt.Value.ToString("O") : null))
                 .ForMember(d => d.Configuration, o => o.Ignore())
                 .ForMember(d => d.ChildProgresses, o => o.Ignore());
+
+            CreateMap<FormSubmissionProgress, FormSubmissionProgressSummaryDto>()
+                .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.ToString()))
+                .ForMember(d => d.FormConfigurationId, o => o.MapFrom(s => s.FormConfigurationId.ToString()))
+                .ForMember(d => d.FormConfigurationName, o => o.MapFrom(s => s.FormConfiguration != null ? (s.FormConfiguration.Description ?? s.FormConfiguration.EntityTypeName) : string.Empty))
+                .ForMember(d => d.UserId, o => o.MapFrom(s => s.UserId.ToString()))
+                .ForMember(d => d.EntityTypeName, o => o.MapFrom(s => s.FormConfiguration != null ? s.FormConfiguration.EntityTypeName : string.Empty))    
+                .ForMember(d => d.ParentProgressId, o => o.MapFrom(s => s.ParentProgressId.HasValue ? s.ParentProgressId.Value.ToString() : null))
+                .ForMember(d => d.CurrentStepIndex, o => o.MapFrom(s => s.CurrentStepIndex))
+                .ForMember(d => d.Status, o => o.MapFrom(s => ParseStatus(s.Status)))
+                .ForMember(d => d.CreatedAt, o => o.MapFrom(s => s.CreatedAt.ToString("O")))
+                .ForMember(d => d.UpdatedAt, o => o.MapFrom(s => s.UpdatedAt.HasValue ? s.UpdatedAt.Value.ToString("O") : null));
         }
 
         private static int? ToInt(string? s) => int.TryParse(s, out var v) ? v : (int?)null;

@@ -32,24 +32,36 @@ namespace knkwebapi_v2.Services
             return entity == null ? null : _mapper.Map<FormConfigurationDto>(entity);
         }
 
-        public async Task<FormConfigurationDto?> GetByEntityNameAsync(string entityName, bool defaultOnly = false)
-        {
-            if (string.IsNullOrWhiteSpace(entityName)) return null;
-            var entity = await _repo.GetByEntityNameAsync(entityName, defaultOnly);
-            return entity == null ? null : _mapper.Map<FormConfigurationDto>(entity);
-        }
-
-        public async Task<IEnumerable<FormConfigurationDto>> GetByEntityNameAllAsync(string entityName)
+        public async Task<IEnumerable<FormConfigurationDto>> GetAllByEntityTypeNameAsync(string entityName, bool defaultOnly = false)
         {
             if (string.IsNullOrWhiteSpace(entityName)) return new List<FormConfigurationDto>();
-            var list = await _repo.GetByEntityNameAllAsync(entityName);
+            var list = await _repo.GetAllByEntityTypeNameAsync(entityName, defaultOnly);
             return _mapper.Map<IEnumerable<FormConfigurationDto>>(list);
+        }
+
+        public async Task<IEnumerable<FormConfigurationDto>> GetAllByEntityTypeNameAllAsync(string entityName)
+        {
+            if (string.IsNullOrWhiteSpace(entityName)) return new List<FormConfigurationDto>();
+            var list = await _repo.GetAllByEntityTypeNameAllAsync(entityName);
+            return _mapper.Map<IEnumerable<FormConfigurationDto>>(list);
+        }
+
+        public async Task<FormConfigurationDto> GetDefaultByEntityTypeNameAsync(string entityName)
+        {
+            if (string.IsNullOrWhiteSpace(entityName))
+                throw new ArgumentException("EntityName is required.", nameof(entityName));
+
+            var entity = await _repo.GetDefaultByEntityTypeNameAsync(entityName);
+            if (entity == null)
+                throw new KeyNotFoundException($"Default FormConfiguration for entity '{entityName}' not found.");
+
+            return _mapper.Map<FormConfigurationDto>(entity);
         }
 
         public async Task<FormConfigurationDto> CreateAsync(FormConfigurationDto config)
         {
             if (config == null) throw new ArgumentNullException(nameof(config));
-            if (string.IsNullOrWhiteSpace(config.EntityName))
+            if (string.IsNullOrWhiteSpace(config.EntityTypeName))
                 throw new ArgumentException("EntityName is required.", nameof(config));
             if (config.Steps == null || config.Steps.Count == 0)
                 throw new ArgumentException("At least one step is required.", nameof(config));
@@ -61,7 +73,8 @@ namespace knkwebapi_v2.Services
                 if (string.IsNullOrWhiteSpace(step.StepName))
                     throw new ArgumentException("Step name is required for all steps.", nameof(config));
             }
-
+            entity.CreatedAt = DateTime.UtcNow;
+            entity.UpdatedAt = DateTime.UtcNow;
             await _repo.AddAsync(entity);
             return _mapper.Map<FormConfigurationDto>(entity);
         }
@@ -75,7 +88,8 @@ namespace knkwebapi_v2.Services
             if (existing == null) throw new KeyNotFoundException($"FormConfiguration with id {id} not found.");
 
             var incoming = _mapper.Map<FormConfiguration>(config);
-            existing.EntityName = incoming.EntityName;
+            existing.EntityTypeName = incoming.EntityTypeName;
+            existing.Name = incoming.Name;
             existing.IsDefault = incoming.IsDefault;
             existing.Description = incoming.Description;
             existing.StepOrderJson = incoming.StepOrderJson;
@@ -93,9 +107,9 @@ namespace knkwebapi_v2.Services
             await _repo.DeleteAsync(id);
         }
 
-        public Task<IEnumerable<string>> GetEntityNamesAsync()
+        public Task<IEnumerable<string>> GetEntityTypeNamesAsync()
         {
-            return _repo.GetEntityNamesAsync();
+            return _repo.GetEntityTypeNamesAsync();
         }
     }
 }

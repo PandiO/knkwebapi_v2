@@ -38,7 +38,7 @@ namespace knkwebapi_v2.Repositories
                 .FirstOrDefaultAsync(fc => fc.Id == id);
         }
 
-        public async Task<FormConfiguration?> GetByEntityNameAsync(string entityName, bool defaultOnly = false)
+        public async Task<IEnumerable<FormConfiguration>> GetAllByEntityTypeNameAsync(string entityName, bool defaultOnly = false)
         {
             var query = _context.FormConfigurations
                 .Include(fc => fc.Steps)
@@ -46,17 +46,17 @@ namespace knkwebapi_v2.Repositories
                         .ThenInclude(f => f.Validations)
                 .Include(fc => fc.Steps)
                     .ThenInclude(s => s.StepConditions)
-                .Where(fc => fc.EntityName == entityName);
+                .Where(fc => fc.EntityTypeName == entityName);
 
             if (defaultOnly)
             {
                 query = query.Where(fc => fc.IsDefault);
             }
 
-            return await query.FirstOrDefaultAsync();
+            return await query.ToListAsync();
         }
 
-        public async Task<IEnumerable<FormConfiguration>> GetByEntityNameAllAsync(string entityName)
+        public async Task<IEnumerable<FormConfiguration>> GetAllByEntityTypeNameAllAsync(string entityName)
         {
             return await _context.FormConfigurations
                 .Include(fc => fc.Steps)
@@ -64,8 +64,19 @@ namespace knkwebapi_v2.Repositories
                         .ThenInclude(f => f.Validations)
                 .Include(fc => fc.Steps)
                     .ThenInclude(s => s.StepConditions)
-                .Where(fc => fc.EntityName == entityName)
+                .Where(fc => fc.EntityTypeName == entityName)
                 .ToListAsync();
+        }
+
+        public async Task<FormConfiguration?> GetDefaultByEntityTypeNameAsync(string entityName)
+        {
+            return await _context.FormConfigurations
+                .Include(fc => fc.Steps)
+                    .ThenInclude(s => s.Fields)
+                        .ThenInclude(f => f.Validations)
+                .Include(fc => fc.Steps)
+                    .ThenInclude(s => s.StepConditions)
+                .FirstOrDefaultAsync(fc => fc.EntityTypeName == entityName && fc.IsDefault);
         }
 
         public async Task AddAsync(FormConfiguration config)
@@ -90,10 +101,10 @@ namespace knkwebapi_v2.Repositories
             }
         }
 
-        public async Task<IEnumerable<string>> GetEntityNamesAsync()
+        public async Task<IEnumerable<string>> GetEntityTypeNamesAsync()
         {
             return await _context.FormConfigurations
-                .Select(fc => fc.EntityName)
+                .Select(fc => fc.EntityTypeName)
                 .Distinct()
                 .ToListAsync();
         }

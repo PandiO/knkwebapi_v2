@@ -18,7 +18,26 @@ namespace KnKWebAPI.Controllers
             _service = service;
         }
 
-        [HttpGet("user/{userId:int}")]
+        [HttpGet("entity")]
+        public async Task<IActionResult> GetByEntityTypeName(string entityTypeName, int? userId, bool? isSummary = false)
+        {
+            if (string.IsNullOrWhiteSpace(entityTypeName))
+            {
+                return BadRequest("Entity type name is required.");
+            }
+            if (isSummary == true)
+            {
+                var summaries = await _service.GetSummaryByEntityTypeNameAsync(entityTypeName, userId);
+                return Ok(summaries);
+            }
+            else
+            {
+                var progresses = await _service.GetByEntityTypeNameAsync(entityTypeName, userId);
+                return Ok(progresses);
+            }
+        }
+
+        [HttpGet("user")]
         public async Task<IActionResult> GetByUserId(int userId)
         {
             var progresses = await _service.GetByUserIdAsync(userId);
