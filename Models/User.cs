@@ -1,7 +1,9 @@
 using System;
+using knkwebapi_v2.Attributes;
 
 namespace knkwebapi_v2.Models;
 
+[FormConfigurableEntity("User")]
 public class User
 {
     public int Id { get; set; }

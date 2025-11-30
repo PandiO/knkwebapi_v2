@@ -1,7 +1,9 @@
 using System;
+using knkwebapi_v2.Attributes;
 
 namespace knkwebapi_v2.Models;
 
+[FormConfigurableEntity("Domain")]
 public class Domain
 {
     public int Id { get; set; }

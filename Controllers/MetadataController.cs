@@ -1,0 +1,45 @@
+using Microsoft.AspNetCore.Mvc;
+using knkwebapi_v2.Services;
+using knkwebapi_v2.Dtos;
+using System.Collections.Generic;
+
+namespace knkwebapi_v2.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class MetadataController : ControllerBase
+    {
+        private readonly IMetadataService _metadataService;
+
+        public MetadataController(IMetadataService metadataService)
+        {
+            _metadataService = metadataService;
+        }
+
+        /// <summary>
+        /// Get metadata for all form-configurable entities.
+        /// Used by FormBuilder to populate entity dropdowns.
+        /// </summary>
+        [HttpGet("entities")]
+        public ActionResult<List<EntityMetadataDto>> GetAllEntityMetadata()
+        {
+            var metadata = _metadataService.GetAllEntityMetadata();
+            return Ok(metadata);
+        }
+
+        /// <summary>
+        /// Get metadata for a specific entity by name.
+        /// Used by FormBuilder to show available fields for an entity.
+        /// </summary>
+        [HttpGet("entities/{entityName}")]
+        public ActionResult<EntityMetadataDto> GetEntityMetadata(string entityName)
+        {
+            var metadata = _metadataService.GetEntityMetadata(entityName);
+            if (metadata == null)
+            {
+                return NotFound($"Entity '{entityName}' not found or not marked as form-configurable.");
+            }
+            return Ok(metadata);
+        }
+    }
+}

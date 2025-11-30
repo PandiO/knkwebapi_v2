@@ -34,6 +34,9 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<IFormSubmissionProgressRepository, FormSubmissionProgressRepository>();
             services.AddScoped<IFormSubmissionProgressService, FormSubmissionProgressService>();
 
+            // Add MetadataService for dynamic form building
+            services.AddSingleton<IMetadataService, MetadataService>();
+
             // convention-based registrations for other services/repositories in the same assembly
             var asm = Assembly.GetExecutingAssembly();
             var candidates = asm.GetTypes()
