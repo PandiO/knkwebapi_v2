@@ -191,6 +191,8 @@ namespace knkwebapi_v2.Dtos
         public string? UserId { get; set; }
         [JsonPropertyName("entityTypeName")]
         public string? EntityTypeName { get; set; }
+        [JsonPropertyName("entityId")]
+        public string? EntityId { get; set; }
         [JsonPropertyName("parentProgressId")]
         public string? ParentProgressId { get; set; }
         [JsonPropertyName("currentStepIndex")]

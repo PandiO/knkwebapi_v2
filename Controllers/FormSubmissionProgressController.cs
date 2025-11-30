@@ -55,6 +55,12 @@ namespace KnKWebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> SaveProgress([FromBody] FormSubmissionProgressDto progressDto)
         {
+            if (!ModelState.IsValid)
+            {
+                // Return concise error; common cause is invalid enum value for status (e.g., "Draft")
+                return BadRequest(new { error = "Invalid request body.", details = ModelState });
+            }
+
             if (progressDto == null) return BadRequest("Request body is required.");
             try
             {
@@ -67,7 +73,6 @@ namespace KnKWebAPI.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception (add ILogger if needed)
                 return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
             }
         }
@@ -75,6 +80,11 @@ namespace KnKWebAPI.Controllers
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateProgress(int id, [FromBody] FormSubmissionProgressDto progressDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new { error = "Invalid request body.", details = ModelState });
+            }
+
             if (progressDto == null) return BadRequest();
             try
             {

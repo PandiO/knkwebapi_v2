@@ -84,18 +84,17 @@ namespace knkwebapi_v2.Services
             if (config == null) throw new ArgumentNullException(nameof(config));
             if (id <= 0) throw new ArgumentException("Invalid id.", nameof(id));
 
-            var existing = await _repo.GetByIdAsync(id);
-            if (existing == null) throw new KeyNotFoundException($"FormConfiguration with id {id} not found.");
+            var exists = await _repo.GetByIdAsync(id);
+            if (exists == null) throw new KeyNotFoundException($"FormConfiguration with id {id} not found.");
 
             var incoming = _mapper.Map<FormConfiguration>(config);
-            existing.EntityTypeName = incoming.EntityTypeName;
-            existing.Name = incoming.Name;
-            existing.IsDefault = incoming.IsDefault;
-            existing.Description = incoming.Description;
-            existing.StepOrderJson = incoming.StepOrderJson;
-            existing.UpdatedAt = DateTime.UtcNow;
+            incoming.Id = id;
+            incoming.UpdatedAt = DateTime.UtcNow;
+            // Preserve existing StepOrderJson if none provided
+            if (string.IsNullOrWhiteSpace(incoming.StepOrderJson))
+                incoming.StepOrderJson = exists.StepOrderJson;
 
-            await _repo.UpdateAsync(existing);
+            await _repo.UpdateAsync(incoming);
         }
 
         public async Task DeleteAsync(int id)

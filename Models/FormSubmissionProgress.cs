@@ -46,6 +46,11 @@ namespace knkwebapi_v2.Models
         /// </summary>
         public int FormConfigurationId { get; set; }
         public FormConfiguration FormConfiguration { get; set; } = null!;
+
+        /// <summary>
+        /// The ID of the entity being edited by this form.
+        /// </summary>
+        public int? EntityId { get; set; }
         
         /// <summary>
         /// Zero-based index of the step the user is currently on.

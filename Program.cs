@@ -22,6 +22,11 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
         // Add converter for enums to be serialized/deserialized as strings
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        // Prevent automatic 400 so we can handle invalid enums (e.g., "Draft") gracefully in controllers.
+        options.SuppressModelStateInvalidFilter = true;
     });
 
 // Bind Kestrel to URLs from config or default to LAN-accessible HTTP
