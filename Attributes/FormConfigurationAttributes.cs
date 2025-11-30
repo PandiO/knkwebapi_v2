@@ -32,4 +32,15 @@ namespace knkwebapi_v2.Attributes
             RelatedEntityType = relatedEntityType;
         }
     }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    public class NavigationPairAttribute : Attribute
+    {
+        public string NaviationPropertyName { get; }
+
+        public NavigationPairAttribute(string naviationPropertyName)
+        {
+            NaviationPropertyName = naviationPropertyName;
+        }
+    }
 }

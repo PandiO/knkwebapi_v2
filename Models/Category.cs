@@ -11,6 +11,10 @@ public class Category
 
     public int? ItemtypeId { get; set; }
 
+    [NavigationPair(nameof(ParentCategory))]
     [RelatedEntityField(typeof(Category))]
     public int? ParentCategoryId { get; set; }
+
+    [RelatedEntityField(typeof(Category))]
+    public Category? ParentCategory { get; set; }
 }

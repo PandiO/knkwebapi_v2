@@ -21,6 +21,11 @@ namespace knkwebapi_v2.Services
             return _cachedMetadata;
         }
 
+        public List<string> GetEntityNames()
+        {
+            return _cachedMetadata.Select(e => e.EntityName).ToList();
+        }
+
         public EntityMetadataDto? GetEntityMetadata(string entityName)
         {
             return _cachedMetadata.FirstOrDefault(e => 

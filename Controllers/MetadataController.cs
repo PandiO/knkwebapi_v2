@@ -27,17 +27,24 @@ namespace knkwebapi_v2.Controllers
             return Ok(metadata);
         }
 
+        [HttpGet("entity-names")]
+        public ActionResult<List<string>> GetEntityNames()
+        {
+            var entityNames = _metadataService.GetEntityNames();
+            return Ok(entityNames);
+        }
+
         /// <summary>
         /// Get metadata for a specific entity by name.
         /// Used by FormBuilder to show available fields for an entity.
         /// </summary>
         [HttpGet("entities/{entityName}")]
-        public ActionResult<EntityMetadataDto> GetEntityMetadata(string entityName)
+        public ActionResult<EntityMetadataDto> GetEntityMetadata(string entityTypeName)
         {
-            var metadata = _metadataService.GetEntityMetadata(entityName);
+            var metadata = _metadataService.GetEntityMetadata(entityTypeName);
             if (metadata == null)
             {
-                return NotFound($"Entity '{entityName}' not found or not marked as form-configurable.");
+                return NotFound($"Entity '{entityTypeName}' not found or not marked as form-configurable.");
             }
             return Ok(metadata);
         }

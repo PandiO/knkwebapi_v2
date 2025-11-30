@@ -6,6 +6,7 @@ namespace knkwebapi_v2.Services
     public interface IMetadataService
     {
         List<EntityMetadataDto> GetAllEntityMetadata();
+        List<string> GetEntityNames();
         EntityMetadataDto? GetEntityMetadata(string entityName);
     }
 }
