@@ -49,5 +49,74 @@ namespace knkwebapi_v2.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<PagedResult<Category>> SearchAsync(PagedQuery query)
+        {
+            var queryable = _context.Categories.AsQueryable();
+
+            // Apply search term filter
+            if (!string.IsNullOrWhiteSpace(query.SearchTerm))
+            {
+                var searchLower = query.SearchTerm.ToLower();
+                queryable = queryable.Where(c => c.Name.ToLower().Contains(searchLower));
+            }
+
+            // Apply filters from dictionary
+            if (query.Filters != null)
+            {
+                if (query.Filters.TryGetValue("parentCategoryId", out var parentCategoryIdStr))
+                {
+                    if (int.TryParse(parentCategoryIdStr, out var parentCategoryId))
+                    {
+                        queryable = queryable.Where(c => c.ParentCategoryId == parentCategoryId);
+                    }
+                }
+
+                if (query.Filters.TryGetValue("itemtypeId", out var itemtypeIdStr))
+                {
+                    if (int.TryParse(itemtypeIdStr, out var itemtypeId))
+                    {
+                        queryable = queryable.Where(c => c.ItemtypeId == itemtypeId);
+                    }
+                }
+            }
+
+            // Apply sorting
+            queryable = ApplySorting(queryable, query.SortBy, query.SortDescending);
+
+            // Get total count before paging
+            var totalCount = await queryable.CountAsync();
+
+            // Apply paging
+            var items = await queryable
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .ToListAsync();
+
+            return new PagedResult<Category>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize
+            };
+        }
+
+        private IQueryable<Category> ApplySorting(IQueryable<Category> queryable, string? sortBy, bool sortDescending)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+            {
+                return queryable.OrderBy(c => c.Name);
+            }
+
+            return sortBy.ToLower() switch
+            {
+                "name" => sortDescending ? queryable.OrderByDescending(c => c.Name) : queryable.OrderBy(c => c.Name),
+                "id" => sortDescending ? queryable.OrderByDescending(c => c.Id) : queryable.OrderBy(c => c.Id),
+                "itemtypeid" => sortDescending ? queryable.OrderByDescending(c => c.ItemtypeId) : queryable.OrderBy(c => c.ItemtypeId),
+                "parentcategoryid" => sortDescending ? queryable.OrderByDescending(c => c.ParentCategoryId) : queryable.OrderBy(c => c.ParentCategoryId),
+                _ => queryable.OrderBy(c => c.Name)
+            };
+        }
     }
 }

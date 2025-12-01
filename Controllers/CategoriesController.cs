@@ -89,5 +89,12 @@ namespace KnKWebAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPost("search")]
+        public async Task<ActionResult<PagedResultDto<CategoryListDto>>> SearchCategories([FromBody] PagedQueryDto query)
+        {
+            var result = await _service.SearchAsync(query);
+            return Ok(result);
+        }
     }
 }

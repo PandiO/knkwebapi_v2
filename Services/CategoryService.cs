@@ -66,5 +66,20 @@ namespace knkwebapi_v2.Services
 
             await _repo.DeleteCategoryAsync(id);
         }
+
+        public async Task<PagedResultDto<CategoryListDto>> SearchAsync(PagedQueryDto queryDto)
+        {
+            if (queryDto == null) throw new ArgumentNullException(nameof(queryDto));
+
+            var query = _mapper.Map<PagedQuery>(queryDto);
+
+            // Execute search
+            var result = await _repo.SearchAsync(query);
+
+            // Map result to DTO
+            var resultDto = _mapper.Map<PagedResultDto<CategoryListDto>>(result);
+
+            return resultDto;
+        }
     }
 }

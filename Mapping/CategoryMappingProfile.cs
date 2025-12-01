@@ -19,6 +19,15 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.Name, src => src.MapFrom(src => src.Name))
                 .ForMember(dest => dest.ItemtypeId, src => src.MapFrom(src => src.ItemtypeId))
                 .ForMember(dest => dest.ParentCategoryId, src => src.MapFrom(src => src.ParentCategoryId));
+
+            CreateMap<Category, CategoryListDto>()
+                .ForMember(dest => dest.id, src => src.MapFrom(src => src.Id))
+                .ForMember(dest => dest.name, src => src.MapFrom(src => src.Name))
+                .ForMember(dest => dest.parentCategoryId, src => src.MapFrom(src => src.ParentCategoryId))
+                .ForMember(dest => dest.parentCategoryName, src => src.MapFrom(src => src.ParentCategory != null ? src.ParentCategory.Name : null))
+                .ForMember(dest => dest.itemtypeId, src => src.MapFrom(src => src.ItemtypeId))
+                .ForMember(dest => dest.itemtypeName, src => src.MapFrom(src => src.ItemtypeId != null ? "ItemtypeNamePlaceholder" : null)); // Placeholder for Itemtype name resolution
+
         }
     }
 }
