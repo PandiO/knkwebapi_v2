@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AutoMapper;
+using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
 
@@ -9,45 +11,49 @@ namespace knkwebapi_v2.Services
     public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository _repo;
+        private readonly IMapper _mapper;
 
-        public CategoryService(ICategoryRepository repo)
+        public CategoryService(ICategoryRepository repo, IMapper mapper)
         {
             _repo = repo;
+            _mapper = mapper;
         }
 
-        public async Task<IEnumerable<Category>> GetAllAsync()
+        public async Task<IEnumerable<CategoryDto>> GetAllAsync()
         {
-            return await _repo.GetAllAsync();
+            var categories = await _repo.GetAllAsync();
+            return _mapper.Map<IEnumerable<CategoryDto>>(categories);
         }
 
-        public async Task<Category?> GetByIdAsync(int id)
+        public async Task<CategoryDto?> GetByIdAsync(int id)
         {
             if (id <= 0) return null;
-            return await _repo.GetByIdAsync(id);
+            var category = await _repo.GetByIdAsync(id);
+            return _mapper.Map<CategoryDto>(category);
         }
 
-        public async Task<Category> CreateAsync(Category category)
+        public async Task<CategoryDto> CreateAsync(CategoryDto categoryDto)
         {
-            if (category == null) throw new ArgumentNullException(nameof(category));
-            if (string.IsNullOrWhiteSpace(category.Name)) throw new ArgumentException("Category name is required.", nameof(category));
+            if (categoryDto == null) throw new ArgumentNullException(nameof(categoryDto));
+            if (string.IsNullOrWhiteSpace(categoryDto.Name)) throw new ArgumentException("Category name is required.", nameof(categoryDto));
 
+            var category = _mapper.Map<Category>(categoryDto);
             await _repo.AddCategoryAsync(category);
-            return category; // EF will populate Id after SaveChanges in repository
+            return _mapper.Map<CategoryDto>(category);
         }
 
-        public async Task UpdateAsync(int id, Category category)
+        public async Task UpdateAsync(int id, CategoryDto categoryDto)
         {
-            if (category == null) throw new ArgumentNullException(nameof(category));
+            if (categoryDto == null) throw new ArgumentNullException(nameof(categoryDto));
             if (id <= 0) throw new ArgumentException("Invalid id.", nameof(id));
-            if (string.IsNullOrWhiteSpace(category.Name)) throw new ArgumentException("Category name is required.", nameof(category));
-
+            if (string.IsNullOrWhiteSpace(categoryDto.Name)) throw new ArgumentException("Category name is required.", nameof(categoryDto));
             var existing = await _repo.GetByIdAsync(id);
             if (existing == null) throw new KeyNotFoundException($"Category with id {id} not found.");
 
             // Apply allowed updates (simple example)
-            existing.Name = category.Name;
-            existing.ItemtypeId = category.ItemtypeId;
-            existing.ParentCategoryId = category.ParentCategoryId;
+            existing.Name = categoryDto.Name;
+            existing.ItemtypeId = categoryDto.ItemtypeId;
+            existing.ParentCategoryId = categoryDto.ParentCategoryId;
 
             await _repo.UpdateCategoryAsync(existing);
         }

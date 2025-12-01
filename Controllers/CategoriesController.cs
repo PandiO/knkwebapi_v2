@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using knkwebapi_v2.Properties;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Services;
+using knkwebapi_v2.Dtos;
 
 namespace KnKWebAPI.Controllers
 {
@@ -38,12 +39,12 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Category category)
+        public async Task<IActionResult> Create([FromBody] CategoryDto categoryDto)
         {
-            if (category == null) return BadRequest();
+            if (categoryDto == null) return BadRequest();
             try
             {
-                var created = await _service.CreateAsync(category);
+                var created = await _service.CreateAsync(categoryDto);
                 return CreatedAtRoute(nameof(GetById), new { id = created.Id }, created);
             }
             catch (ArgumentException ex)
@@ -53,12 +54,12 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Category category)
+        public async Task<IActionResult> Update(int id, [FromBody] CategoryDto categoryDto)
         {
-            if (category == null) return BadRequest();
+            if (categoryDto == null) return BadRequest();
             try
             {
-                await _service.UpdateAsync(id, category);
+                await _service.UpdateAsync(id, categoryDto);
                 return NoContent();
             }
             catch (KeyNotFoundException)
