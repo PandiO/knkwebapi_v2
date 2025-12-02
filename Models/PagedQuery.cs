@@ -18,7 +18,13 @@ public class PagedQuery
 
 public class PagedResult<T>
 {
+    /// <summary>
+    /// The list of items for the current page.
+    /// </summary>
     public List<T> Items { get; set; } = new();
+    /// <summary>
+    /// The total count of items matching the query across all pages.
+    /// </summary>
     public int TotalCount { get; set; }
     public int PageNumber { get; set; }
     public int PageSize { get; set; }

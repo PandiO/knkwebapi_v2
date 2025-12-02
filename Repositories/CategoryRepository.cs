@@ -28,7 +28,7 @@ namespace knkwebapi_v2.Repositories
         }
         public async Task<Category?> GetByIdAsync(int id)
         {
-            return await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+            return await _context.Categories.Include(c => c.ParentCategory).FirstOrDefaultAsync(c => c.Id == id);
         }
         public async Task AddCategoryAsync(Category category)
         {

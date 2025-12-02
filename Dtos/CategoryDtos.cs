@@ -15,6 +15,8 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("parentCategoryId")]
         public int? ParentCategoryId { get; set; }
+        [JsonPropertyName("parentCategory")]
+        public CategoryDto? ParentCategory { get; set; }
     }
     
     public class CategoryListDto
