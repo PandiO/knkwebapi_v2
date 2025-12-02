@@ -8,19 +8,19 @@ namespace knkwebapi_v2.Mapping
     {
         public CategoryMappingProfile()
         {
-            CreateMap<Category, CategoryDto>().ReverseMap()
+            CreateMap<Category, CategoryDto>()
                 .ForMember(dest => dest.Id, src => src.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Name, src => src.MapFrom(src => src.Name))
                 .ForMember(dest => dest.ItemtypeId, src => src.MapFrom(src => src.ItemtypeId))
-                .ForMember(dest => dest.ParentCategoryId, src => src.MapFrom(src => src.ParentCategoryId.HasValue ? src.ParentCategoryId : src.ParentCategory != null ? src.ParentCategory.Id : null))
-                .ForMember(dest => dest.ParentCategory, src => src.MapFrom(src => src.ParentCategory));
+                .ForMember(dest => dest.ParentCategoryId, src => src.MapFrom(src => src.ParentCategoryId.HasValue ? src.ParentCategoryId : src.ParentCategory != null ? src.ParentCategory.Id : null));
 
             CreateMap<CategoryDto, Category>()
                 .ForMember(dest => dest.Id, src => src.MapFrom(src => src.Id ?? 0))
                 .ForMember(dest => dest.Name, src => src.MapFrom(src => src.Name))
                 .ForMember(dest => dest.ItemtypeId, src => src.MapFrom(src => src.ItemtypeId))
                 .ForMember(dest => dest.ParentCategoryId, src => src.MapFrom(src => src.ParentCategoryId))
-                .ForMember(dest => dest.ParentCategory, src => src.MapFrom(src => src.ParentCategory));
+                .ForMember(dest => dest.ParentCategory, src => src.Ignore());
+                // .ForMember(dest => dest.ParentCategory, src => src.MapFrom(src => src.ParentCategory));
 
             CreateMap<Category, CategoryListDto>()
                 .ForMember(dest => dest.id, src => src.MapFrom(src => src.Id))

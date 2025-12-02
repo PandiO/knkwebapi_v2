@@ -89,6 +89,7 @@ namespace knkwebapi_v2.Repositories
 
             // Apply paging
             var items = await queryable
+                .Include(c => c.ParentCategory)
                 .Skip((query.PageNumber - 1) * query.PageSize)
                 .Take(query.PageSize)
                 .ToListAsync();
