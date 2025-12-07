@@ -64,6 +64,11 @@ namespace knkwebapi_v2.Models
         /// - List → multi-select or repeating sub-form
         /// </summary>
         public FieldType FieldType { get; set; }
+
+        /// <summary>
+        /// For FieldType = List, specifies the type of elements in the collection.
+        /// </summary>
+        public FieldType? ElementType { get; set; }
         
         /// <summary>
         /// Required when FieldType = Object.

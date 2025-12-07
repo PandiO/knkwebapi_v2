@@ -24,6 +24,7 @@ public partial class KnKDbContext : DbContext
     public DbSet<FieldValidation> FieldValidations { get; set; }
     public DbSet<StepCondition> StepConditions { get; set; }
     public DbSet<FormSubmissionProgress> FormSubmissionProgresses { get; set; }
+    public virtual DbSet<Location> Locations { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,6 +47,11 @@ public partial class KnKDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
             entity.ToTable("categories");
+        });
+        modelBuilder.Entity<Location>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+            entity.ToTable("locations");
         });
 
         base.OnModelCreating(modelBuilder);
@@ -121,6 +127,12 @@ public partial class KnKDbContext : DbContext
         
         modelBuilder.Entity<FormField>()
             .HasIndex(f => f.IsReusable);
+
+        modelBuilder.Entity<Domain>()
+            .HasOne(d => d.Location)
+            .WithOne()
+            .HasForeignKey<Domain>(d => d.LocationId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         OnModelCreatingPartial(modelBuilder);
     }

@@ -190,6 +190,7 @@ namespace knkwebapi_v2.Repositories
                             Placeholder = field.Placeholder,
                             Description = field.Description,
                             FieldType = field.FieldType,
+                            ElementType = field.ElementType,
                             ObjectType = field.ObjectType,
                             EnumType = field.EnumType,
                             DefaultValue = field.DefaultValue,
@@ -213,6 +214,7 @@ namespace knkwebapi_v2.Repositories
                         fieldMatch.Placeholder = field.Placeholder;
                         fieldMatch.Description = field.Description;
                         fieldMatch.FieldType = field.FieldType;
+                        fieldMatch.ElementType = field.ElementType;
                         fieldMatch.ObjectType = field.ObjectType;
                         fieldMatch.EnumType = field.EnumType;
                         fieldMatch.DefaultValue = field.DefaultValue;
@@ -275,3 +277,4 @@ namespace knkwebapi_v2.Repositories
         }
     }
 }
+

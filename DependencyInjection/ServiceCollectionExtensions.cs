@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Services;
 using AutoMapper;
+using knkwebapi_v2.Repositories.Interfaces;
 
 namespace knkwebapi_v2.DependencyInjection
 {
@@ -23,6 +24,8 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ILocationRepository, LocationRepository>();
+            services.AddScoped<ILocationService, LocationService>();
             services.AddScoped<IDomainRepository, DomainRepository>();
             services.AddScoped<IDomainService, DomainService>();
             services.AddScoped<IFormConfigurationRepository, FormConfigurationRepository>();

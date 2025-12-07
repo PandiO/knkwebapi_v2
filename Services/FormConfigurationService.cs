@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
@@ -90,9 +91,26 @@ namespace knkwebapi_v2.Services
             var incoming = _mapper.Map<FormConfiguration>(config);
             incoming.Id = id;
             incoming.UpdatedAt = DateTime.UtcNow;
+            incoming.CreatedAt = exists.CreatedAt;
+            
             // Preserve existing StepOrderJson if none provided
             if (string.IsNullOrWhiteSpace(incoming.StepOrderJson))
                 incoming.StepOrderJson = exists.StepOrderJson;
+
+            // DEBUG: Log ElementType values before save
+            // foreach (var step in incoming.Steps)
+            // {
+            //     foreach (var field in step.Fields)
+            //     {
+            //         System.Diagnostics.Debug.WriteLine($"Field: {field.FieldName}, FieldType: {field.FieldType}, ElementType: {field.ElementType}");
+                    
+            //         // Ensure FormStepId is set
+            //         if (field.FormStepId == null || field.FormStepId == 0)
+            //         {
+            //             field.FormStepId = step.Id;
+            //         }
+            //     }
+            // }
 
             await _repo.UpdateAsync(incoming);
         }

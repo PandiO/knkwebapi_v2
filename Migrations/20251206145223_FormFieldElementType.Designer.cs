@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using knkwebapi_v2.Properties;
 
@@ -11,9 +12,11 @@ using knkwebapi_v2.Properties;
 namespace knkwebapi_v2.Migrations
 {
     [DbContext(typeof(KnKDbContext))]
-    partial class KnKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251206145223_FormFieldElementType")]
+    partial class FormFieldElementType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -84,9 +87,6 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasKey("Id")
                         .HasName("PRIMARY");
-
-                    b.HasIndex("LocationId")
-                        .IsUnique();
 
                     b.ToTable("domains", (string)null);
                 });
@@ -345,41 +345,6 @@ namespace knkwebapi_v2.Migrations
                     b.ToTable("FormSubmissionProgresses");
                 });
 
-            modelBuilder.Entity("knkwebapi_v2.Models.Location", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .HasColumnType("longtext");
-
-                    b.Property<float>("Pitch")
-                        .HasColumnType("float");
-
-                    b.Property<string>("World")
-                        .HasColumnType("longtext");
-
-                    b.Property<double>("X")
-                        .HasColumnType("double");
-
-                    b.Property<double>("Y")
-                        .HasColumnType("double");
-
-                    b.Property<float>("Yaw")
-                        .HasColumnType("float");
-
-                    b.Property<double>("Z")
-                        .HasColumnType("double");
-
-                    b.HasKey("Id")
-                        .HasName("PRIMARY");
-
-                    b.ToTable("locations", (string)null);
-                });
-
             modelBuilder.Entity("knkwebapi_v2.Models.StepCondition", b =>
                 {
                     b.Property<int>("Id")
@@ -452,16 +417,6 @@ namespace knkwebapi_v2.Migrations
                         .HasForeignKey("ParentCategoryId");
 
                     b.Navigation("ParentCategory");
-                });
-
-            modelBuilder.Entity("knkwebapi_v2.Models.Domain", b =>
-                {
-                    b.HasOne("knkwebapi_v2.Models.Location", "Location")
-                        .WithOne()
-                        .HasForeignKey("knkwebapi_v2.Models.Domain", "LocationId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.FieldValidation", b =>

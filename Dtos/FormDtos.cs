@@ -54,6 +54,8 @@ namespace knkwebapi_v2.Dtos
         public string? Description { get; set; }
         [JsonPropertyName("fieldType")]
         public FieldType FieldType { get; set; }
+        [JsonPropertyName("elementType")]
+        public FieldType? ElementType { get; set; }
         [JsonPropertyName("defaultValue")]
         public string? DefaultValue { get; set; }
         [JsonPropertyName("isRequired")]

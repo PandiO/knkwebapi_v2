@@ -19,5 +19,9 @@ public class Domain
 
     public string WgRegionId { get; set; } = null!;
 
+    [NavigationPair(nameof(Location))]
+    [RelatedEntityField(typeof(Location))]
     public int? LocationId { get; set; }
+    [RelatedEntityField(typeof(Location))]
+    public Location? Location { get; set; }
 }

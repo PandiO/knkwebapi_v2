@@ -1,0 +1,96 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using AutoMapper;
+using knkwebapi_v2.Dtos;
+using knkwebapi_v2.Models;
+using knkwebapi_v2.Repositories.Interfaces;
+
+namespace knkwebapi_v2.Services
+{
+    public class LocationService : ILocationService
+    {
+        private readonly ILocationRepository _repo;
+        private readonly IMapper _mapper;
+
+        public LocationService(ILocationRepository repo, IMapper mapper)
+        {
+            _repo = repo;
+            _mapper = mapper;
+        }
+
+        public async Task<IEnumerable<LocationDto>> GetAllAsync()
+        {
+            var locations = await _repo.GetAllAsync();
+            return _mapper.Map<IEnumerable<LocationDto>>(locations);
+        }
+
+        public async Task<LocationDto?> GetByIdAsync(int id)
+        {
+            if (id <= 0) return null;
+            var location = await _repo.GetByIdAsync(id);
+            return _mapper.Map<LocationDto>(location);
+        }
+
+        public async Task<LocationDto> CreateAsync(LocationDto locationDto)
+        {
+            if (locationDto == null) throw new ArgumentNullException(nameof(locationDto));
+            if (string.IsNullOrWhiteSpace(locationDto.Name)) 
+                throw new ArgumentException("Location name is required.", nameof(locationDto));
+            if (string.IsNullOrWhiteSpace(locationDto.World)) 
+                throw new ArgumentException("World is required.", nameof(locationDto));
+
+            var location = _mapper.Map<Location>(locationDto);
+            await _repo.AddLocationAsync(location);
+            return _mapper.Map<LocationDto>(location);
+        }
+
+        public async Task UpdateAsync(int id, LocationDto locationDto)
+        {
+            if (locationDto == null) throw new ArgumentNullException(nameof(locationDto));
+            if (id <= 0) throw new ArgumentException("Invalid id.", nameof(id));
+            if (string.IsNullOrWhiteSpace(locationDto.Name)) 
+                throw new ArgumentException("Location name is required.", nameof(locationDto));
+            if (string.IsNullOrWhiteSpace(locationDto.World)) 
+                throw new ArgumentException("World is required.", nameof(locationDto));
+
+            var existing = await _repo.GetByIdAsync(id);
+            if (existing == null) throw new KeyNotFoundException($"Location with id {id} not found.");
+
+            // Apply allowed updates
+            existing.Name = locationDto.Name;
+            existing.X = locationDto.X;
+            existing.Y = locationDto.Y;
+            existing.Z = locationDto.Z;
+            existing.Yaw = locationDto.Yaw;
+            existing.Pitch = locationDto.Pitch;
+            existing.World = locationDto.World;
+
+            await _repo.UpdateLocationAsync(existing);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            if (id <= 0) throw new ArgumentException("Invalid id.", nameof(id));
+            var existing = await _repo.GetByIdAsync(id);
+            if (existing == null) throw new KeyNotFoundException($"Location with id {id} not found.");
+
+            await _repo.DeleteLocationAsync(id);
+        }
+
+        public async Task<PagedResultDto<LocationDto>> SearchAsync(PagedQueryDto queryDto)
+        {
+            if (queryDto == null) throw new ArgumentNullException(nameof(queryDto));
+
+            var query = _mapper.Map<PagedQuery>(queryDto);
+
+            // Execute search
+            var result = await _repo.SearchAsync(query);
+
+            // Map result to DTO
+            var resultDto = _mapper.Map<PagedResultDto<LocationDto>>(result);
+
+            return resultDto;
+        }
+    }
+}
