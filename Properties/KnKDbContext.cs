@@ -25,6 +25,10 @@ public partial class KnKDbContext : DbContext
     public DbSet<StepCondition> StepConditions { get; set; }
     public DbSet<FormSubmissionProgress> FormSubmissionProgresses { get; set; }
     public virtual DbSet<Location> Locations { get; set; } = null!;
+    public virtual DbSet<Street> Streets { get; set; } = null!;
+    public virtual DbSet<Town> Towns { get; set; } = null!;
+    public virtual DbSet<District> Districts { get; set; } = null!;
+    public virtual DbSet<Structure> Structures { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -133,6 +137,73 @@ public partial class KnKDbContext : DbContext
             .WithOne()
             .HasForeignKey<Domain>(d => d.LocationId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Street configuration
+        modelBuilder.Entity<Street>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+            entity.ToTable("streets");
+        });
+
+        // Town configuration
+        modelBuilder.Entity<Town>(entity =>
+        {
+            entity.ToTable("towns");
+        });
+
+        // Town-Street many-to-many
+        modelBuilder.Entity<Town>()
+            .HasMany(t => t.Streets)
+            .WithMany()
+            .UsingEntity<Dictionary<string, object>>(
+                "TownStreet",
+                j => j.HasOne<Street>().WithMany().HasForeignKey("StreetId"),
+                j => j.HasOne<Town>().WithMany().HasForeignKey("TownId"));
+
+        // District configuration
+        modelBuilder.Entity<District>(entity =>
+        {
+            entity.ToTable("districts");
+        });
+
+        // District-Town many-to-one (required)
+        modelBuilder.Entity<District>()
+            .HasOne(d => d.Town)
+            .WithMany(t => t.Districts)
+            .HasForeignKey(d => d.TownId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
+
+        // District-Street many-to-many
+        modelBuilder.Entity<District>()
+            .HasMany(d => d.Streets)
+            .WithMany(s => s.Districts)
+            .UsingEntity<Dictionary<string, object>>(
+                "DistrictStreet",
+                j => j.HasOne<Street>().WithMany().HasForeignKey("StreetId"),
+                j => j.HasOne<District>().WithMany().HasForeignKey("DistrictId"));
+
+        // Structure configuration
+        modelBuilder.Entity<Structure>(entity =>
+        {
+            entity.ToTable("structures");
+        });
+
+        // Structure-Street many-to-one (required)
+        modelBuilder.Entity<Structure>()
+            .HasOne(s => s.Street)
+            .WithMany(st => st.Structures)
+            .HasForeignKey(s => s.StreetId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
+
+        // Structure-District many-to-one (required)
+        modelBuilder.Entity<Structure>()
+            .HasOne(s => s.District)
+            .WithMany(d => d.Structures)
+            .HasForeignKey(s => s.DistrictId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
 
         OnModelCreatingPartial(modelBuilder);
     }

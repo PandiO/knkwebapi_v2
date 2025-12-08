@@ -12,9 +12,6 @@ public class District : Domain
     public int TownId { get; set; }
     [RelatedEntityField(typeof(Town))]
     public Town Town { get; set; } = null!;
-    [NavigationPair(nameof(Streets))]
-    [RelatedEntityField(typeof(Street))]
-    public ICollection<int> StreetIds { get; set; } = new Collection<int>();
     [RelatedEntityField(typeof(Street))]
     public ICollection<Street> Streets { get; set; } = new Collection<Street>();
     [RelatedEntityField(typeof(Structure))]

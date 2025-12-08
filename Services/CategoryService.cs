@@ -37,6 +37,14 @@ namespace knkwebapi_v2.Services
             if (categoryDto == null) throw new ArgumentNullException(nameof(categoryDto));
             if (string.IsNullOrWhiteSpace(categoryDto.Name)) throw new ArgumentException("Category name is required.", nameof(categoryDto));
 
+            // Validate parent category if provided
+            if (categoryDto.ParentCategoryId.HasValue && categoryDto.ParentCategoryId > 0)
+            {
+                var parentExists = await _repo.GetByIdAsync(categoryDto.ParentCategoryId.Value);
+                if (parentExists == null)
+                    throw new ArgumentException($"Parent Category with id {categoryDto.ParentCategoryId} not found.", nameof(categoryDto));
+            }
+
             var category = _mapper.Map<Category>(categoryDto);
             await _repo.AddCategoryAsync(category);
             return _mapper.Map<CategoryDto>(category);
@@ -50,7 +58,20 @@ namespace knkwebapi_v2.Services
             var existing = await _repo.GetByIdAsync(id);
             if (existing == null) throw new KeyNotFoundException($"Category with id {id} not found.");
 
-            // Apply allowed updates (simple example)
+            // Validate parent category if changed
+            if (categoryDto.ParentCategoryId.HasValue && categoryDto.ParentCategoryId > 0 &&
+                (!existing.ParentCategoryId.HasValue || existing.ParentCategoryId != categoryDto.ParentCategoryId))
+            {
+                // Prevent circular reference (parent cannot be the category itself)
+                if (categoryDto.ParentCategoryId == id)
+                    throw new ArgumentException("A category cannot be its own parent.", nameof(categoryDto));
+
+                var parentExists = await _repo.GetByIdAsync(categoryDto.ParentCategoryId.Value);
+                if (parentExists == null)
+                    throw new ArgumentException($"Parent Category with id {categoryDto.ParentCategoryId} not found.", nameof(categoryDto));
+            }
+
+            // Apply allowed updates
             existing.Name = categoryDto.Name;
             existing.ItemtypeId = categoryDto.ItemtypeId;
             existing.ParentCategoryId = categoryDto.ParentCategoryId;

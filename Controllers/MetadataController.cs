@@ -38,7 +38,7 @@ namespace knkwebapi_v2.Controllers
         /// Get metadata for a specific entity by name.
         /// Used by FormBuilder to show available fields for an entity.
         /// </summary>
-        [HttpGet("entities/{entityName}")]
+        [HttpGet("entities/{entityTypeName}")]
         public ActionResult<EntityMetadataDto> GetEntityMetadata(string entityTypeName)
         {
             var metadata = _metadataService.GetEntityMetadata(entityTypeName);
