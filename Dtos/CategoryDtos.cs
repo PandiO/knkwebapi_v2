@@ -10,11 +10,14 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("name")]
         public string Name { get; set; } = null!;
 
-        [JsonPropertyName("itemtypeId")]
-        public int? ItemtypeId { get; set; }
-
         [JsonPropertyName("iconMaterialRefId")]
         public int? IconMaterialRefId { get; set; }
+        [JsonPropertyName("iconMaterialRef")]
+        public MinecraftMaterialRefDto? IconMaterialRef { get; set; }
+
+        // Optional namespace key for hybrid material picker selections when the material is not yet persisted
+        [JsonPropertyName("iconNamespaceKey")]
+        public string? IconNamespaceKey { get; set; }
 
         [JsonPropertyName("parentCategoryId")]
         public int? ParentCategoryId { get; set; }
@@ -32,13 +35,11 @@ namespace knkwebapi_v2.Dtos
         public string? parentCategoryName { get; set; }
         [JsonPropertyName("parentCategoryId")]
         public int? parentCategoryId { get; set; }
-        [JsonPropertyName("itemtypeId")]
-        public int? itemtypeId { get; set; }
-        [JsonPropertyName("itemtypeName")]
-        public string? itemtypeName { get; set; }
 
         [JsonPropertyName("iconMaterialRefId")]
         public int? iconMaterialRefId { get; set; }
+        [JsonPropertyName("iconMaterialRefName")]
+        public string? iconMaterialRefName { get; set; }
 
         [JsonPropertyName("iconNamespaceKey")]
         public string? iconNamespaceKey { get; set; }

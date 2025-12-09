@@ -9,6 +9,7 @@ namespace knkwebapi_v2.Enums
         Decimal = 4,
         Enum = 5,
         Object = 6,
-        List = 7
+        List = 7,
+        HybridMinecraftMaterialRefPicker = 8
     }
 }

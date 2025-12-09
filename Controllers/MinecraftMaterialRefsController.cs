@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Services;
@@ -9,11 +10,11 @@ namespace KnKWebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class MinecraftBlockRefController : ControllerBase
+    public class MinecraftMaterialRefsController : ControllerBase
     {
-        private readonly IMinecraftBlockRefService _service;
+        private readonly IMinecraftMaterialRefService _service;
 
-        public MinecraftBlockRefController(IMinecraftBlockRefService service)
+        public MinecraftMaterialRefsController(IMinecraftMaterialRefService service)
         {
             _service = service;
         }
@@ -25,7 +26,17 @@ namespace KnKWebAPI.Controllers
             return Ok(items);
         }
 
-        [HttpGet("{id:int}", Name = "GetMinecraftBlockRefById")]
+        [HttpGet("hybrid")]
+        public async Task<ActionResult<IEnumerable<MinecraftHybridMaterialOptionDto>>> GetHybrid(
+            [FromQuery] string? search = null,
+            [FromQuery] string? category = null,
+            [FromQuery] int? take = null)
+        {
+            var result = await _service.GetHybridAsync(search, category, take);
+            return Ok(result);
+        }
+
+        [HttpGet("{id:int}", Name = "GetMinecraftMaterialRefById")]
         public async Task<IActionResult> GetById(int id)
         {
             var item = await _service.GetByIdAsync(id);
@@ -34,13 +45,28 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] MinecraftBlockRefCreateDto dto)
+        public async Task<IActionResult> Create([FromBody] MinecraftMaterialRefCreateDto dto)
         {
             if (dto == null) return BadRequest();
             try
             {
                 var created = await _service.CreateAsync(dto);
-                return CreatedAtRoute("GetMinecraftBlockRefById", new { id = created.Id }, created);
+                return CreatedAtRoute("GetMinecraftMaterialRefById", new { id = created.Id }, created);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("get-or-create")]
+        public async Task<IActionResult> GetOrCreate([FromBody] MinecraftMaterialRefCreateDto dto)
+        {
+            if (dto == null) return BadRequest();
+            try
+            {
+                var created = await _service.GetOrCreateAsync(dto.NamespaceKey, dto.Category, dto.LegacyName);
+                return Ok(created);
             }
             catch (ArgumentException ex)
             {
@@ -49,7 +75,7 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] MinecraftBlockRefUpdateDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] MinecraftMaterialRefUpdateDto dto)
         {
             if (dto == null) return BadRequest();
             try
@@ -86,8 +112,16 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost("search")]
-        public async Task<ActionResult<PagedResultDto<MinecraftBlockRefListDto>>> Search([FromBody] PagedQueryDto query)
+        public async Task<ActionResult<PagedResultDto<MinecraftMaterialRefListDto>>> Search([FromBody] PagedQueryDto query)
         {
+            // Check if hybrid mode is requested via filter
+            if (query?.Filters != null && query.Filters.TryGetValue("SearchHybrid", out var hybridValue) && hybridValue?.ToString()?.ToLower() == "true")
+            {
+                var hybridResult = await _service.SearchHybridAsync(query);
+                return Ok(hybridResult);
+            }
+
+            // Default: normal paged search
             var result = await _service.SearchAsync(query);
             return Ok(result);
         }

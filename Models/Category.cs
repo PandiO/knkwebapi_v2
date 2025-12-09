@@ -9,8 +9,6 @@ public class Category
     public int Id { get; set; }
     public string Name { get; set; } = null!;
 
-    public int? ItemtypeId { get; set; }
-
     public int? IconMaterialRefId { get; set; }
     public MinecraftMaterialRef? IconMaterialRef { get; set; }
 

@@ -78,11 +78,28 @@ namespace knkwebapi_v2.Repositories
                     }
                 }
 
-                if (query.Filters.TryGetValue("itemtypeId", out var itemtypeIdStr))
+                if (query.Filters.TryGetValue("iconMaterialRefId", out var iconMaterialRefIdStr))
                 {
-                    if (int.TryParse(itemtypeIdStr, out var itemtypeId))
+                    if (int.TryParse(iconMaterialRefIdStr, out var iconMaterialRefId))
                     {
-                        queryable = queryable.Where(c => c.ItemtypeId == itemtypeId);
+                        queryable = queryable.Where(c => c.IconMaterialRefId == iconMaterialRefId);
+                    }
+                }
+                if (query.Filters.TryGetValue("excludeIds", out var excludeIdsStr))
+                {
+                    var excludeIds = excludeIdsStr.Split(',').Select(idStr => 
+                    {
+                        if (int.TryParse(idStr, out var id))
+                            return id;
+                        return (int?)null;
+                    })
+                    .Where(id => id.HasValue)
+                    .Select(id => id.Value)
+                    .ToList();
+
+                    if (excludeIds.Any())
+                    {
+                        queryable = queryable.Where(c => !excludeIds.Contains(c.Id));
                     }
                 }
             }
@@ -121,7 +138,7 @@ namespace knkwebapi_v2.Repositories
             {
                 "name" => sortDescending ? queryable.OrderByDescending(c => c.Name) : queryable.OrderBy(c => c.Name),
                 "id" => sortDescending ? queryable.OrderByDescending(c => c.Id) : queryable.OrderBy(c => c.Id),
-                "itemtypeid" => sortDescending ? queryable.OrderByDescending(c => c.ItemtypeId) : queryable.OrderBy(c => c.ItemtypeId),
+                "iconmaterialrefid" => sortDescending ? queryable.OrderByDescending(c => c.IconMaterialRefId) : queryable.OrderBy(c => c.IconMaterialRefId),
                 "parentcategoryid" => sortDescending ? queryable.OrderByDescending(c => c.ParentCategoryId) : queryable.OrderBy(c => c.ParentCategoryId),
                 _ => queryable.OrderBy(c => c.Name)
             };

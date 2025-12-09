@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using knkwebapi_v2.Attributes;
 
 namespace knkwebapi_v2.Models;
 
+[FormConfigurableEntity("MinecraftMaterialRef")]
 public class MinecraftMaterialRef
 {
     public int Id { get; set; }

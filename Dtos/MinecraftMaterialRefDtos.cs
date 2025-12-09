@@ -51,5 +51,17 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("category")]
         public string Category { get; set; } = null!;
+
+        [JsonPropertyName("legacyName")]
+        public string? LegacyName { get; set; }
+
+        [JsonPropertyName("displayName")]
+        public string? DisplayName { get; set; }
+
+        [JsonPropertyName("isPersisted")]
+        public bool? IsPersisted { get; set; }
+
+        [JsonPropertyName("iconUrl")]
+        public string? IconUrl { get; set; }
     }
 }

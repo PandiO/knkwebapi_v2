@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Services;
@@ -9,11 +10,11 @@ namespace KnKWebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class MinecraftMaterialRefController : ControllerBase
+    public class MinecraftBlockRefsController : ControllerBase
     {
-        private readonly IMinecraftMaterialRefService _service;
+        private readonly IMinecraftBlockRefService _service;
 
-        public MinecraftMaterialRefController(IMinecraftMaterialRefService service)
+        public MinecraftBlockRefsController(IMinecraftBlockRefService service)
         {
             _service = service;
         }
@@ -25,7 +26,7 @@ namespace KnKWebAPI.Controllers
             return Ok(items);
         }
 
-        [HttpGet("{id:int}", Name = "GetMinecraftMaterialRefById")]
+        [HttpGet("{id:int}", Name = "GetMinecraftBlockRefById")]
         public async Task<IActionResult> GetById(int id)
         {
             var item = await _service.GetByIdAsync(id);
@@ -34,13 +35,13 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] MinecraftMaterialRefCreateDto dto)
+        public async Task<IActionResult> Create([FromBody] MinecraftBlockRefCreateDto dto)
         {
             if (dto == null) return BadRequest();
             try
             {
                 var created = await _service.CreateAsync(dto);
-                return CreatedAtRoute("GetMinecraftMaterialRefById", new { id = created.Id }, created);
+                return CreatedAtRoute("GetMinecraftBlockRefById", new { id = created.Id }, created);
             }
             catch (ArgumentException ex)
             {
@@ -49,7 +50,7 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] MinecraftMaterialRefUpdateDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] MinecraftBlockRefUpdateDto dto)
         {
             if (dto == null) return BadRequest();
             try
@@ -86,8 +87,16 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost("search")]
-        public async Task<ActionResult<PagedResultDto<MinecraftMaterialRefListDto>>> Search([FromBody] PagedQueryDto query)
+        public async Task<ActionResult<PagedResultDto<MinecraftBlockRefListDto>>> Search([FromBody] PagedQueryDto query)
         {
+            // Check if hybrid mode is requested via filter
+            if (query?.Filters != null && query.Filters.TryGetValue("SearchHybrid", out var hybridValue) && hybridValue?.ToString()?.ToLower() == "true")
+            {
+                var hybridResult = await _service.SearchHybridAsync(query);
+                return Ok(hybridResult);
+            }
+
+            // Default: normal paged search
             var result = await _service.SearchAsync(query);
             return Ok(result);
         }

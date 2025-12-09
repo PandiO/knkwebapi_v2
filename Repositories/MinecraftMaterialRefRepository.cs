@@ -24,6 +24,13 @@ namespace knkwebapi_v2.Repositories
             return await _context.MinecraftMaterialRefs.FirstOrDefaultAsync(x => x.Id == id);
         }
 
+        public async Task<MinecraftMaterialRef?> GetByNamespaceKeyAsync(string namespaceKey)
+        {
+            if (string.IsNullOrWhiteSpace(namespaceKey)) return null;
+            var key = namespaceKey.ToLower();
+            return await _context.MinecraftMaterialRefs.FirstOrDefaultAsync(x => x.NamespaceKey.ToLower() == key);
+        }
+
         public async Task AddAsync(MinecraftMaterialRef entity)
         {
             await _context.MinecraftMaterialRefs.AddAsync(entity);

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Services;
+using knkwebapi_v2.Services.Interfaces;
 using AutoMapper;
 using knkwebapi_v2.Repositories.Interfaces;
 
@@ -32,6 +33,7 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<IMinecraftMaterialRefService, MinecraftMaterialRefService>();
             services.AddScoped<IMinecraftBlockRefRepository, MinecraftBlockRefRepository>();
             services.AddScoped<IMinecraftBlockRefService, MinecraftBlockRefService>();
+            services.AddSingleton<IMinecraftMaterialCatalogService, MinecraftMaterialCatalogService>();
             services.AddScoped<IFormConfigurationRepository, FormConfigurationRepository>();
             services.AddScoped<IFormConfigurationService, FormConfigurationService>();
             services.AddScoped<IFormStepRepository, FormStepRepository>();

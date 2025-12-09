@@ -6,6 +6,7 @@ namespace knkwebapi_v2.Repositories.Interfaces
     {
         Task<IEnumerable<MinecraftMaterialRef>> GetAllAsync();
         Task<MinecraftMaterialRef?> GetByIdAsync(int id);
+        Task<MinecraftMaterialRef?> GetByNamespaceKeyAsync(string namespaceKey);
         Task AddAsync(MinecraftMaterialRef entity);
         Task UpdateAsync(MinecraftMaterialRef entity);
         Task DeleteAsync(int id);
