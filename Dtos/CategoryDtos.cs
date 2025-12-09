@@ -13,6 +13,9 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("itemtypeId")]
         public int? ItemtypeId { get; set; }
 
+        [JsonPropertyName("iconMaterialRefId")]
+        public int? IconMaterialRefId { get; set; }
+
         [JsonPropertyName("parentCategoryId")]
         public int? ParentCategoryId { get; set; }
         [JsonPropertyName("parentCategory")]
@@ -33,5 +36,11 @@ namespace knkwebapi_v2.Dtos
         public int? itemtypeId { get; set; }
         [JsonPropertyName("itemtypeName")]
         public string? itemtypeName { get; set; }
+
+        [JsonPropertyName("iconMaterialRefId")]
+        public int? iconMaterialRefId { get; set; }
+
+        [JsonPropertyName("iconNamespaceKey")]
+        public string? iconNamespaceKey { get; set; }
     }
 }

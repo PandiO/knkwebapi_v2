@@ -12,12 +12,14 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.Id, src => src.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Name, src => src.MapFrom(src => src.Name))
                 .ForMember(dest => dest.ItemtypeId, src => src.MapFrom(src => src.ItemtypeId))
+                .ForMember(dest => dest.IconMaterialRefId, src => src.MapFrom(src => src.IconMaterialRefId))
                 .ForMember(dest => dest.ParentCategoryId, src => src.MapFrom(src => src.ParentCategoryId.HasValue ? src.ParentCategoryId : src.ParentCategory != null ? src.ParentCategory.Id : null));
 
             CreateMap<CategoryDto, Category>()
                 .ForMember(dest => dest.Id, src => src.MapFrom(src => src.Id ?? 0))
                 .ForMember(dest => dest.Name, src => src.MapFrom(src => src.Name))
                 .ForMember(dest => dest.ItemtypeId, src => src.MapFrom(src => src.ItemtypeId))
+                .ForMember(dest => dest.IconMaterialRefId, src => src.MapFrom(src => src.IconMaterialRefId))
                 .ForMember(dest => dest.ParentCategoryId, src => src.MapFrom(src => src.ParentCategoryId))
                 .ForMember(dest => dest.ParentCategory, src => src.Ignore());
                 // .ForMember(dest => dest.ParentCategory, src => src.MapFrom(src => src.ParentCategory));
@@ -28,7 +30,9 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.parentCategoryId, src => src.MapFrom(src => src.ParentCategoryId))
                 .ForMember(dest => dest.parentCategoryName, src => src.MapFrom(src => src.ParentCategory != null ? src.ParentCategory.Name : null))
                 .ForMember(dest => dest.itemtypeId, src => src.MapFrom(src => src.ItemtypeId))
-                .ForMember(dest => dest.itemtypeName, src => src.MapFrom(src => src.ItemtypeId != null ? "ItemtypeNamePlaceholder" : null)); // Placeholder for Itemtype name resolution
+                .ForMember(dest => dest.itemtypeName, src => src.MapFrom(src => src.ItemtypeId != null ? "ItemtypeNamePlaceholder" : null))
+                .ForMember(dest => dest.iconMaterialRefId, src => src.MapFrom(src => src.IconMaterialRefId))
+                .ForMember(dest => dest.iconNamespaceKey, src => src.MapFrom(src => src.IconMaterialRef != null ? src.IconMaterialRef.NamespaceKey : null));
 
         }
     }

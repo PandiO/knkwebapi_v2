@@ -5,17 +5,20 @@ using AutoMapper;
 using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
+using knkwebapi_v2.Repositories.Interfaces;
 
 namespace knkwebapi_v2.Services
 {
     public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository _repo;
+        private readonly IMinecraftMaterialRefRepository _materialRepo;
         private readonly IMapper _mapper;
 
-        public CategoryService(ICategoryRepository repo, IMapper mapper)
+        public CategoryService(ICategoryRepository repo, IMinecraftMaterialRefRepository materialRepo, IMapper mapper)
         {
             _repo = repo;
+            _materialRepo = materialRepo;
             _mapper = mapper;
         }
 
@@ -45,6 +48,14 @@ namespace knkwebapi_v2.Services
                     throw new ArgumentException($"Parent Category with id {categoryDto.ParentCategoryId} not found.", nameof(categoryDto));
             }
 
+            // Validate icon material if provided
+            if (categoryDto.IconMaterialRefId.HasValue && categoryDto.IconMaterialRefId > 0)
+            {
+                var icon = await _materialRepo.GetByIdAsync(categoryDto.IconMaterialRefId.Value);
+                if (icon == null)
+                    throw new ArgumentException($"MinecraftMaterialRef with id {categoryDto.IconMaterialRefId} not found.", nameof(categoryDto));
+            }
+
             var category = _mapper.Map<Category>(categoryDto);
             await _repo.AddCategoryAsync(category);
             return _mapper.Map<CategoryDto>(category);
@@ -71,9 +82,18 @@ namespace knkwebapi_v2.Services
                     throw new ArgumentException($"Parent Category with id {categoryDto.ParentCategoryId} not found.", nameof(categoryDto));
             }
 
+            // Validate icon material if provided
+            if (categoryDto.IconMaterialRefId.HasValue && categoryDto.IconMaterialRefId > 0)
+            {
+                var icon = await _materialRepo.GetByIdAsync(categoryDto.IconMaterialRefId.Value);
+                if (icon == null)
+                    throw new ArgumentException($"MinecraftMaterialRef with id {categoryDto.IconMaterialRefId} not found.", nameof(categoryDto));
+            }
+
             // Apply allowed updates
             existing.Name = categoryDto.Name;
             existing.ItemtypeId = categoryDto.ItemtypeId;
+            existing.IconMaterialRefId = categoryDto.IconMaterialRefId;
             existing.ParentCategoryId = categoryDto.ParentCategoryId;
 
             await _repo.UpdateCategoryAsync(existing);

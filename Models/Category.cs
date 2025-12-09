@@ -11,6 +11,9 @@ public class Category
 
     public int? ItemtypeId { get; set; }
 
+    public int? IconMaterialRefId { get; set; }
+    public MinecraftMaterialRef? IconMaterialRef { get; set; }
+
     [NavigationPair(nameof(ParentCategory))]
     [RelatedEntityField(typeof(Category))]
     public int? ParentCategoryId { get; set; }

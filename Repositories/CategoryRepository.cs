@@ -24,11 +24,17 @@ namespace knkwebapi_v2.Repositories
 
         public async Task<IEnumerable<Category>> GetAllAsync()
         {
-            return await _context.Categories.ToListAsync();
+            return await _context.Categories
+                .Include(c => c.ParentCategory)
+                .Include(c => c.IconMaterialRef)
+                .ToListAsync();
         }
         public async Task<Category?> GetByIdAsync(int id)
         {
-            return await _context.Categories.Include(c => c.ParentCategory).FirstOrDefaultAsync(c => c.Id == id);
+            return await _context.Categories
+                .Include(c => c.ParentCategory)
+                .Include(c => c.IconMaterialRef)
+                .FirstOrDefaultAsync(c => c.Id == id);
         }
         public async Task AddCategoryAsync(Category category)
         {
@@ -90,6 +96,7 @@ namespace knkwebapi_v2.Repositories
             // Apply paging
             var items = await queryable
                 .Include(c => c.ParentCategory)
+                .Include(c => c.IconMaterialRef)
                 .Skip((query.PageNumber - 1) * query.PageSize)
                 .Take(query.PageSize)
                 .ToListAsync();

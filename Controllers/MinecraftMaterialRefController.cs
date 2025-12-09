@@ -1,24 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using knkwebapi_v2.Properties;
-using knkwebapi_v2.Models;
-using knkwebapi_v2.Services;
 using knkwebapi_v2.Dtos;
+using knkwebapi_v2.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace KnKWebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class CategoriesController : ControllerBase
+    public class MinecraftMaterialRefController : ControllerBase
     {
-        private readonly ICategoryService _service;
+        private readonly IMinecraftMaterialRefService _service;
 
-        public CategoriesController(ICategoryService service)
+        public MinecraftMaterialRefController(IMinecraftMaterialRefService service)
         {
             _service = service;
         }
@@ -30,7 +25,7 @@ namespace KnKWebAPI.Controllers
             return Ok(items);
         }
 
-        [HttpGet("{id:int}", Name = "GetCategoryById")]
+        [HttpGet("{id:int}", Name = "GetMinecraftMaterialRefById")]
         public async Task<IActionResult> GetById(int id)
         {
             var item = await _service.GetByIdAsync(id);
@@ -39,13 +34,13 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CategoryDto categoryDto)
+        public async Task<IActionResult> Create([FromBody] MinecraftMaterialRefCreateDto dto)
         {
-            if (categoryDto == null) return BadRequest();
+            if (dto == null) return BadRequest();
             try
             {
-                var created = await _service.CreateAsync(categoryDto);
-                return CreatedAtRoute("GetCategoryById", new { id = created.Id }, created);
+                var created = await _service.CreateAsync(dto);
+                return CreatedAtRoute("GetMinecraftMaterialRefById", new { id = created.Id }, created);
             }
             catch (ArgumentException ex)
             {
@@ -54,12 +49,12 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] CategoryDto categoryDto)
+        public async Task<IActionResult> Update(int id, [FromBody] MinecraftMaterialRefUpdateDto dto)
         {
-            if (categoryDto == null) return BadRequest();
+            if (dto == null) return BadRequest();
             try
             {
-                await _service.UpdateAsync(id, categoryDto);
+                await _service.UpdateAsync(id, dto);
                 return NoContent();
             }
             catch (KeyNotFoundException)
@@ -91,7 +86,7 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost("search")]
-        public async Task<ActionResult<PagedResultDto<CategoryListDto>>> SearchCategories([FromBody] PagedQueryDto query)
+        public async Task<ActionResult<PagedResultDto<MinecraftMaterialRefListDto>>> Search([FromBody] PagedQueryDto query)
         {
             var result = await _service.SearchAsync(query);
             return Ok(result);

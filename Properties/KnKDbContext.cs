@@ -29,6 +29,8 @@ public partial class KnKDbContext : DbContext
     public virtual DbSet<Town> Towns { get; set; } = null!;
     public virtual DbSet<District> Districts { get; set; } = null!;
     public virtual DbSet<Structure> Structures { get; set; } = null!;
+    public virtual DbSet<MinecraftMaterialRef> MinecraftMaterialRefs { get; set; } = null!;
+    public virtual DbSet<MinecraftBlockRef> MinecraftBlockRefs { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,6 +53,11 @@ public partial class KnKDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
             entity.ToTable("categories");
+
+            entity.HasOne(c => c.IconMaterialRef)
+                .WithMany()
+                .HasForeignKey(c => c.IconMaterialRefId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<Location>(entity =>
         {
@@ -187,6 +194,22 @@ public partial class KnKDbContext : DbContext
         modelBuilder.Entity<Structure>(entity =>
         {
             entity.ToTable("structures");
+        });
+
+        modelBuilder.Entity<MinecraftMaterialRef>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+            entity.ToTable("minecraftmaterialrefs");
+            entity.HasIndex(e => e.NamespaceKey).IsUnique();
+            entity.Property(e => e.NamespaceKey).IsRequired().HasMaxLength(191);
+            entity.Property(e => e.Category).IsRequired();
+        });
+
+        modelBuilder.Entity<MinecraftBlockRef>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+            entity.ToTable("minecraftblockrefs");
+            entity.Property(e => e.NamespaceKey).IsRequired().HasMaxLength(191);
         });
 
         // Structure-Street many-to-one (required)
