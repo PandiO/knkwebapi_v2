@@ -26,6 +26,27 @@ namespace knkwebapi_v2.Repositories
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Get all reusable steps for a specific entity type.
+        /// A step belongs to an entity type through its associated FormConfiguration.
+        /// </summary>
+        public async Task<IEnumerable<FormStep>> GetAllReusableByEntityTypeAsync(string entityTypeName)
+        {
+            if (string.IsNullOrWhiteSpace(entityTypeName))
+                return new List<FormStep>();
+
+            // Reusable steps exist in the library (FormConfigurationId = null).
+            // We can track entity type via a future tag/category mechanism.
+            // For now, return all reusable steps since they're generic templates.
+            // TODO: When entity type tagging is added, filter by that.
+            return await _context.FormSteps
+                .Where(s => s.IsReusable && s.FormConfigurationId == null)
+                .Include(s => s.Fields)
+                    .ThenInclude(f => f.Validations)
+                .Include(s => s.StepConditions)
+                .ToListAsync();
+        }
+
         public async Task<FormStep?> GetByIdAsync(int id)
         {
             return await _context.FormSteps

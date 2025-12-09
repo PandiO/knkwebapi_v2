@@ -46,6 +46,10 @@ namespace knkwebapi_v2.DependencyInjection
             // Add MetadataService for dynamic form building
             services.AddSingleton<IMetadataService, MetadataService>();
 
+            // Add FormTemplate services for reusable step/field management
+            services.AddScoped<IFormTemplateValidationService, FormTemplateValidationService>();
+            services.AddScoped<IFormTemplateReusableService, FormTemplateReusableService>();
+
             // convention-based registrations for other services/repositories in the same assembly
             var asm = Assembly.GetExecutingAssembly();
             var candidates = asm.GetTypes()

@@ -112,8 +112,31 @@ namespace knkwebapi_v2.Models
         /// <summary>
         /// Tracks which reusable field template was used to create this field instance.
         /// NULL if this field was created from scratch (not cloned).
+        /// 
+        /// BEHAVIOR DEPENDS ON IsLinkedToSource:
+        /// - If IsLinkedToSource = false (Copy mode): This is a full clone. SourceFieldId is for traceability only.
+        /// - If IsLinkedToSource = true (Link mode): This is a reference to the source. Display properties come from source.
         /// </summary>
         public int? SourceFieldId { get; set; }
+        
+        /// <summary>
+        /// Indicates whether this field is linked to a source template (true) or is an independent copy (false).
+        /// 
+        /// Link mode (IsLinkedToSource = true):
+        /// - This field references the source template (SourceFieldId).
+        /// - Display properties (FieldName, Label, FieldType, etc.) are loaded from source at read-time.
+        /// - Changes to the source template are immediately visible in linked instances.
+        /// - The field's position can still be customized per step via FieldOrderJson.
+        /// 
+        /// Copy mode (IsLinkedToSource = false):
+        /// - This field is a full clone of the source, fully independent after creation.
+        /// - All properties (FieldName, Label, FieldType, validations, etc.) are owned by this instance.
+        /// - Changes to the source template do NOT affect this copy.
+        /// - SourceFieldId is kept only for traceability/analytics purposes.
+        /// 
+        /// Default: false (copy mode is the standard behavior).
+        /// </summary>
+        public bool IsLinkedToSource { get; set; } = false;
         
         /// <summary>
         /// Creates a dependency relationship: this field is only shown/enabled when another field meets a condition.

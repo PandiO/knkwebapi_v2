@@ -13,11 +13,19 @@ namespace knkwebapi_v2.Services
     {
         private readonly IFormConfigurationRepository _repo;
         private readonly IMapper _mapper;
+        private readonly IFormTemplateValidationService _validationService;
+        private readonly IMetadataService _metadataService;
 
-        public FormConfigurationService(IFormConfigurationRepository repo, IMapper mapper)
+        public FormConfigurationService(
+            IFormConfigurationRepository repo,
+            IMapper mapper,
+            IFormTemplateValidationService validationService,
+            IMetadataService metadataService)
         {
             _repo = repo;
             _mapper = mapper;
+            _validationService = validationService;
+            _metadataService = metadataService;
         }
 
         public async Task<IEnumerable<FormConfigurationDto>> GetAllAsync()
@@ -74,8 +82,18 @@ namespace knkwebapi_v2.Services
                 if (string.IsNullOrWhiteSpace(step.StepName))
                     throw new ArgumentException("Step name is required for all steps.", nameof(config));
             }
+
             entity.CreatedAt = DateTime.UtcNow;
             entity.UpdatedAt = DateTime.UtcNow;
+
+            // Validate configuration before saving
+            var validationResult = await _validationService.ValidateConfigurationAsync(entity, _metadataService);
+            if (!validationResult.IsValid)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot create FormConfiguration: {validationResult.Summary}");
+            }
+
             await _repo.AddAsync(entity);
             return _mapper.Map<FormConfigurationDto>(entity);
         }
@@ -97,20 +115,13 @@ namespace knkwebapi_v2.Services
             if (string.IsNullOrWhiteSpace(incoming.StepOrderJson))
                 incoming.StepOrderJson = exists.StepOrderJson;
 
-            // DEBUG: Log ElementType values before save
-            // foreach (var step in incoming.Steps)
-            // {
-            //     foreach (var field in step.Fields)
-            //     {
-            //         System.Diagnostics.Debug.WriteLine($"Field: {field.FieldName}, FieldType: {field.FieldType}, ElementType: {field.ElementType}");
-                    
-            //         // Ensure FormStepId is set
-            //         if (field.FormStepId == null || field.FormStepId == 0)
-            //         {
-            //             field.FormStepId = step.Id;
-            //         }
-            //     }
-            // }
+            // Validate configuration before saving
+            var validationResult = await _validationService.ValidateConfigurationAsync(incoming, _metadataService);
+            if (!validationResult.IsValid)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot update FormConfiguration: {validationResult.Summary}");
+            }
 
             await _repo.UpdateAsync(incoming);
         }

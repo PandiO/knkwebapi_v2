@@ -76,6 +76,12 @@ namespace knkwebapi_v2.Dtos
         public bool IsReusable { get; set; }
         [JsonPropertyName("sourceFieldId")]
         public string? SourceFieldId { get; set; }
+        [JsonPropertyName("isLinkedToSource")]
+        public bool IsLinkedToSource { get; set; }
+        [JsonPropertyName("hasCompatibilityIssues")]
+        public bool HasCompatibilityIssues { get; set; }
+        [JsonPropertyName("compatibilityIssues")]
+        public List<string>? CompatibilityIssues { get; set; }
         [JsonPropertyName("validations")]
         public List<FieldValidationDto> Validations { get; set; } = new();
     }
@@ -100,6 +106,12 @@ namespace knkwebapi_v2.Dtos
         public bool IsReusable { get; set; }
         [JsonPropertyName("sourceStepId")]
         public string? SourceStepId { get; set; }
+        [JsonPropertyName("isLinkedToSource")]
+        public bool IsLinkedToSource { get; set; }
+        [JsonPropertyName("hasCompatibilityIssues")]
+        public bool HasCompatibilityIssues { get; set; }
+        [JsonPropertyName("stepLevelIssues")]
+        public List<string>? StepLevelIssues { get; set; }
         [JsonPropertyName("fields")]
         public List<FormFieldDto> Fields { get; set; } = new();
         [JsonPropertyName("conditions")]

@@ -64,9 +64,11 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.SubConfigurationId, o => o.MapFrom(s => ToInt(s.SubConfigurationId)))
                 .ForMember(d => d.IsReusable, o => o.MapFrom(s => s.IsReusable))
                 .ForMember(d => d.SourceFieldId, o => o.MapFrom(s => ToInt(s.SourceFieldId)))
+                .ForMember(d => d.IsLinkedToSource, o => o.MapFrom(s => s.IsLinkedToSource))
                 .ForMember(d => d.Validations, o => o.MapFrom(s => s.Validations))
                 // ignore DTO.Order here; handled at step mapping level via FieldOrderJson
-                ;
+                // ignore compatibility issues; calculated at runtime
+                .ForMember(d => d.DependentFields, o => o.Ignore());
 
             CreateMap<FormField, FormFieldDto>()
                 .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.ToString()))
@@ -85,8 +87,12 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.SubConfigurationId, o => o.MapFrom(s => s.SubConfigurationId.HasValue ? s.SubConfigurationId.Value.ToString() : null))
                 .ForMember(d => d.IsReusable, o => o.MapFrom(s => s.IsReusable))
                 .ForMember(d => d.SourceFieldId, o => o.MapFrom(s => s.SourceFieldId.HasValue ? s.SourceFieldId.Value.ToString() : null))
+                .ForMember(d => d.IsLinkedToSource, o => o.MapFrom(s => s.IsLinkedToSource))
                 .ForMember(d => d.Validations, o => o.MapFrom(s => s.Validations))
-                .ForMember(d => d.Order, o => o.Ignore());
+                .ForMember(d => d.Order, o => o.Ignore())
+                // compatibility issues handled at runtime by service
+                .ForMember(d => d.HasCompatibilityIssues, o => o.MapFrom(s => false))
+                .ForMember(d => d.CompatibilityIssues, o => o.MapFrom(s => (List<string>?)null));
 
             // FormStep
             CreateMap<FormStepDto, FormStep>()
@@ -96,6 +102,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.Description ?? s.Title))
                 .ForMember(d => d.IsReusable, o => o.MapFrom(s => s.IsReusable))
                 .ForMember(d => d.SourceStepId, o => o.MapFrom(s => ToInt(s.SourceStepId)))
+                .ForMember(d => d.IsLinkedToSource, o => o.MapFrom(s => s.IsLinkedToSource))
                 .ForMember(d => d.Fields, o => o.MapFrom(s => s.Fields.OrderBy(f => f.Order)))
                 .ForMember(d => d.StepConditions, o => o.MapFrom(s => s.Conditions))
                 .AfterMap((src, dest) =>
@@ -121,8 +128,12 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.FieldOrderJson, o => o.MapFrom(s => s.FieldOrderJson))
                 .ForMember(d => d.IsReusable, o => o.MapFrom(s => s.IsReusable))
                 .ForMember(d => d.SourceStepId, o => o.MapFrom(s => s.SourceStepId.HasValue ? s.SourceStepId.Value.ToString() : null))
+                .ForMember(d => d.IsLinkedToSource, o => o.MapFrom(s => s.IsLinkedToSource))
                 .ForMember(d => d.Fields, o => o.MapFrom(s => s.Fields))
-                .ForMember(d => d.Conditions, o => o.MapFrom(s => s.StepConditions));
+                .ForMember(d => d.Conditions, o => o.MapFrom(s => s.StepConditions))
+                // compatibility issues handled at runtime
+                .ForMember(d => d.HasCompatibilityIssues, o => o.MapFrom(s => false))
+                .ForMember(d => d.StepLevelIssues, o => o.MapFrom(s => (List<string>?)null));
 
             // FormConfiguration
             CreateMap<FormConfigurationDto, FormConfiguration>()

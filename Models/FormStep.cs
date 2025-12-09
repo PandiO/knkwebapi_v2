@@ -47,8 +47,31 @@ namespace knkwebapi_v2.Models
         /// 
         /// USE CASE: When updating a reusable template, you can optionally offer to update all derived steps.
         /// Also useful for analytics: "How many configurations use the 'Location Settings' template?"
+        /// 
+        /// BEHAVIOR DEPENDS ON IsLinkedToSource:
+        /// - If IsLinkedToSource = false (Copy mode): This is a full clone. SourceStepId is for traceability only.
+        /// - If IsLinkedToSource = true (Link mode): This is a reference to the source. Display properties come from source.
         /// </summary>
         public int? SourceStepId { get; set; }
+        
+        /// <summary>
+        /// Indicates whether this step is linked to a source template (true) or is an independent copy (false).
+        /// 
+        /// Link mode (IsLinkedToSource = true):
+        /// - This step references the source template (SourceStepId).
+        /// - Display properties (StepName, Description, FieldOrderJson) are loaded from the source at read-time.
+        /// - Changes to the source template are immediately visible in linked instances.
+        /// - Limited to FieldOrderJson and field order for customization.
+        /// 
+        /// Copy mode (IsLinkedToSource = false):
+        /// - This step is a full clone of the source, fully independent after creation.
+        /// - All properties (StepName, Description, FieldOrderJson) are owned by this instance.
+        /// - Changes to the source template do NOT affect this copy.
+        /// - SourceStepId is kept only for traceability/analytics purposes.
+        /// 
+        /// Default: false (copy mode is the standard behavior).
+        /// </summary>
+        public bool IsLinkedToSource { get; set; } = false;
         
         /// <summary>
         /// JSON array storing the ordered GUIDs of fields: ["field-guid-1", "field-guid-2", ...].
