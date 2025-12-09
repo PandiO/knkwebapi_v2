@@ -25,5 +25,18 @@ namespace knkwebapi_v2.Dtos
         public bool IsRelatedEntity { get; set; }
         [JsonPropertyName("relatedEntityType")]
         public string? RelatedEntityType { get; set; }
+        /// <summary>
+        /// Indicates if this field has a default value defined in the model class.
+        /// If true, the field can be optional in forms even if non-nullable on the entity.
+        /// Example: public string Name { get; set; } = null!; (has default, though typically null)
+        /// </summary>
+        [JsonPropertyName("hasDefaultValue")]
+        public bool HasDefaultValue { get; set; }
+        /// <summary>
+        /// The default value as a string representation, if one exists.
+        /// Examples: "True", "False", "null", "DateTime.Now", "0", "true"
+        /// </summary>
+        [JsonPropertyName("defaultValue")]
+        public string? DefaultValue { get; set; }
     }
 }

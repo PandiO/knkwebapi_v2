@@ -57,16 +57,29 @@ namespace KnKWebAPI.Controllers
         [HttpGet("{entityName}")]
         public async Task<IActionResult> GetAllByEntityTypeName(string entityName, bool defaultOnly = false)
         {
-            if (defaultOnly)
+            try
             {
-                var config = await _service.GetDefaultByEntityTypeNameAsync(entityName);
-                if (config == null) return NotFound();
-                return Ok(config);
-            } else
+                if (defaultOnly)
+                {
+                    var config = await _service.GetDefaultByEntityTypeNameAsync(entityName);
+                    if (config == null) return NotFound();
+                    return Ok(config);
+                }
+                else
+                {
+                    var config = await _service.GetAllByEntityTypeNameAsync(entityName, defaultOnly);
+                    if (config == null) return NotFound();
+                    return Ok(config);
+                }
+            }
+            catch (KeyNotFoundException)
             {
-                var config = await _service.GetAllByEntityTypeNameAsync(entityName, defaultOnly);
-                if (config == null) return NotFound();
-                return Ok(config);
+                // No default configuration found for this entity type
+                return NotFound();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
 

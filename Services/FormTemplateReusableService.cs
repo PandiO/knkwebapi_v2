@@ -86,6 +86,13 @@ namespace knkwebapi_v2.Services
             // Add to configuration's StepOrderJson
             await UpdateStepOrder(config, newStep.StepGuid, configRepo);
 
+            // For linked steps, populate fields from source before mapping to DTO
+            // This ensures the frontend receives the field data even though it's a reference
+            if (linkMode == ReuseLinkMode.Link)
+            {
+                newStep.Fields = sourceStep.Fields;
+            }
+
             return _mapper.Map<FormStepDto>(newStep);
         }
 
@@ -127,6 +134,13 @@ namespace knkwebapi_v2.Services
 
             // Add to step's FieldOrderJson
             await UpdateFieldOrder(step, newField.FieldGuid, stepRepo);
+
+            // For linked fields, copy validation data from source before mapping to DTO
+            // This ensures the frontend receives validation rules even though it's a reference
+            if (linkMode == ReuseLinkMode.Link && sourceField.Validations != null)
+            {
+                newField.Validations = sourceField.Validations.ToList();
+            }
 
             return _mapper.Map<FormFieldDto>(newField);
         }
