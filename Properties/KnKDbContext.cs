@@ -24,6 +24,12 @@ public partial class KnKDbContext : DbContext
     public DbSet<FieldValidation> FieldValidations { get; set; }
     public DbSet<StepCondition> StepConditions { get; set; }
     public DbSet<FormSubmissionProgress> FormSubmissionProgresses { get; set; }
+    
+    // DisplayConfiguration DbSets
+    public DbSet<DisplayConfiguration> DisplayConfigurations { get; set; }
+    public DbSet<DisplaySection> DisplaySections { get; set; }
+    public DbSet<DisplayField> DisplayFields { get; set; }
+    
     public virtual DbSet<Location> Locations { get; set; } = null!;
     public virtual DbSet<Street> Streets { get; set; } = null!;
     public virtual DbSet<Town> Towns { get; set; } = null!;
@@ -138,6 +144,47 @@ public partial class KnKDbContext : DbContext
         
         modelBuilder.Entity<FormField>()
             .HasIndex(f => f.IsReusable);
+
+        // DisplayConfiguration relationships
+        modelBuilder.Entity<DisplayConfiguration>()
+            .HasMany(dc => dc.Sections)
+            .WithOne(ds => ds.DisplayConfiguration)
+            .HasForeignKey(ds => ds.DisplayConfigurationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DisplayConfiguration>()
+            .HasIndex(dc => new { dc.EntityTypeName, dc.IsDefault })
+            .HasDatabaseName("IX_DisplayConfiguration_EntityType_Default");
+
+        modelBuilder.Entity<DisplayConfiguration>()
+            .HasIndex(dc => dc.IsDraft)
+            .HasDatabaseName("IX_DisplayConfiguration_IsDraft");
+        
+        // DisplaySection relationships
+        modelBuilder.Entity<DisplaySection>()
+            .HasMany(ds => ds.Fields)
+            .WithOne(df => df.DisplaySection)
+            .HasForeignKey(df => df.DisplaySectionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DisplaySection>()
+            .HasMany(ds => ds.SubSections)
+            .WithOne(ss => ss.ParentSection)
+            .HasForeignKey(ss => ss.ParentSectionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DisplaySection>()
+            .HasIndex(ds => ds.IsReusable)
+            .HasDatabaseName("IX_DisplaySection_IsReusable");
+
+        modelBuilder.Entity<DisplaySection>()
+            .HasIndex(ds => ds.ParentSectionId)
+            .HasDatabaseName("IX_DisplaySection_ParentSectionId");
+        
+        // DisplayField indexes
+        modelBuilder.Entity<DisplayField>()
+            .HasIndex(df => df.IsReusable)
+            .HasDatabaseName("IX_DisplayField_IsReusable");
 
         modelBuilder.Entity<Domain>()
             .HasOne(d => d.Location)

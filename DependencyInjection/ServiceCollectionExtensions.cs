@@ -42,6 +42,11 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<IFormFieldService, FormFieldService>();
             services.AddScoped<IFormSubmissionProgressRepository, FormSubmissionProgressRepository>();
             services.AddScoped<IFormSubmissionProgressService, FormSubmissionProgressService>();
+            
+            // DisplayConfiguration repositories
+            services.AddScoped<IDisplayConfigurationRepository, DisplayConfigurationRepository>();
+            services.AddScoped<IDisplaySectionRepository, DisplaySectionRepository>();
+            services.AddScoped<IDisplayFieldRepository, DisplayFieldRepository>();
 
             // Add MetadataService for dynamic form building
             services.AddSingleton<IMetadataService, MetadataService>();
