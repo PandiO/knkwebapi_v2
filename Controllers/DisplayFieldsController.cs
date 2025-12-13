@@ -139,7 +139,7 @@ namespace knkwebapi_v2.Controllers
         [HttpPost("{id:int}/clone")]
         public async Task<ActionResult<DisplayFieldDto>> CloneFieldAsync(
             int id,
-            [FromBody] CloneRequest request)
+            [FromBody] CloneFieldRequest request)
         {
             try
             {
@@ -161,7 +161,7 @@ namespace knkwebapi_v2.Controllers
             }
         }
 
-        public class CloneRequest
+        public class CloneFieldRequest
         {
             public ReuseLinkMode LinkMode { get; set; }
         }

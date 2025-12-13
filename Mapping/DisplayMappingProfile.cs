@@ -8,8 +8,20 @@ namespace knkwebapi_v2.Mapping
     public class DisplayMappingProfile : Profile
     {
         // Helper methods voor type conversie
-        private static int ToInt(string? s) => string.IsNullOrEmpty(s) ? 0 : int.Parse(s);
-        private static int? ToNullableInt(string? s) => string.IsNullOrEmpty(s) ? null : int.Parse(s);
+        // Handles temporary IDs from frontend (e.g., "temp-123456-0.789") by returning 0
+        private static int ToInt(string? s)
+        {
+            if (string.IsNullOrEmpty(s) || s.StartsWith("temp-", StringComparison.OrdinalIgnoreCase))
+                return 0;
+            return int.TryParse(s, out var result) ? result : 0;
+        }
+
+        private static int? ToNullableInt(string? s)
+        {
+            if (string.IsNullOrEmpty(s) || s.StartsWith("temp-", StringComparison.OrdinalIgnoreCase))
+                return null;
+            return int.TryParse(s, out var result) ? result : null;
+        }
 
         public DisplayMappingProfile()
         {

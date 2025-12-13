@@ -71,7 +71,7 @@ namespace knkwebapi_v2.Models
         public FieldType? ElementType { get; set; }
         
         /// <summary>
-        /// Required when FieldType = Object.
+        /// Required when FieldType or ElementType = Object.
         /// Specifies the entity type this field references (e.g., "Domain", "Category", "User").
         /// 
         /// USE CASE: When rendering the field, the frontend knows to fetch options from /api/domains or /api/categories.
