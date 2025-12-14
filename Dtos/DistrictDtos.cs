@@ -35,6 +35,18 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("streetIds")]
         public List<int> StreetIds { get; set; } = new();
+
+        // Optional embedded Town with primitives only to avoid cycles
+        [JsonPropertyName("town")]
+        public DistrictTownDto? Town { get; set; }
+
+        // Optional embedded Streets collection
+        [JsonPropertyName("streets")]
+        public IEnumerable<DistrictStreetDto>? Streets { get; set; }
+
+        // Optional embedded Structures collection
+        [JsonPropertyName("structures")]
+        public IEnumerable<DistrictStructureDto>? Structures { get; set; }
     }
 
     public class DistrictListDto
@@ -56,5 +68,65 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("townName")]
         public string? townName { get; set; }
+    }
+}
+
+namespace knkwebapi_v2.Dtos
+{
+    // Lightweight Town DTO for embedding in District payloads (no back-references)
+    public class DistrictTownDto
+    {
+        [JsonPropertyName("id")]
+        public int? Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("allowEntry")]
+        public bool? AllowEntry { get; set; }
+
+        [JsonPropertyName("allowExit")]
+        public bool? AllowExit { get; set; }
+
+        [JsonPropertyName("wgRegionId")]
+        public string? WgRegionId { get; set; }
+
+        [JsonPropertyName("locationId")]
+        public int? LocationId { get; set; }
+    }
+}
+
+namespace knkwebapi_v2.Dtos
+{
+    // Lightweight Street DTO for embedding in District payloads
+    public class DistrictStreetDto
+    {
+        [JsonPropertyName("id")]
+        public int? Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+    }
+
+    // Lightweight Structure DTO for embedding in District payloads
+    public class DistrictStructureDto
+    {
+        [JsonPropertyName("id")]
+        public int? Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("houseNumber")]
+        public int? HouseNumber { get; set; }
+
+        [JsonPropertyName("streetId")]
+        public int? StreetId { get; set; }
     }
 }

@@ -131,9 +131,9 @@ namespace knkwebapi_v2.Controllers
             try
             {
                 var created = await _service.CreateAsync(config);
-                return CreatedAtAction(
-                    nameof(GetByIdAsync), 
-                    new { id = int.Parse(created.Id ?? "0") }, 
+                // Return Created with location header pointing to GetByIdAsync
+                return Created(
+                    $"/api/displayconfigurations/{created.Id}", 
                     created);
             }
             catch (ArgumentException ex)

@@ -45,6 +45,10 @@ namespace knkwebapi_v2.Services
             if (existing == null) throw new KeyNotFoundException($"Domain with id {id} not found.");
 
             existing.Name = domain.Name;
+            existing.Description = domain.Description;
+            existing.AllowEntry = domain.AllowEntry;
+            existing.AllowExit = domain.AllowExit;
+            existing.LocationId = domain.LocationId;
 
             await _repo.UpdateDomainAsync(existing);
         }

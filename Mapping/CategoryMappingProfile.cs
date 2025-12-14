@@ -12,7 +12,8 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.Id, src => src.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Name, src => src.MapFrom(src => src.Name))
                 .ForMember(dest => dest.IconMaterialRefId, src => src.MapFrom(src => src.IconMaterialRefId))
-                .ForMember(dest => dest.ParentCategoryId, src => src.MapFrom(src => src.ParentCategoryId.HasValue ? src.ParentCategoryId : src.ParentCategory != null ? src.ParentCategory.Id : null));
+                .ForMember(dest => dest.ParentCategoryId, src => src.MapFrom(src => src.ParentCategoryId.HasValue ? src.ParentCategoryId : src.ParentCategory != null ? src.ParentCategory.Id : null))
+                .ForMember(dest => dest.ParentCategory, src => src.MapFrom(src => src.ParentCategory));
 
             CreateMap<CategoryDto, Category>()
                 .ForMember(dest => dest.Id, src => src.MapFrom(src => src.Id ?? 0))

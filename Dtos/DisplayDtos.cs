@@ -119,6 +119,12 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("displaySectionId")]
         public string? DisplaySectionId { get; set; }
         
+        [JsonPropertyName("relatedEntityPropertyName")]
+        public string? RelatedEntityPropertyName { get; set; }
+        
+        [JsonPropertyName("relatedEntityTypeName")]
+        public string? RelatedEntityTypeName { get; set; }
+        
         [JsonPropertyName("fieldName")]
         public string? FieldName { get; set; }
         
@@ -136,6 +142,9 @@ namespace knkwebapi_v2.Dtos
         
         [JsonPropertyName("isReusable")]
         public bool IsReusable { get; set; }
+        
+            [JsonPropertyName("isEditableInDisplay")]
+            public bool IsEditableInDisplay { get; set; }
         
         [JsonPropertyName("sourceFieldId")]
         public string? SourceFieldId { get; set; }

@@ -7,7 +7,7 @@ namespace knkwebapi_v2.Services
     public interface IDistrictService
     {
         Task<IEnumerable<DistrictDto>> GetAllAsync();
-        Task<DistrictDto?> GetByIdAsync(int id);
+        Task<DistrictDto?> GetByIdAsync(int id, string? townFields = null, string? streetFields = null, string? structureFields = null);
         Task<DistrictDto> CreateAsync(DistrictDto districtDto);
         Task UpdateAsync(int id, DistrictDto districtDto);
         Task DeleteAsync(int id);

@@ -10,6 +10,8 @@ public class Category
     public string Name { get; set; } = null!;
 
     public int? IconMaterialRefId { get; set; }
+    
+    [RelatedEntityField(typeof(MinecraftMaterialRef))]
     public MinecraftMaterialRef? IconMaterialRef { get; set; }
 
     [NavigationPair(nameof(ParentCategory))]

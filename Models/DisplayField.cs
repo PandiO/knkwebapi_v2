@@ -26,8 +26,22 @@ namespace knkwebapi_v2.Models
         public Guid FieldGuid { get; set; } = Guid.NewGuid();
         
         /// <summary>
-        /// Property name from entity (e.g., "Name", "TownHouse.Street.Name").
-        /// Can be NULL if TemplateText is used instead.
+    /// The navigation property name this field is dedicated to (e.g., "ParentCategory", "IconMaterialRef").
+    /// When set, FieldName refers to a property on the related entity, not the main entity.
+    /// </summary>
+    [MaxLength(200)]
+    public string? RelatedEntityPropertyName { get; set; }
+    
+    /// <summary>
+    /// The type name of the related entity (e.g., "Category", "MinecraftMaterialRef").
+    /// Used for metadata lookup. Set automatically when RelatedEntityPropertyName is provided.
+    /// </summary>
+    [MaxLength(200)]
+    public string? RelatedEntityTypeName { get; set; }
+    
+    /// <summary>
+    /// Property name from entity (e.g., "Name", "TownHouse.Street.Name").
+    /// If RelatedEntityPropertyName is set, this refers to a property on the related entity.
         /// </summary>
         [MaxLength(200)]
         public string? FieldName { get; set; }
@@ -54,6 +68,8 @@ namespace knkwebapi_v2.Models
         public string? FieldType { get; set; }
         
         public bool IsReusable { get; set; } = false;
+        
+        public bool IsEditableInDisplay { get; set; } = false;
         
         public int? SourceFieldId { get; set; }
         

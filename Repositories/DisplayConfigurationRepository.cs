@@ -107,6 +107,15 @@ namespace knkwebapi_v2.Repositories
 
         public async Task UpdateAsync(DisplayConfiguration config)
         {
+            // Detach any existing tracked entity with the same key
+            var trackedEntity = _context.ChangeTracker.Entries<DisplayConfiguration>()
+                .FirstOrDefault(e => e.Entity.Id == config.Id);
+            
+            if (trackedEntity != null)
+            {
+                trackedEntity.State = EntityState.Detached;
+            }
+            
             _context.DisplayConfigurations.Update(config);
             await _context.SaveChangesAsync();
         }

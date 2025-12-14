@@ -69,3 +69,38 @@ namespace knkwebapi_v2.Dtos
         public string? districtName { get; set; }
     }
 }
+
+namespace knkwebapi_v2.Dtos
+{
+    // Lightweight District DTO for embedding in Structure payloads
+    public class StructureDistrictDto
+    {
+        [JsonPropertyName("id")]
+        public int? Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("allowEntry")]
+        public bool? AllowEntry { get; set; }
+
+        [JsonPropertyName("allowExit")]
+        public bool? AllowExit { get; set; }
+
+        [JsonPropertyName("wgRegionId")]
+        public string? WgRegionId { get; set; }
+    }
+
+    // Lightweight Street DTO for embedding in Structure payloads
+    public class StructureStreetDto
+    {
+        [JsonPropertyName("id")]
+        public int? Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+    }
+}

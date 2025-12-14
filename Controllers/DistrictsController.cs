@@ -26,9 +26,9 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpGet("{id:int}", Name = nameof(GetDistrictById))]
-        public async Task<IActionResult> GetDistrictById(int id)
+        public async Task<IActionResult> GetDistrictById(int id, [FromQuery] string? townFields = null, [FromQuery] string? streetFields = null, [FromQuery] string? structureFields = null)
         {
-            var item = await _service.GetByIdAsync(id);
+            var item = await _service.GetByIdAsync(id, townFields, streetFields, structureFields);
             if (item == null) return NotFound();
             return Ok(item);
         }

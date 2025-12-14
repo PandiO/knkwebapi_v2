@@ -34,11 +34,54 @@ namespace knkwebapi_v2.Services
             return _mapper.Map<IEnumerable<DistrictDto>>(districts);
         }
 
-        public async Task<DistrictDto?> GetByIdAsync(int id)
+        public async Task<DistrictDto?> GetByIdAsync(int id, string? townFields = null, string? structureFields = null, string? streetFields = null)
         {
             if (id <= 0) return null;
             var district = await _repo.GetByIdAsync(id);
-            return _mapper.Map<DistrictDto>(district);
+            var dto = _mapper.Map<DistrictDto>(district);
+            if (dto == null) return null;
+
+            // Optionally shape embedded Town fields
+            if (dto.Town != null && !string.IsNullOrWhiteSpace(townFields))
+            {
+                var requested = new HashSet<string>(townFields.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries), StringComparer.OrdinalIgnoreCase);
+                if (!requested.Contains("Id")) dto.Town.Id = null;
+                if (!requested.Contains("Name")) dto.Town.Name = null;
+                if (!requested.Contains("Description")) dto.Town.Description = null;
+                if (!requested.Contains("AllowEntry")) dto.Town.AllowEntry = null;
+                if (!requested.Contains("AllowExit")) dto.Town.AllowExit = null;
+                if (!requested.Contains("WgRegionId")) dto.Town.WgRegionId = null;
+                if (!requested.Contains("LocationId")) dto.Town.LocationId = null;
+            }
+
+            // Optionally shape embedded Streets fields
+            if (dto.Streets != null && !string.IsNullOrWhiteSpace(streetFields))
+            {
+                var requested = new HashSet<string>(streetFields.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries), StringComparer.OrdinalIgnoreCase);
+                dto.Streets = dto.Streets.Select(s => {
+                    var shaped = new DistrictStreetDto { };
+                    if (requested.Contains("Id")) shaped.Id = s.Id;
+                    if (requested.Contains("Name")) shaped.Name = s.Name;
+                    return shaped;
+                }).ToList();
+            }
+
+            // Optionally shape embedded Structures fields
+            if (dto.Structures != null && !string.IsNullOrWhiteSpace(structureFields))
+            {
+                var requested = new HashSet<string>(structureFields.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries), StringComparer.OrdinalIgnoreCase);
+                dto.Structures = dto.Structures.Select(s => {
+                    var shaped = new DistrictStructureDto { };
+                    if (requested.Contains("Id")) shaped.Id = s.Id;
+                    if (requested.Contains("Name")) shaped.Name = s.Name;
+                    if (requested.Contains("Description")) shaped.Description = s.Description;
+                    if (requested.Contains("HouseNumber")) shaped.HouseNumber = s.HouseNumber;
+                    if (requested.Contains("StreetId")) shaped.StreetId = s.StreetId;
+                    return shaped;
+                }).ToList();
+            }
+
+            return dto;
         }
 
         public async Task<DistrictDto> CreateAsync(DistrictDto districtDto)

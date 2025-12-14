@@ -23,4 +23,10 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.name, src => src.MapFrom(src => src.Name));
         }
     }
+
+    // Extension method for dynamic shaping (optional, can be used in services)
+    public static class StreetMappingExtensions
+    {
+        // Note: Actual shaping will happen in StreetService similar to DistrictService
+    }
 }

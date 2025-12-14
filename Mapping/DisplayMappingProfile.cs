@@ -122,7 +122,8 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.IsLinkedToSource, o => o.MapFrom(s => s.IsLinkedToSource))
                 .ForMember(d => d.CreatedAt, o => o.MapFrom(s => s.CreatedAt.ToString("o")))
                 .ForMember(d => d.UpdatedAt, o => o.MapFrom(s => 
-                    s.UpdatedAt.HasValue ? s.UpdatedAt.Value.ToString("o") : null));
+                    s.UpdatedAt.HasValue ? s.UpdatedAt.Value.ToString("o") : null))
+                .ForMember(d => d.IsEditableInDisplay, o => o.MapFrom(s => s.IsEditableInDisplay));
 
             CreateMap<DisplayFieldDto, DisplayField>()
                 .ForMember(d => d.Id, o => o.MapFrom(s => ToInt(s.Id)))
@@ -137,6 +138,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.IsReusable, o => o.MapFrom(s => s.IsReusable))
                 .ForMember(d => d.SourceFieldId, o => o.MapFrom(s => ToNullableInt(s.SourceFieldId)))
                 .ForMember(d => d.IsLinkedToSource, o => o.MapFrom(s => s.IsLinkedToSource))
+                    .ForMember(d => d.IsEditableInDisplay, o => o.MapFrom(s => s.IsEditableInDisplay))
                 .ForMember(d => d.CreatedAt, o => o.MapFrom(s => 
                     string.IsNullOrEmpty(s.CreatedAt) ? DateTime.UtcNow : DateTime.Parse(s.CreatedAt)))
                 .ForMember(d => d.UpdatedAt, o => o.MapFrom(s => 
