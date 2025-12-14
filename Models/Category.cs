@@ -20,4 +20,8 @@ public class Category
 
     [RelatedEntityField(typeof(Category))]
     public Category? ParentCategory { get; set; }
+
+    // One-to-many: ParentCategoryId -> ChildCategories
+    [RelatedEntityField(typeof(Category))]
+    public ICollection<Category> ChildCategories { get; set; } = new List<Category>();
 }

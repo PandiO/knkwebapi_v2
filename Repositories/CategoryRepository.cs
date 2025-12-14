@@ -32,7 +32,8 @@ namespace knkwebapi_v2.Repositories
         public async Task<Category?> GetByIdAsync(int id)
         {
             return await _context.Categories
-                .Include(c => c.ParentCategory)
+                .Include(c => c.ParentCategory).ThenInclude(pc => pc.IconMaterialRef)
+                .Include(c => c.ChildCategories).ThenInclude(cc => cc.IconMaterialRef)
                 .Include(c => c.IconMaterialRef)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
@@ -54,6 +55,19 @@ namespace knkwebapi_v2.Repositories
                 _context.Categories.Remove(category);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<bool> HasChildrenAsync(int id)
+        {
+            return await _context.Categories.AnyAsync(c => c.ParentCategoryId == id);
+        }
+
+        public async Task<IEnumerable<Category>> GetChildrenAsync(int id)
+        {
+            return await _context.Categories
+                .Where(c => c.ParentCategoryId == id)
+                .Include(c => c.IconMaterialRef)
+                .ToListAsync();
         }
 
         public async Task<PagedResult<Category>> SearchAsync(PagedQuery query)

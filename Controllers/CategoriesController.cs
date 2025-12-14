@@ -38,6 +38,20 @@ namespace KnKWebAPI.Controllers
             return Ok(item);
         }
 
+        [HttpGet("{id:int}/children")]
+        public async Task<IActionResult> GetChildren(int id)
+        {
+            try
+            {
+                var items = await _service.GetChildrenAsync(id);
+                return Ok(items);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CategoryDto categoryDto)
         {
@@ -87,6 +101,16 @@ namespace KnKWebAPI.Controllers
             catch (ArgumentException ex)
             {
                 return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Business rule violation (e.g., has children)
+                return Conflict(new { code = "CategoryHasChildren", message = ex.Message });
+            }
+            catch (DbUpdateException ex)
+            {
+                // Database constraint violation
+                return Conflict(new { code = "DbConstraint", message = ex.Message });
             }
         }
 

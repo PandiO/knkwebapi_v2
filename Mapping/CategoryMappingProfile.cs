@@ -22,7 +22,8 @@ namespace knkwebapi_v2.Mapping
                     LegacyName = s.IconMaterialRef.LegacyName,
                     Category = s.IconMaterialRef.Category,
                     IconUrl = s.IconMaterialRef.IconUrl
-                }));
+                }))
+                .ForMember(dest => dest.ChildCategories, src => src.MapFrom(s => s.ChildCategories));
 
             CreateMap<CategoryDto, Category>()
                 .ForMember(dest => dest.Id, src => src.MapFrom(src => src.Id ?? 0))
@@ -32,13 +33,27 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.ParentCategory, src => src.Ignore());
                 // .ForMember(dest => dest.ParentCategory, src => src.MapFrom(src => src.ParentCategory));
 
+            CreateMap<Category, RelatedCategoryDto>()
+                .ForMember(dest => dest.Id, src => src.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Name, src => src.MapFrom(src => src.Name))
+                .ForMember(dest => dest.IconMaterialRefId, src => src.MapFrom(src => src.IconMaterialRefId))
+                .ForMember(dest => dest.IconMaterialRef, src => src.MapFrom(s => s.IconMaterialRef == null ? null : new MinecraftMaterialRefDto
+                {
+                    Id = s.IconMaterialRef.Id,
+                    NamespaceKey = s.IconMaterialRef.NamespaceKey,
+                    LegacyName = s.IconMaterialRef.LegacyName,
+                    Category = s.IconMaterialRef.Category,
+                    IconUrl = s.IconMaterialRef.IconUrl
+                }));
+
             CreateMap<Category, CategoryListDto>()
                 .ForMember(dest => dest.id, src => src.MapFrom(src => src.Id))
                 .ForMember(dest => dest.name, src => src.MapFrom(src => src.Name))
                 .ForMember(dest => dest.parentCategoryId, src => src.MapFrom(src => src.ParentCategoryId))
                 .ForMember(dest => dest.parentCategoryName, src => src.MapFrom(src => src.ParentCategory != null ? src.ParentCategory.Name : null))
                 .ForMember(dest => dest.iconMaterialRefId, src => src.MapFrom(src => src.IconMaterialRefId))
-                .ForMember(dest => dest.iconNamespaceKey, src => src.MapFrom(src => src.IconMaterialRef != null ? src.IconMaterialRef.NamespaceKey : null));
+                .ForMember(dest => dest.iconNamespaceKey, src => src.MapFrom(src => src.IconMaterialRef != null ? src.IconMaterialRef.NamespaceKey : null))
+                .ForMember(dest => dest.childrenCount, src => src.MapFrom(src => src.ChildCategories != null ? src.ChildCategories.Count : 0));
 
         }
     }

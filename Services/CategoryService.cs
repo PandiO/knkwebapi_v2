@@ -43,6 +43,13 @@ namespace knkwebapi_v2.Services
             return _mapper.Map<CategoryDto>(category);
         }
 
+        public async Task<IEnumerable<CategoryDto>> GetChildrenAsync(int id)
+        {
+            if (id <= 0) throw new ArgumentException("Invalid id.", nameof(id));
+            var children = await _repo.GetChildrenAsync(id);
+            return _mapper.Map<IEnumerable<CategoryDto>>(children);
+        }
+
         public async Task<CategoryDto> CreateAsync(CategoryDto categoryDto)
         {
             if (categoryDto == null) throw new ArgumentNullException(nameof(categoryDto));
@@ -101,6 +108,12 @@ namespace knkwebapi_v2.Services
             if (id <= 0) throw new ArgumentException("Invalid id.", nameof(id));
             var existing = await _repo.GetByIdAsync(id);
             if (existing == null) throw new KeyNotFoundException($"Category with id {id} not found.");
+
+            // Prevent deleting a category that has children; surface a clear error
+            if (await _repo.HasChildrenAsync(id))
+            {
+                throw new InvalidOperationException("Cannot delete category with child categories. Reassign or delete children first.");
+            }
 
             await _repo.DeleteCategoryAsync(id);
         }

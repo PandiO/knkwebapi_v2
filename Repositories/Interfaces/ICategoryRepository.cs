@@ -10,6 +10,8 @@ namespace knkwebapi_v2.Repositories
         Task AddCategoryAsync(Category category);
         Task UpdateCategoryAsync(Category category);
         Task DeleteCategoryAsync(int id);
+        Task<bool> HasChildrenAsync(int id);
+        Task<IEnumerable<Category>> GetChildrenAsync(int id);
         Task<PagedResult<Category>> SearchAsync(PagedQuery query);
     }
 }

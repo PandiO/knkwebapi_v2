@@ -13,5 +13,6 @@ namespace knkwebapi_v2.Services
         Task UpdateAsync(int id, CategoryDto categoryDto);
         Task DeleteAsync(int id);
         Task<PagedResultDto<CategoryListDto>> SearchAsync(PagedQueryDto query);
+        Task<IEnumerable<CategoryDto>> GetChildrenAsync(int id);
     }
 }

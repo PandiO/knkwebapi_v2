@@ -21,7 +21,26 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("parentCategory")]
         public CategoryDto? ParentCategory { get; set; }
 
+        // Children of this category
+        [JsonPropertyName("childCategories")]
+        public List<RelatedCategoryDto> ChildCategories { get; set; } = new();
+
         // Optional embedded icon material reference when available
+        [JsonPropertyName("iconMaterialRef")]
+        public MinecraftMaterialRefDto? IconMaterialRef { get; set; }
+    }
+
+    public class RelatedCategoryDto
+    {
+        [JsonPropertyName("id")]
+        public int? Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; } = null!;
+
+        [JsonPropertyName("iconMaterialRefId")]
+        public int? IconMaterialRefId { get; set; }
+
         [JsonPropertyName("iconMaterialRef")]
         public MinecraftMaterialRefDto? IconMaterialRef { get; set; }
     }
@@ -44,5 +63,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("iconNamespaceKey")]
         public string? iconNamespaceKey { get; set; }
+
+        // Convenience: number of direct children
+        [JsonPropertyName("childrenCount")]
+        public int childrenCount { get; set; }
     }
 }
