@@ -37,6 +37,13 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("houseNumber")]
         public int HouseNumber { get; set; }
+
+        // Optional embedded lightweight navigations
+        [JsonPropertyName("street")]
+        public StructureStreetDto? Street { get; set; }
+
+        [JsonPropertyName("district")]
+        public StructureDistrictDto? District { get; set; }
     }
 
     public class StructureListDto

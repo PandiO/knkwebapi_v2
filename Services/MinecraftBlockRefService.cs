@@ -59,6 +59,7 @@ namespace knkwebapi_v2.Services
             existing.NamespaceKey = dto.NamespaceKey;
             existing.BlockStateString = dto.BlockStateString;
             existing.LogicalType = dto.LogicalType;
+            existing.IconUrl = dto.IconUrl;
 
             await _repo.UpdateAsync(existing);
         }

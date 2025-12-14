@@ -62,11 +62,16 @@ namespace knkwebapi_v2.Services
                 return _mapper.Map<MinecraftMaterialRefDto>(existing);
             }
 
+            // Fetch iconUrl from catalog if available
+            var catalogEntry = _catalog.Search(null, null)
+                .FirstOrDefault(x => x.NamespaceKey.Equals(namespaceKey, StringComparison.OrdinalIgnoreCase));
+
             var entity = new MinecraftMaterialRef
             {
                 NamespaceKey = namespaceKey,
                 Category = category,
-                LegacyName = legacyName
+                LegacyName = legacyName,
+                IconUrl = catalogEntry?.IconUrl
             };
 
             await _repo.AddAsync(entity);
@@ -86,6 +91,7 @@ namespace knkwebapi_v2.Services
             existing.NamespaceKey = dto.NamespaceKey;
             existing.LegacyName = dto.LegacyName;
             existing.Category = dto.Category;
+            existing.IconUrl = dto.IconUrl;
 
             await _repo.UpdateAsync(existing);
         }
@@ -120,7 +126,8 @@ namespace knkwebapi_v2.Services
                     LegacyName = match?.LegacyName ?? cat.LegacyName,
                     DisplayName = cat.DisplayName ?? match?.NamespaceKey ?? cat.NamespaceKey,
                     IsPersisted = match != null,
-                    IconUrl = cat.IconUrl
+                    // Use persisted IconUrl if available, otherwise use catalog IconUrl
+                    IconUrl = match?.IconUrl ?? cat.IconUrl
                 });
             }
 
@@ -137,7 +144,7 @@ namespace knkwebapi_v2.Services
                         LegacyName = db.LegacyName,
                         DisplayName = db.NamespaceKey,
                         IsPersisted = true,
-                        IconUrl = null
+                        IconUrl = db.IconUrl
                     });
                 }
             }

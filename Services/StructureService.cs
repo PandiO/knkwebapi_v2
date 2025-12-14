@@ -41,6 +41,7 @@ namespace knkwebapi_v2.Services
         {
             if (id <= 0) return null;
             var structure = await _repo.GetByIdAsync(id);
+            // Map with embedded lightweight navigations (Street, District) via mapping profile
             return _mapper.Map<StructureDto>(structure);
         }
 

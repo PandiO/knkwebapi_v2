@@ -15,6 +15,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("logicalType")]
         public string? LogicalType { get; set; }
+
+        [JsonPropertyName("iconUrl")]
+        public string? IconUrl { get; set; }
     }
 
     public class MinecraftBlockRefCreateDto
@@ -27,6 +30,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("logicalType")]
         public string? LogicalType { get; set; }
+
+        [JsonPropertyName("iconUrl")]
+        public string? IconUrl { get; set; }
     }
 
     public class MinecraftBlockRefUpdateDto
@@ -39,6 +45,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("logicalType")]
         public string? LogicalType { get; set; }
+
+        [JsonPropertyName("iconUrl")]
+        public string? IconUrl { get; set; }
     }
 
     public class MinecraftBlockRefListDto

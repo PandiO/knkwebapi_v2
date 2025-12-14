@@ -19,7 +19,22 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.LocationId, src => src.MapFrom(src => src.LocationId))
                 .ForMember(dest => dest.StreetId, src => src.MapFrom(src => src.StreetId))
                 .ForMember(dest => dest.DistrictId, src => src.MapFrom(src => src.DistrictId))
-                .ForMember(dest => dest.HouseNumber, src => src.MapFrom(src => src.HouseNumber));
+                .ForMember(dest => dest.HouseNumber, src => src.MapFrom(src => src.HouseNumber))
+                // Embedded lightweight navigations
+                .ForMember(dest => dest.Street, src => src.MapFrom(s => s.Street == null ? null : new StructureStreetDto
+                {
+                    Id = s.Street.Id,
+                    Name = s.Street.Name
+                }))
+                .ForMember(dest => dest.District, src => src.MapFrom(s => s.District == null ? null : new StructureDistrictDto
+                {
+                    Id = s.District.Id,
+                    Name = s.District.Name,
+                    Description = s.District.Description,
+                    AllowEntry = s.District.AllowEntry,
+                    AllowExit = s.District.AllowExit,
+                    WgRegionId = s.District.WgRegionId
+                }));
 
             CreateMap<StructureDto, Structure>()
                 .ForMember(dest => dest.Id, src => src.MapFrom(src => src.Id ?? 0))

@@ -8,10 +8,14 @@ namespace knkwebapi_v2.Mapping
     {
         public MinecraftMaterialRefMappingProfile()
         {
-            CreateMap<MinecraftMaterialRef, MinecraftMaterialRefDto>();
-            CreateMap<MinecraftMaterialRefCreateDto, MinecraftMaterialRef>();
-            CreateMap<MinecraftMaterialRefUpdateDto, MinecraftMaterialRef>();
-            CreateMap<MinecraftMaterialRef, MinecraftMaterialRefListDto>();
+            CreateMap<MinecraftMaterialRef, MinecraftMaterialRefDto>()
+                .ForMember(dest => dest.IconUrl, opt => opt.MapFrom(src => src.IconUrl));
+            CreateMap<MinecraftMaterialRefCreateDto, MinecraftMaterialRef>()
+                .ForMember(dest => dest.IconUrl, opt => opt.MapFrom(src => src.IconUrl));
+            CreateMap<MinecraftMaterialRefUpdateDto, MinecraftMaterialRef>()
+                .ForMember(dest => dest.IconUrl, opt => opt.MapFrom(src => src.IconUrl));
+            CreateMap<MinecraftMaterialRef, MinecraftMaterialRefListDto>()
+                .ForMember(dest => dest.IconUrl, opt => opt.MapFrom(src => src.IconUrl));
 
             CreateMap<PagedResult<MinecraftMaterialRef>, PagedResultDto<MinecraftMaterialRefListDto>>()
                 .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items))

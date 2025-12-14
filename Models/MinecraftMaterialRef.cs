@@ -16,4 +16,6 @@ public class MinecraftMaterialRef
 
     [Required]
     public string Category { get; set; } = null!;
+
+    public string? IconUrl { get; set; }
 }

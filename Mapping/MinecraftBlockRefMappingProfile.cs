@@ -8,10 +8,14 @@ namespace knkwebapi_v2.Mapping
     {
         public MinecraftBlockRefMappingProfile()
         {
-            CreateMap<MinecraftBlockRef, MinecraftBlockRefDto>();
-            CreateMap<MinecraftBlockRefCreateDto, MinecraftBlockRef>();
-            CreateMap<MinecraftBlockRefUpdateDto, MinecraftBlockRef>();
-            CreateMap<MinecraftBlockRef, MinecraftBlockRefListDto>();
+            CreateMap<MinecraftBlockRef, MinecraftBlockRefDto>()
+                .ForMember(dest => dest.IconUrl, opt => opt.MapFrom(src => src.IconUrl));
+            CreateMap<MinecraftBlockRefCreateDto, MinecraftBlockRef>()
+                .ForMember(dest => dest.IconUrl, opt => opt.MapFrom(src => src.IconUrl));
+            CreateMap<MinecraftBlockRefUpdateDto, MinecraftBlockRef>()
+                .ForMember(dest => dest.IconUrl, opt => opt.MapFrom(src => src.IconUrl));
+            CreateMap<MinecraftBlockRef, MinecraftBlockRefListDto>()
+                .ForMember(dest => dest.IconUrl, opt => opt.MapFrom(src => src.IconUrl));
 
             CreateMap<PagedResult<MinecraftBlockRef>, PagedResultDto<MinecraftBlockRefListDto>>()
                 .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items))

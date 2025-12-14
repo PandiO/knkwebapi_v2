@@ -15,6 +15,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("category")]
         public string Category { get; set; } = null!;
+
+        [JsonPropertyName("iconUrl")]
+        public string? IconUrl { get; set; }
     }
 
     public class MinecraftMaterialRefCreateDto
@@ -27,6 +30,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("category")]
         public string Category { get; set; } = null!;
+
+        [JsonPropertyName("iconUrl")]
+        public string? IconUrl { get; set; }
     }
 
     public class MinecraftMaterialRefUpdateDto
@@ -39,6 +45,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("category")]
         public string Category { get; set; } = null!;
+
+        [JsonPropertyName("iconUrl")]
+        public string? IconUrl { get; set; }
     }
 
     public class MinecraftMaterialRefListDto

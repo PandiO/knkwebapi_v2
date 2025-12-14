@@ -15,4 +15,6 @@ public class MinecraftBlockRef
     public string? BlockStateString { get; set; }
 
     public string? LogicalType { get; set; }
+
+    public string? IconUrl { get; set; }
 }
