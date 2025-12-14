@@ -41,6 +41,12 @@ namespace knkwebapi_v2.Services
                 throw new ArgumentException("World is required.", nameof(locationDto));
 
             var location = _mapper.Map<Location>(locationDto);
+            location.X = locationDto.X ?? location.X;
+            location.Y = locationDto.Y ?? location.Y;
+            location.Z = locationDto.Z ?? location.Z;
+            location.Yaw = locationDto.Yaw ?? location.Yaw;
+            location.Pitch = locationDto.Pitch ?? location.Pitch;
+
             await _repo.AddLocationAsync(location);
             return _mapper.Map<LocationDto>(location);
         }
@@ -59,11 +65,11 @@ namespace knkwebapi_v2.Services
 
             // Apply allowed updates
             existing.Name = locationDto.Name;
-            existing.X = locationDto.X;
-            existing.Y = locationDto.Y;
-            existing.Z = locationDto.Z;
-            existing.Yaw = locationDto.Yaw;
-            existing.Pitch = locationDto.Pitch;
+            existing.X = locationDto.X ?? existing.X;
+            existing.Y = locationDto.Y ?? existing.Y;
+            existing.Z = locationDto.Z ?? existing.Z;
+            existing.Yaw = locationDto.Yaw ?? existing.Yaw;
+            existing.Pitch = locationDto.Pitch ?? existing.Pitch;
             existing.World = locationDto.World;
 
             await _repo.UpdateLocationAsync(existing);

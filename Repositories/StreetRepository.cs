@@ -22,6 +22,7 @@ namespace knkwebapi_v2.Repositories
         {
             return await _context.Streets
                 .Include(s => s.Districts)
+                .ThenInclude(d => d.Town)
                 .Include(s => s.Structures)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }

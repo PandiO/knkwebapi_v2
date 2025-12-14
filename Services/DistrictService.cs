@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using knkwebapi_v2.Dtos;
@@ -14,17 +16,20 @@ namespace knkwebapi_v2.Services
         private readonly IDistrictRepository _repo;
         private readonly ITownRepository _townRepo;
         private readonly ILocationRepository _locationRepo;
+            private readonly IStreetRepository _streetRepo;
         private readonly IMapper _mapper;
 
         public DistrictService(
             IDistrictRepository repo,
             ITownRepository townRepo,
             ILocationRepository locationRepo,
+                        IStreetRepository streetRepo,
             IMapper mapper)
         {
             _repo = repo;
             _townRepo = townRepo;
             _locationRepo = locationRepo;
+                        _streetRepo = streetRepo;
             _mapper = mapper;
         }
 
@@ -94,10 +99,44 @@ namespace knkwebapi_v2.Services
             // Validate that Town exists
             var town = await _townRepo.GetByIdAsync(districtDto.TownId);
             if (town == null) throw new ArgumentException($"Town with id {districtDto.TownId} not found.", nameof(districtDto));
-
-            // Validate LocationId if provided
-            if (districtDto.LocationId.HasValue)
+            // Cascade create/update for Location if embedded payload provided
+            if (districtDto.Location != null)
             {
+                if (districtDto.Location.Id.HasValue && districtDto.Location.Id.Value > 0)
+                {
+                    var existingLoc = await _locationRepo.GetByIdAsync(districtDto.Location.Id.Value);
+                    if (existingLoc == null)
+                        throw new ArgumentException($"Location with id {districtDto.Location.Id.Value} not found.", nameof(districtDto));
+                    // Update fields
+                    existingLoc.Name = districtDto.Location.Name ?? existingLoc.Name;
+                    existingLoc.X = districtDto.Location.X.HasValue ? districtDto.Location.X.Value : existingLoc.X;
+                    existingLoc.Y = districtDto.Location.Y.HasValue ? districtDto.Location.Y.Value : existingLoc.Y;
+                    existingLoc.Z = districtDto.Location.Z.HasValue ? districtDto.Location.Z.Value : existingLoc.Z;
+                    existingLoc.Yaw = districtDto.Location.Yaw.HasValue ? districtDto.Location.Yaw.Value : existingLoc.Yaw;
+                    existingLoc.Pitch = districtDto.Location.Pitch.HasValue ? districtDto.Location.Pitch.Value : existingLoc.Pitch;
+                    existingLoc.World = districtDto.Location.World ?? existingLoc.World;
+                    await _locationRepo.UpdateLocationAsync(existingLoc);
+                    districtDto.LocationId = existingLoc.Id;
+                }
+                else
+                {
+                    var newLoc = new Location
+                    {
+                        Name = districtDto.Location.Name ?? string.Empty,
+                        X = districtDto.Location.X.HasValue ? districtDto.Location.X.Value : 0,
+                        Y = districtDto.Location.Y.HasValue ? districtDto.Location.Y.Value : 0,
+                        Z = districtDto.Location.Z.HasValue ? districtDto.Location.Z.Value : 0,
+                        Yaw = districtDto.Location.Yaw.HasValue ? districtDto.Location.Yaw.Value : 0,
+                        Pitch = districtDto.Location.Pitch.HasValue ? districtDto.Location.Pitch.Value : 0,
+                        World = districtDto.Location.World ?? string.Empty,
+                    };
+                    await _locationRepo.AddLocationAsync(newLoc);
+                    districtDto.LocationId = newLoc.Id;
+                }
+            }
+            else if (districtDto.LocationId.HasValue)
+            {
+                // Validate referenced location exists
                 var location = await _locationRepo.GetByIdAsync(districtDto.LocationId.Value);
                 if (location == null)
                     throw new ArgumentException($"Location with id {districtDto.LocationId} not found.", nameof(districtDto));
@@ -105,6 +144,20 @@ namespace knkwebapi_v2.Services
 
             var district = _mapper.Map<District>(districtDto);
             district.CreatedAt = DateTime.UtcNow;
+
+                        // Handle Street relationships
+                        if (districtDto.StreetIds != null && districtDto.StreetIds.Any())
+                        {
+                            district.Streets = new Collection<Street>();
+                            foreach (var streetId in districtDto.StreetIds)
+                            {
+                                var street = await _streetRepo.GetByIdAsync(streetId);
+                                if (street == null)
+                                    throw new ArgumentException($"Street with id {streetId} not found.", nameof(districtDto));
+                                district.Streets.Add(street);
+                            }
+                        }
+
             await _repo.AddDistrictAsync(district);
             return _mapper.Map<DistrictDto>(district);
         }
@@ -126,8 +179,41 @@ namespace knkwebapi_v2.Services
                 var town = await _townRepo.GetByIdAsync(districtDto.TownId);
                 if (town == null) throw new ArgumentException($"Town with id {districtDto.TownId} not found.", nameof(districtDto));
             }
-            // Validate LocationId if provided
-            if (districtDto.LocationId.HasValue)
+            // Cascade create/update for Location if embedded payload provided
+            if (districtDto.Location != null)
+            {
+                if (districtDto.Location.Id.HasValue && districtDto.Location.Id.Value > 0)
+                {
+                    var existingLoc = await _locationRepo.GetByIdAsync(districtDto.Location.Id.Value);
+                    if (existingLoc == null)
+                        throw new ArgumentException($"Location with id {districtDto.Location.Id.Value} not found.", nameof(districtDto));
+                    existingLoc.Name = districtDto.Location.Name ?? existingLoc.Name;
+                    existingLoc.X = districtDto.Location.X.HasValue ? districtDto.Location.X.Value : existingLoc.X;
+                    existingLoc.Y = districtDto.Location.Y.HasValue ? districtDto.Location.Y.Value : existingLoc.Y;
+                    existingLoc.Z = districtDto.Location.Z.HasValue ? districtDto.Location.Z.Value : existingLoc.Z;
+                    existingLoc.Yaw = districtDto.Location.Yaw.HasValue ? districtDto.Location.Yaw.Value : existingLoc.Yaw;
+                    existingLoc.Pitch = districtDto.Location.Pitch.HasValue ? districtDto.Location.Pitch.Value : existingLoc.Pitch;
+                    existingLoc.World = districtDto.Location.World ?? existingLoc.World;
+                    await _locationRepo.UpdateLocationAsync(existingLoc);
+                    districtDto.LocationId = existingLoc.Id;
+                }
+                else
+                {
+                    var newLoc = new Location
+                    {
+                        Name = districtDto.Location.Name ?? string.Empty,
+                        X = districtDto.Location.X.HasValue ? districtDto.Location.X.Value : 0,
+                        Y = districtDto.Location.Y.HasValue ? districtDto.Location.Y.Value : 0,
+                        Z = districtDto.Location.Z.HasValue ? districtDto.Location.Z.Value : 0,
+                        Yaw = districtDto.Location.Yaw.HasValue ? districtDto.Location.Yaw.Value : 0,
+                        Pitch = districtDto.Location.Pitch.HasValue ? districtDto.Location.Pitch.Value : 0,
+                        World = districtDto.Location.World ?? string.Empty,
+                    };
+                    await _locationRepo.AddLocationAsync(newLoc);
+                    districtDto.LocationId = newLoc.Id;
+                }
+            }
+            else if (districtDto.LocationId.HasValue)
             {
                 var location = await _locationRepo.GetByIdAsync(districtDto.LocationId.Value);
                 if (location == null)
@@ -141,6 +227,21 @@ namespace knkwebapi_v2.Services
             existing.WgRegionId = districtDto.WgRegionId;
             existing.LocationId = districtDto.LocationId;
             existing.TownId = districtDto.TownId;
+
+            // Handle Street relationships
+            if (districtDto.StreetIds != null)
+            {
+                // Clear existing streets
+                existing.Streets.Clear();
+                // Add new streets
+                foreach (var streetId in districtDto.StreetIds)
+                {
+                    var street = await _streetRepo.GetByIdAsync(streetId);
+                    if (street == null)
+                        throw new ArgumentException($"Street with id {streetId} not found.", nameof(districtDto));
+                    existing.Streets.Add(street);
+                }
+            }
 
             await _repo.UpdateDistrictAsync(existing);
         }

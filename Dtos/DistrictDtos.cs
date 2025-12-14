@@ -29,6 +29,10 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("locationId")]
         public int? LocationId { get; set; }
+        
+        // Optional embedded Location to allow cascading create/update
+        [JsonPropertyName("location")]
+        public LocationDto? Location { get; set; }
 
         [JsonPropertyName("townId")]
         public int TownId { get; set; }

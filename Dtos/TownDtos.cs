@@ -35,11 +35,11 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("streetIds")]
         public List<int>? StreetIds { get; set; } = new();
         [JsonPropertyName("streets")]
-        public List<StreetDto>? Streets { get; set; } = new();
+        public List<TownStreetDto>? Streets { get; set; } = new();
         [JsonPropertyName("districtIds")]
         public List<int>? DistrictIds { get; set; } = new();
         [JsonPropertyName("districts")]
-        public List<DistrictDto> Districts { get; set; } = new();
+        public List<TownDistrictDto> Districts { get; set; } = new();
     }
 
     public class TownListDto

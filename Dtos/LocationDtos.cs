@@ -10,15 +10,15 @@ public class LocationDto
     [JsonPropertyName("name")]
     public string? Name { get; set; }
     [JsonPropertyName("x")]
-    public double X { get; set; }
+    public double? X { get; set; }
     [JsonPropertyName("y")]
-    public double Y { get; set; }
+    public double? Y { get; set; }
     [JsonPropertyName("z")]
-    public double Z { get; set; }
+    public double? Z { get; set; }
     [JsonPropertyName("yaw")]
-    public float Yaw { get; set; }
+    public float? Yaw { get; set; }
     [JsonPropertyName("pitch")]
-    public float Pitch { get; set; }
+    public float? Pitch { get; set; }
     [JsonPropertyName("world")]
     public string? World { get; set; }
 }

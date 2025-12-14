@@ -87,10 +87,12 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost("search")]
-        public async Task<ActionResult<PagedResultDto<MinecraftBlockRefListDto>>> Search([FromBody] PagedQueryDto query)
+        public async Task<ActionResult<PagedResultDto<MinecraftBlockRefListDto>>> Search([FromBody] PagedQueryDto? query)
         {
+            query ??= new PagedQueryDto();
+
             // Check if hybrid mode is requested via filter
-            if (query?.Filters != null && query.Filters.TryGetValue("SearchHybrid", out var hybridValue) && hybridValue?.ToString()?.ToLower() == "true")
+            if (query.Filters != null && query.Filters.TryGetValue("SearchHybrid", out var hybridValue) && hybridValue?.ToString()?.ToLower() == "true")
             {
                 var hybridResult = await _service.SearchHybridAsync(query);
                 return Ok(hybridResult);

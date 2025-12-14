@@ -18,6 +18,8 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.AllowExit, src => src.MapFrom(src => src.AllowExit))
                 .ForMember(dest => dest.WgRegionId, src => src.MapFrom(src => src.WgRegionId))
                 .ForMember(dest => dest.LocationId, src => src.MapFrom(src => src.LocationId))
+                // Map embedded Location as full DTO (uses LocationMappingProfile)
+                .ForMember(dest => dest.Location, src => src.MapFrom(src => src.Location))
                 .ForMember(dest => dest.TownId, src => src.MapFrom(src => src.TownId))
                 .ForMember(dest => dest.StreetIds, src => src.MapFrom(src => src.Streets.Select(s => s.Id).ToList()))
                 // Map embedded Town as lightweight DTO to avoid cycles

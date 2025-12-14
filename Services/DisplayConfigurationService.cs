@@ -153,7 +153,7 @@ namespace knkwebapi_v2.Services
                 if (!isNewSection)
                 {
                     // Update existing section
-                    var existingSection = config.Sections.FirstOrDefault(s => s.Id == int.Parse(sectionDto.Id));
+                    var existingSection = config.Sections.FirstOrDefault(s => s.Id == int.Parse(sectionDto.Id!));
                     if (existingSection != null)
                     {
                         UpdateSection(existingSection, sectionDto);
@@ -221,7 +221,7 @@ namespace knkwebapi_v2.Services
                 if (!isNewField)
                 {
                     // Update existing field
-                    var existingField = section.Fields.FirstOrDefault(f => f.Id == int.Parse(fieldDto.Id));
+                    var existingField = section.Fields.FirstOrDefault(f => f.Id == int.Parse(fieldDto.Id!));
                     if (existingField != null)
                     {
                         existingField.FieldName = fieldDto.FieldName;
@@ -279,7 +279,7 @@ namespace knkwebapi_v2.Services
                 if (!isNewSubSection)
                 {
                     // Update existing subsection (recursive)
-                    var existingSubSection = parentSection.SubSections.FirstOrDefault(s => s.Id == int.Parse(subSectionDto.Id));
+                    var existingSubSection = parentSection.SubSections.FirstOrDefault(s => s.Id == int.Parse(subSectionDto.Id!));
                     if (existingSubSection != null)
                     {
                         UpdateSection(existingSubSection, subSectionDto);

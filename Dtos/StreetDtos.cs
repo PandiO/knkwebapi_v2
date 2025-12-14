@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
 namespace knkwebapi_v2.Dtos
 {
@@ -9,6 +10,17 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("name")]
         public string Name { get; set; } = null!;
+
+        [JsonPropertyName("districtIds")]
+        public List<int> DistrictIds { get; set; } = new();
+
+        // Optional embedded Districts collection
+        [JsonPropertyName("districts")]
+        public IEnumerable<StreetDistrictDto>? Districts { get; set; }
+
+        // Optional embedded Structures collection
+        [JsonPropertyName("structures")]
+        public IEnumerable<StreetStructureDto>? Structures { get; set; }
     }
 
     public class StreetListDto
@@ -34,6 +46,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("description")]
         public string? Description { get; set; }
+
+        [JsonPropertyName("town")]
+        public StreetDistrictTownDto? Town { get; set; }
 
         [JsonPropertyName("allowEntry")]
         public bool? AllowEntry { get; set; }
@@ -62,5 +77,14 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("districtId")]
         public int? DistrictId { get; set; }
+    }
+
+    public class StreetDistrictTownDto
+    {
+        [JsonPropertyName("id")]
+        public int? Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
     }
 }

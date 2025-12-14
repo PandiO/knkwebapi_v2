@@ -5,6 +5,9 @@ using knkwebapi_v2.DependencyInjection; // added for DI extensions
 using System;
 using System.Linq;
 using System.Text.Json.Serialization;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,6 +50,49 @@ builder.Services.AddDbContext<KnKDbContext>(options =>
 // Register app services/repositories in one place
 builder.Services.AddApplicationServices(builder.Configuration);
 
+// Health checks: add liveness/readiness
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy());
+
+// Options binding for telemetry and client activity
+builder.Services.Configure<knkwebapi_v2.Configuration.TelemetryOptions>(builder.Configuration.GetSection(knkwebapi_v2.Configuration.TelemetryOptions.SectionName));
+builder.Services.Configure<knkwebapi_v2.Configuration.ClientActivityOptions>(builder.Configuration.GetSection(knkwebapi_v2.Configuration.ClientActivityOptions.SectionName));
+
+// Register in-memory client activity store
+builder.Services.AddSingleton<knkwebapi_v2.Services.Interfaces.IClientActivityStore>(sp =>
+{
+    var opts = builder.Configuration.GetSection(knkwebapi_v2.Configuration.ClientActivityOptions.SectionName).Get<knkwebapi_v2.Configuration.ClientActivityOptions>()
+               ?? new knkwebapi_v2.Configuration.ClientActivityOptions();
+    return new knkwebapi_v2.Services.InMemoryClientActivityStore(opts.MaxClients, opts.CleanupInterval);
+});
+
+// OpenTelemetry setup per configuration
+var telemetryOptions = builder.Configuration.GetSection(knkwebapi_v2.Configuration.TelemetryOptions.SectionName)
+    .Get<knkwebapi_v2.Configuration.TelemetryOptions>() ?? new knkwebapi_v2.Configuration.TelemetryOptions();
+
+if (telemetryOptions.Enabled)
+{
+    builder.Services.AddOpenTelemetry()
+        .WithMetrics(metrics =>
+        {
+            metrics.AddAspNetCoreInstrumentation();
+            if (string.Equals(telemetryOptions.Exporter, "otlp", StringComparison.OrdinalIgnoreCase)
+                && telemetryOptions.Otlp.EnableMetrics)
+            {
+                metrics.AddOtlpExporter(o => { o.Endpoint = new Uri(telemetryOptions.Otlp.Endpoint); });
+            }
+        })
+        .WithTracing(tracing =>
+        {
+            tracing.AddAspNetCoreInstrumentation();
+            if (string.Equals(telemetryOptions.Exporter, "otlp", StringComparison.OrdinalIgnoreCase)
+                && telemetryOptions.Otlp.EnableTracing)
+            {
+                tracing.AddOtlpExporter(o => { o.Endpoint = new Uri(telemetryOptions.Otlp.Endpoint); });
+            }
+        });
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
@@ -58,6 +104,18 @@ builder.Services.AddCors(options =>
                 .SetIsOriginAllowed(origin => true)
                 .AllowAnyMethod();
         });
+});
+
+// Placeholder admin authorization policy.
+// TODO: Bind this to your real authentication/authorization setup.
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdmin", policy =>
+    {
+        // Placeholder: allow all in Development, require role claim otherwise.
+        policy.RequireAssertion(ctx =>
+            ctx.User?.IsInRole("Admin") == true || ctx.User?.Claims.Any(c => c.Type == "role" && c.Value == "Admin") == true);
+    });
 });
 
 var app = builder.Build();
@@ -73,6 +131,9 @@ app.UseCors();
 app.MapRazorPages();
 app.UseRouting();
 
+// Client activity tracking middleware
+app.UseMiddleware<knkwebapi_v2.Middleware.ClientActivityMiddleware>();
+
 // Only redirect to HTTPS if an HTTPS listener is configured
 var configuredUrls = (urlConfig ?? string.Empty)
     .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -81,6 +142,10 @@ if (hasHttpsListener)
 {
     app.UseHttpsRedirection();
 }
+
+// TODO: Prometheus exporter endpoint can be added with OpenTelemetry Prometheus AspNetCore package
+
 app.MapControllers();
 
 app.Run();
+

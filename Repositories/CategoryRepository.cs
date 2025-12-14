@@ -94,7 +94,7 @@ namespace knkwebapi_v2.Repositories
                         return (int?)null;
                     })
                     .Where(id => id.HasValue)
-                    .Select(id => id.Value)
+                    .Select(id => id!.Value)
                     .ToList();
 
                     if (excludeIds.Any())
