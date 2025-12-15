@@ -30,6 +30,9 @@ public partial class KnKDbContext : DbContext
     public DbSet<DisplaySection> DisplaySections { get; set; }
     public DbSet<DisplayField> DisplayFields { get; set; }
     
+    // Entity Type Configuration (admin-configurable entity display properties)
+    public DbSet<EntityTypeConfiguration> EntityTypeConfigurations { get; set; }
+    
     public virtual DbSet<Location> Locations { get; set; } = null!;
     public virtual DbSet<Street> Streets { get; set; } = null!;
     public virtual DbSet<Town> Towns { get; set; } = null!;
@@ -258,7 +261,37 @@ public partial class KnKDbContext : DbContext
             entity.ToTable("minecraftblockrefs");
             entity.Property(e => e.NamespaceKey).IsRequired().HasMaxLength(191);
         });
-
+        // EntityTypeConfiguration model configuration
+        modelBuilder.Entity<EntityTypeConfiguration>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("entity_type_configurations");
+            
+            entity.Property(e => e.EntityTypeName)
+                .IsRequired()
+                .HasMaxLength(191);
+            
+            entity.Property(e => e.IconKey)
+                .HasMaxLength(50);
+            
+            entity.Property(e => e.CustomIconUrl)
+                .HasMaxLength(500);
+            
+            entity.Property(e => e.DisplayColor)
+                .HasMaxLength(7);
+            
+            // CreatedAt and UpdatedAt are set in C# (DateTime.UtcNow), not via SQL defaults
+            // This avoids MySQL timezone issues
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime");
+            
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime");
+            
+            entity.HasIndex(e => e.EntityTypeName)
+                .IsUnique()
+                .HasDatabaseName("IX_EntityTypeConfiguration_EntityTypeName");
+        });
         // Structure-Street many-to-one (required)
         modelBuilder.Entity<Structure>()
             .HasOne(s => s.Street)

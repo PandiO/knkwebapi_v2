@@ -311,37 +311,46 @@ namespace knkwebapi_v2.Services
         /// - Integer → Int32
         /// - Boolean → Boolean
         /// - DateTime → DateTime
-        /// - Decimal → Decimal
+        /// - Decimal → Decimal or Double (both numeric types)
         /// 
         /// Uses lenient matching to handle nullable types:
         /// - "Int32" matches both "Int32" and "Int32?"
         /// - This allows forms to work with both required and optional fields
+        /// 
+        /// DECIMAL vs DOUBLE:
+        /// - Form FieldType.Decimal accepts both C# decimal and double types
+        /// - This allows flexibility in model design (e.g., GateStructure uses double for HealthMax)
+        /// - Both types represent numeric values suitable for form decimal inputs
         /// </summary>
         private void ValidateSimpleTypeCompatibility(
             FormField field,
             FieldMetadataDto metadataField,
             TemplateFieldValidationResult result)
         {
-            // Map form field type to expected CLR type name
-            var expectedType = field.FieldType switch
+            // Map form field type to expected CLR type name(s)
+            // For Decimal, we accept both "Decimal" and "Double" as compatible numeric types
+            var expectedTypes = field.FieldType switch
             {
-                FieldType.String => "String",
-                FieldType.Integer => "Int32",
-                FieldType.Boolean => "Boolean",
-                FieldType.DateTime => "DateTime",
-                FieldType.Decimal => "Decimal",
-                _ => ""
+                FieldType.String => new[] { "String" },
+                FieldType.Integer => new[] { "Int32" },
+                FieldType.Boolean => new[] { "Boolean" },
+                FieldType.DateTime => new[] { "DateTime" },
+                FieldType.Decimal => new[] { "Decimal", "Double" }, // Accept both decimal and double
+                _ => Array.Empty<string>()
             };
 
-            // Check for type match (case-insensitive)
-            if (!metadataField.FieldType.Equals(expectedType, StringComparison.OrdinalIgnoreCase))
+            // Check if the metadata field type matches any of the expected types
+            var isMatch = expectedTypes.Any(expectedType =>
+                metadataField.FieldType.Equals(expectedType, StringComparison.OrdinalIgnoreCase) ||
+                metadataField.FieldType.Contains(expectedType, StringComparison.OrdinalIgnoreCase)
+            );
+
+            if (!isMatch)
             {
-                // Be lenient: allow nullable versions (e.g., "Int32?" should match "Int32")
-                // This handles optional fields that may be null in the database
-                if (!metadataField.FieldType.Contains(expectedType, StringComparison.OrdinalIgnoreCase))
-                {
-                    result.Issues.Add($"Field '{field.FieldName}' type mismatch: expected '{expectedType}', got '{metadataField.FieldType}'.");
-                }
+                var expectedTypeStr = expectedTypes.Length > 1 
+                    ? string.Join(" or ", expectedTypes) 
+                    : expectedTypes.FirstOrDefault() ?? "";
+                result.Issues.Add($"Field '{field.FieldName}' type mismatch: expected '{expectedTypeStr}', got '{metadataField.FieldType}'.");
             }
         }
 
