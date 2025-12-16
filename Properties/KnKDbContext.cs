@@ -40,6 +40,7 @@ public partial class KnKDbContext : DbContext
     public virtual DbSet<Town> Towns { get; set; } = null!;
     public virtual DbSet<District> Districts { get; set; } = null!;
     public virtual DbSet<Structure> Structures { get; set; } = null!;
+    public virtual DbSet<ItemBlueprint> ItemBlueprints { get; set; } = null!;
     public virtual DbSet<MinecraftMaterialRef> MinecraftMaterialRefs { get; set; } = null!;
     public virtual DbSet<MinecraftBlockRef> MinecraftBlockRefs { get; set; } = null!;
     public virtual DbSet<MinecraftEnchantmentRef> MinecraftEnchantmentRefs { get; set; } = null!;
@@ -75,6 +76,16 @@ public partial class KnKDbContext : DbContext
             entity.HasOne(c => c.IconMaterialRef)
                 .WithMany()
                 .HasForeignKey(c => c.IconMaterialRefId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<ItemBlueprint>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+            entity.ToTable("item_blueprints");
+
+            entity.HasOne(ib => ib.IconMaterial)
+                .WithMany()
+                .HasForeignKey(ib => ib.IconMaterialRefId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<Location>(entity =>
