@@ -112,6 +112,16 @@ namespace knkwebapi_v2.Dtos
         public bool HasCompatibilityIssues { get; set; }
         [JsonPropertyName("stepLevelIssues")]
         public List<string>? StepLevelIssues { get; set; }
+        [JsonPropertyName("isManyToManyRelationship")]
+        public bool IsManyToManyRelationship { get; set; }
+        [JsonPropertyName("relatedEntityPropertyName")]
+        public string? RelatedEntityPropertyName { get; set; }
+        [JsonPropertyName("joinEntityType")]
+        public string? JoinEntityType { get; set; }
+        [JsonPropertyName("parentStepId")]
+        public string? ParentStepId { get; set; }
+        [JsonPropertyName("childFormSteps")]
+        public List<FormStepDto> ChildFormSteps { get; set; } = new();
         [JsonPropertyName("fields")]
         public List<FormFieldDto> Fields { get; set; } = new();
         [JsonPropertyName("conditions")]

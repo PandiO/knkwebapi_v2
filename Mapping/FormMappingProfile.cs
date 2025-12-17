@@ -103,6 +103,11 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.IsReusable, o => o.MapFrom(s => s.IsReusable))
                 .ForMember(d => d.SourceStepId, o => o.MapFrom(s => ToInt(s.SourceStepId)))
                 .ForMember(d => d.IsLinkedToSource, o => o.MapFrom(s => s.IsLinkedToSource))
+                .ForMember(d => d.IsManyToManyRelationship, o => o.MapFrom(s => s.IsManyToManyRelationship))
+                .ForMember(d => d.RelatedEntityPropertyName, o => o.MapFrom(s => s.RelatedEntityPropertyName))
+                .ForMember(d => d.JoinEntityType, o => o.MapFrom(s => s.JoinEntityType))
+                .ForMember(d => d.ParentStepId, o => o.MapFrom(s => ToInt(s.ParentStepId)))
+                .ForMember(d => d.ChildFormSteps, o => o.MapFrom(s => s.ChildFormSteps))
                 .ForMember(d => d.Fields, o => o.MapFrom(s => s.Fields.OrderBy(f => f.Order)))
                 .ForMember(d => d.StepConditions, o => o.MapFrom(s => s.Conditions))
                 .AfterMap((src, dest) =>
@@ -129,6 +134,11 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.IsReusable, o => o.MapFrom(s => s.IsReusable))
                 .ForMember(d => d.SourceStepId, o => o.MapFrom(s => s.SourceStepId.HasValue ? s.SourceStepId.Value.ToString() : null))
                 .ForMember(d => d.IsLinkedToSource, o => o.MapFrom(s => s.IsLinkedToSource))
+                .ForMember(d => d.IsManyToManyRelationship, o => o.MapFrom(s => s.IsManyToManyRelationship))
+                .ForMember(d => d.RelatedEntityPropertyName, o => o.MapFrom(s => s.RelatedEntityPropertyName))
+                .ForMember(d => d.JoinEntityType, o => o.MapFrom(s => s.JoinEntityType))
+                .ForMember(d => d.ParentStepId, o => o.MapFrom(s => s.ParentStepId.HasValue ? s.ParentStepId.Value.ToString() : null))
+                .ForMember(d => d.ChildFormSteps, o => o.MapFrom(s => s.ChildFormSteps))
                 .ForMember(d => d.Fields, o => o.MapFrom(s => s.Fields))
                 .ForMember(d => d.Conditions, o => o.MapFrom(s => s.StepConditions))
                 // compatibility issues handled at runtime

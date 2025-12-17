@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using knkwebapi_v2.Properties;
 
@@ -11,9 +12,11 @@ using knkwebapi_v2.Properties;
 namespace knkwebapi_v2.Migrations
 {
     [DbContext(typeof(KnKDbContext))]
-    partial class KnKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251216134254_AddMinecraftEnchantmentRef")]
+    partial class AddMinecraftEnchantmentRef
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -543,20 +546,8 @@ namespace knkwebapi_v2.Migrations
                     b.Property<bool>("IsLinkedToSource")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<bool>("IsManyToManyRelationship")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<bool>("IsReusable")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("JoinEntityType")
-                        .HasColumnType("longtext");
-
-                    b.Property<int?>("ParentStepId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("RelatedEntityPropertyName")
-                        .HasColumnType("longtext");
 
                     b.Property<int?>("SourceStepId")
                         .HasColumnType("int");
@@ -573,8 +564,6 @@ namespace knkwebapi_v2.Migrations
                     b.HasIndex("FormConfigurationId");
 
                     b.HasIndex("IsReusable");
-
-                    b.HasIndex("ParentStepId");
 
                     b.ToTable("FormSteps");
                 });
@@ -1019,14 +1008,7 @@ namespace knkwebapi_v2.Migrations
                         .HasForeignKey("FormConfigurationId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("knkwebapi_v2.Models.FormStep", "ParentStep")
-                        .WithMany("ChildFormSteps")
-                        .HasForeignKey("ParentStepId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.Navigation("FormConfiguration");
-
-                    b.Navigation("ParentStep");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.FormSubmissionProgress", b =>
@@ -1150,8 +1132,6 @@ namespace knkwebapi_v2.Migrations
 
             modelBuilder.Entity("knkwebapi_v2.Models.FormStep", b =>
                 {
-                    b.Navigation("ChildFormSteps");
-
                     b.Navigation("Fields");
 
                     b.Navigation("StepConditions");

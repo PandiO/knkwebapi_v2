@@ -101,6 +101,46 @@ namespace knkwebapi_v2.Models
         public int? FormConfigurationId { get; set; }
         public FormConfiguration? FormConfiguration { get; set; }
         
+        /// <summary>
+        /// If true, this step represents a many-to-many relationship editor.
+        /// Used to configure join entity instances with extra fields (e.g., ItemBlueprintDefaultEnchantment with Level).
+        /// When true, the step displays:
+        /// 1. PagedEntityTable for selecting related entities
+        /// 2. Cards showing selected relationships with editable join entity fields
+        /// 3. Uses childFormSteps to define the join entity field template
+        /// </summary>
+        public bool IsManyToManyRelationship { get; set; } = false;
+        
+        /// <summary>
+        /// The property name on the parent entity that holds the many-to-many relationship collection.
+        /// Example: For ItemBlueprint editing enchantments, this would be "DefaultForBlueprints" or "DefaultEnchantments".
+        /// Used to determine which related entity collection to modify.
+        /// </summary>
+        public string? RelatedEntityPropertyName { get; set; }
+        
+        /// <summary>
+        /// The fully qualified type name of the join entity (e.g., "ItemBlueprintDefaultEnchantment").
+        /// This entity holds the many-to-many relationship and any extra fields (like Level, Priority, etc.).
+        /// System will retrieve metadata for this entity to allow editing its fields.
+        /// </summary>
+        public string? JoinEntityType { get; set; }
+        
+        /// <summary>
+        /// Foreign key to parent step if this is a child step defining join entity fields.
+        /// Child steps define the template for editing join entity instances in many-to-many relationships.
+        /// NULL for top-level steps, NON-NULL for child steps that belong to a many-to-many relationship step.
+        /// </summary>
+        public int? ParentStepId { get; set; }
+        public FormStep? ParentStep { get; set; }
+        
+        /// <summary>
+        /// Collection of child steps that define the join entity field template for many-to-many relationships.
+        /// These steps are displayed when editing individual relationship instances (the cards).
+        /// Example: For ItemBlueprint → EnchantmentDefinition with ItemBlueprintDefaultEnchantment join entity,
+        /// child steps define fields like "Level", "ApplyByDefault", etc.
+        /// </summary>
+        public List<FormStep> ChildFormSteps { get; set; } = new();
+        
         // Navigation properties
         public List<FormField> Fields { get; set; } = new();
         public List<StepCondition> StepConditions { get; set; } = new();

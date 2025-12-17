@@ -40,6 +40,7 @@ public partial class KnKDbContext : DbContext
     public virtual DbSet<Structure> Structures { get; set; } = null!;
     public virtual DbSet<MinecraftMaterialRef> MinecraftMaterialRefs { get; set; } = null!;
     public virtual DbSet<MinecraftBlockRef> MinecraftBlockRefs { get; set; } = null!;
+    public virtual DbSet<MinecraftEnchantmentRef> MinecraftEnchantmentRefs { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -94,6 +95,13 @@ public partial class KnKDbContext : DbContext
             .HasMany(s => s.StepConditions)
             .WithOne(sc => sc.FormStep)
             .HasForeignKey(sc => sc.FormStepId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        // FormStep self-referencing relationship for many-to-many child steps
+        modelBuilder.Entity<FormStep>()
+            .HasMany(s => s.ChildFormSteps)
+            .WithOne(cs => cs.ParentStep)
+            .HasForeignKey(cs => cs.ParentStepId)
             .OnDelete(DeleteBehavior.Cascade);
         
         // FormField relationships
@@ -261,6 +269,15 @@ public partial class KnKDbContext : DbContext
             entity.ToTable("minecraftblockrefs");
             entity.Property(e => e.NamespaceKey).IsRequired().HasMaxLength(191);
         });
+
+        modelBuilder.Entity<MinecraftEnchantmentRef>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+            entity.ToTable("minecraftenchantmentrefs");
+            entity.HasIndex(e => e.NamespaceKey).IsUnique();
+            entity.Property(e => e.NamespaceKey).IsRequired().HasMaxLength(191);
+        });
+
         // EntityTypeConfiguration model configuration
         modelBuilder.Entity<EntityTypeConfiguration>(entity =>
         {
