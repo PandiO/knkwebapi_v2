@@ -4,3 +4,91 @@ GET {{knkwebapi_v2_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+# Workflows health
+GET {{knkwebapi_v2_HostAddress}}/api/Workflows/health
+Accept: application/json
+
+###
+
+# Create a workflow session
+POST {{knkwebapi_v2_HostAddress}}/api/Workflows
+Content-Type: application/json
+
+{
+	"userId": 1,
+	"formConfigurationId": null,
+	"entityTypeName": "SampleEntity",
+	"entityId": null
+}
+
+###
+
+# Get workflow by id
+GET {{knkwebapi_v2_HostAddress}}/api/Workflows/1
+Accept: application/json
+
+###
+
+# Resume workflow by id
+POST {{knkwebapi_v2_HostAddress}}/api/Workflows/1/resume
+Accept: application/json
+
+###
+
+# Get workflow progress
+GET {{knkwebapi_v2_HostAddress}}/api/Workflows/1/progress
+Accept: application/json
+
+###
+
+# Complete step for workflow
+POST {{knkwebapi_v2_HostAddress}}/api/Workflows/1/steps/step-1/complete?stepIndex=0
+Accept: application/json
+
+###
+
+# Create a world task for the workflow
+POST {{knkwebapi_v2_HostAddress}}/api/WorldTasks
+Content-Type: application/json
+
+{
+	"workflowSessionId": 1,
+	"taskType": "VerifySomething",
+	"assignedUserId": 1,
+	"stepKey": "step-1",
+	"payloadJson": "{ \"note\": \"Initial payload\" }"
+}
+
+###
+
+# List world tasks by session
+GET {{knkwebapi_v2_HostAddress}}/api/WorldTasks/session/1
+Accept: application/json
+
+###
+
+# Search world tasks for a user (paged)
+POST {{knkwebapi_v2_HostAddress}}/api/WorldTasks/user/1/search
+Content-Type: application/json
+
+{
+	"pageNumber": 1,
+	"pageSize": 10,
+	"searchTerm": null,
+	"sortBy": "createdAt",
+	"sortDescending": true
+}
+
+###
+
+# Update world task status to Completed (will advance linked step if stepKey present)
+POST {{knkwebapi_v2_HostAddress}}/api/WorldTasks/1/status
+Content-Type: application/json
+
+{
+	"Status": "Completed",
+	"PayloadJson": "{ \"approvedBy\": \"tester\" }"
+}
+
+###

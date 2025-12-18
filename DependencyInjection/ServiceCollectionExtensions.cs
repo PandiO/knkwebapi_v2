@@ -51,6 +51,11 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<IItemBlueprintService, ItemBlueprintService>();
             services.AddScoped<IEnchantmentDefinitionRepository, EnchantmentDefinitionRepository>();
             services.AddScoped<IEnchantmentDefinitionService, EnchantmentDefinitionService>();
+            // Workflow + WorldTasks
+            services.AddScoped<IWorkflowRepository, WorkflowRepository>();
+            services.AddScoped<IWorkflowService, WorkflowService>();
+            services.AddScoped<IWorldTaskRepository, WorldTaskRepository>();
+            services.AddScoped<IWorldTaskService, WorldTaskService>();
             
             // DisplayConfiguration repositories
             services.AddScoped<IDisplayConfigurationRepository, DisplayConfigurationRepository>();

@@ -45,6 +45,10 @@ public partial class KnKDbContext : DbContext
     public virtual DbSet<MinecraftEnchantmentRef> MinecraftEnchantmentRefs { get; set; } = null!;
     public virtual DbSet<ItemBlueprint> ItemBlueprints { get; set; } = null!;
     public virtual DbSet<EnchantmentDefinition> EnchantmentDefinitions { get; set; } = null!;
+    // Workflow + Tasks
+    public virtual DbSet<WorkflowSession> WorkflowSessions { get; set; } = null!;
+    public virtual DbSet<StepProgress> StepProgresses { get; set; } = null!;
+    public virtual DbSet<WorldTask> WorldTasks { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -357,6 +361,105 @@ public partial class KnKDbContext : DbContext
             .WithMany(ed => ed.DefaultForBlueprints)
             .HasForeignKey(e => e.EnchantmentDefinitionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // WorkflowSession configuration
+        modelBuilder.Entity<WorkflowSession>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("workflow_sessions");
+
+            entity.Property(e => e.SessionGuid)
+                .IsRequired();
+
+            entity.Property(e => e.EntityTypeName)
+                .HasMaxLength(191);
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime");
+
+            entity.HasIndex(e => e.SessionGuid)
+                .IsUnique();
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.FormConfiguration)
+                .WithMany()
+                .HasForeignKey(e => e.FormConfigurationId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // StepProgress configuration
+        modelBuilder.Entity<StepProgress>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("step_progress");
+
+            entity.Property(e => e.StepKey)
+                .IsRequired()
+                .HasMaxLength(191);
+
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime");
+            entity.Property(e => e.CompletedAt)
+                .HasColumnType("datetime");
+
+            entity.HasIndex(e => new { e.WorkflowSessionId, e.StepKey })
+                .IsUnique();
+
+            entity.HasOne(e => e.WorkflowSession)
+                .WithMany(s => s.Steps)
+                .HasForeignKey(e => e.WorkflowSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // WorldTask configuration
+        modelBuilder.Entity<WorldTask>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("world_tasks");
+
+            entity.Property(e => e.TaskType)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.PayloadJson)
+                .HasColumnType("longtext");
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime");
+            entity.Property(e => e.CompletedAt)
+                .HasColumnType("datetime");
+
+            entity.HasIndex(e => new { e.WorkflowSessionId, e.Status });
+            entity.HasIndex(e => e.AssignedUserId);
+
+            entity.HasOne(e => e.WorkflowSession)
+                .WithMany(s => s.WorldTasks)
+                .HasForeignKey(e => e.WorkflowSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.AssignedUser)
+                .WithMany()
+                .HasForeignKey(e => e.AssignedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
         OnModelCreatingPartial(modelBuilder);
     }
