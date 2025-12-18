@@ -238,4 +238,41 @@ public class MinecraftEnchantmentRefService : IMinecraftEnchantmentRefService
             PageSize = pageSize
         };
     }
+
+    public async Task<PagedResultDto<MinecraftEnchantmentRefListDto>> SearchHybridAsync(PagedQueryDto queryDto)
+    {
+        if (queryDto == null) throw new ArgumentNullException(nameof(queryDto));
+
+        var search = queryDto.SearchTerm;
+        var category = queryDto.Filters?.TryGetValue("category", out var cat) == true ? cat?.ToString() : null;
+        
+        // Get ALL hybrid results (unfiltered) to calculate total count
+        var allHybridResults = (await GetHybridAsync(search, category, null)).ToList();
+        var totalCount = allHybridResults.Count;
+        
+        // Apply pagination
+        var skip = (queryDto.PageNumber - 1) * queryDto.PageSize;
+        var pagedResults = allHybridResults
+            .Skip(skip)
+            .Take(queryDto.PageSize)
+            .ToList();
+
+        return new PagedResultDto<MinecraftEnchantmentRefListDto>
+        {
+            Items = pagedResults.Select(h => new MinecraftEnchantmentRefListDto
+            {
+                Id = h.Id ?? 0,
+                NamespaceKey = h.NamespaceKey,
+                Category = h.Category,
+                LegacyName = h.LegacyName,
+                DisplayName = h.DisplayName,
+                IsPersisted = h.Id.HasValue,
+                MaxLevel = h.MaxLevel,
+                IconUrl = h.IconUrl
+            }).ToList(),
+            TotalCount = totalCount,
+            PageNumber = queryDto.PageNumber,
+            PageSize = pagedResults.Count
+        };
+    }
 }

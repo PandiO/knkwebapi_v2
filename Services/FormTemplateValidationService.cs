@@ -297,6 +297,10 @@ namespace knkwebapi_v2.Services
                     // Special application-specific type, no validation needed
                     break;
 
+                case FieldType.HybridMinecraftEnchantmentRefPicker:
+                    // Special application-specific type, no validation needed
+                    break;
+
                 default:
                     result.Issues.Add($"Unknown field type: {field.FieldType}");
                     break;

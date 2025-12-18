@@ -1,0 +1,100 @@
+using knkwebapi_v2.Models;
+using knkwebapi_v2.Properties;
+using knkwebapi_v2.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace knkwebapi_v2.Repositories
+{
+    public class EnchantmentDefinitionRepository : IEnchantmentDefinitionRepository
+    {
+        private readonly KnKDbContext _context;
+
+        public EnchantmentDefinitionRepository(KnKDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<IEnumerable<EnchantmentDefinition>> GetAllAsync()
+        {
+            return await _context.EnchantmentDefinitions
+                .Include(ed => ed.BaseEnchantmentRef)
+                .Include(ed => ed.DefaultForBlueprints)
+                    .ThenInclude(df => df.ItemBlueprint)
+                .ToListAsync();
+        }
+
+        public async Task<EnchantmentDefinition?> GetByIdAsync(int id)
+        {
+            return await _context.EnchantmentDefinitions
+                .Include(ed => ed.BaseEnchantmentRef)
+                .Include(ed => ed.DefaultForBlueprints)
+                    .ThenInclude(df => df.ItemBlueprint)
+                .FirstOrDefaultAsync(ed => ed.Id == id);
+        }
+
+        public async Task AddAsync(EnchantmentDefinition entity)
+        {
+            await _context.EnchantmentDefinitions.AddAsync(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(EnchantmentDefinition entity)
+        {
+            _context.EnchantmentDefinitions.Update(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var entity = await _context.EnchantmentDefinitions.FindAsync(id);
+            if (entity != null)
+            {
+                _context.EnchantmentDefinitions.Remove(entity);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<PagedResult<EnchantmentDefinition>> SearchAsync(PagedQuery query)
+        {
+            var queryable = _context.EnchantmentDefinitions.AsQueryable();
+
+            // Apply search term filter
+            if (!string.IsNullOrWhiteSpace(query.SearchTerm))
+            {
+                var searchLower = query.SearchTerm.ToLower();
+                queryable = queryable.Where(ed =>
+                    ed.Key.ToLower().Contains(searchLower) ||
+                    ed.DisplayName.ToLower().Contains(searchLower) ||
+                    ed.Description.ToLower().Contains(searchLower));
+            }
+
+            // Get total count before pagination
+            var totalCount = await queryable.CountAsync();
+
+            // Apply sorting
+            queryable = query.SortBy switch
+            {
+                "key" => query.SortDescending ? queryable.OrderByDescending(ed => ed.Key) : queryable.OrderBy(ed => ed.Key),
+                "displayName" => query.SortDescending ? queryable.OrderByDescending(ed => ed.DisplayName) : queryable.OrderBy(ed => ed.DisplayName),
+                "maxLevel" => query.SortDescending ? queryable.OrderByDescending(ed => ed.MaxLevel) : queryable.OrderBy(ed => ed.MaxLevel),
+                _ => query.SortDescending ? queryable.OrderByDescending(ed => ed.Id) : queryable.OrderBy(ed => ed.Id)
+            };
+
+            // Apply pagination
+            var items = await queryable
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .Include(ed => ed.BaseEnchantmentRef)
+                .Include(ed => ed.DefaultForBlueprints)
+                .ToListAsync();
+
+            return new PagedResult<EnchantmentDefinition>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize
+            };
+        }
+    }
+}

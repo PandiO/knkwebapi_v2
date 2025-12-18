@@ -50,6 +50,9 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("maxLevel")]
         public int? MaxLevel { get; set; }
 
+        [JsonPropertyName("isPersisted")]
+        public bool IsPersisted { get; set; }
+
         [JsonPropertyName("displayName")]
         public string? DisplayName { get; set; }
     }

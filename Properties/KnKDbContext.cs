@@ -2,6 +2,7 @@ using System;
 using knkwebapi_v2.Models;
 using Microsoft.EntityFrameworkCore;
 
+// Updated with FieldValidationRule relationship configuration
 namespace knkwebapi_v2.Properties;
 
 public partial class KnKDbContext : DbContext
@@ -22,6 +23,7 @@ public partial class KnKDbContext : DbContext
     public DbSet<FormStep> FormSteps { get; set; }
     public DbSet<FormField> FormFields { get; set; }
     public DbSet<FieldValidation> FieldValidations { get; set; }
+    public DbSet<FieldValidationRule> FieldValidationRules { get; set; }
     public DbSet<StepCondition> StepConditions { get; set; }
     public DbSet<FormSubmissionProgress> FormSubmissionProgresses { get; set; }
     
@@ -41,6 +43,8 @@ public partial class KnKDbContext : DbContext
     public virtual DbSet<MinecraftMaterialRef> MinecraftMaterialRefs { get; set; } = null!;
     public virtual DbSet<MinecraftBlockRef> MinecraftBlockRefs { get; set; } = null!;
     public virtual DbSet<MinecraftEnchantmentRef> MinecraftEnchantmentRefs { get; set; } = null!;
+    public virtual DbSet<ItemBlueprint> ItemBlueprints { get; set; } = null!;
+    public virtual DbSet<EnchantmentDefinition> EnchantmentDefinitions { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -112,6 +116,12 @@ public partial class KnKDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
         
         modelBuilder.Entity<FormField>()
+            .HasMany(f => f.ValidationRules)
+            .WithOne(vr => vr.FormField)
+            .HasForeignKey(vr => vr.FormFieldId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<FormField>()
             .HasOne(f => f.DependsOnField)
             .WithMany(f => f.DependentFields)
             .HasForeignKey(f => f.DependsOnFieldId)
@@ -121,6 +131,13 @@ public partial class KnKDbContext : DbContext
             .HasOne(f => f.SubConfiguration)
             .WithMany()
             .HasForeignKey(f => f.SubConfigurationId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        // FieldValidationRule relationships
+        modelBuilder.Entity<FieldValidationRule>()
+            .HasOne(vr => vr.DependsOnField)
+            .WithMany()
+            .HasForeignKey(vr => vr.DependsOnFieldId)
             .OnDelete(DeleteBehavior.Restrict);
         
         // FormSubmissionProgress relationships
@@ -324,6 +341,22 @@ public partial class KnKDbContext : DbContext
             .HasForeignKey(s => s.DistrictId)
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired();
+
+        // ItemBlueprintDefaultEnchantment join entity with composite primary key
+        modelBuilder.Entity<ItemBlueprintDefaultEnchantment>()
+            .HasKey(e => new { e.ItemBlueprintId, e.EnchantmentDefinitionId });
+
+        modelBuilder.Entity<ItemBlueprintDefaultEnchantment>()
+            .HasOne(e => e.ItemBlueprint)
+            .WithMany(ib => ib.DefaultEnchantments)
+            .HasForeignKey(e => e.ItemBlueprintId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ItemBlueprintDefaultEnchantment>()
+            .HasOne(e => e.EnchantmentDefinition)
+            .WithMany(ed => ed.DefaultForBlueprints)
+            .HasForeignKey(e => e.EnchantmentDefinitionId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         OnModelCreatingPartial(modelBuilder);
     }

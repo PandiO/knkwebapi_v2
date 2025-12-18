@@ -24,6 +24,10 @@ namespace knkwebapi_v2.Repositories
                         .ThenInclude(f => f.Validations)
                 .Include(fc => fc.Steps)
                     .ThenInclude(s => s.StepConditions)
+                .Include(fc => fc.Steps)
+                    .ThenInclude(s => s.ChildFormSteps)
+                        .ThenInclude(cs => cs.Fields)
+                            .ThenInclude(f => f.Validations)
                 .ToListAsync();
         }
 
@@ -35,6 +39,10 @@ namespace knkwebapi_v2.Repositories
                         .ThenInclude(f => f.Validations)
                 .Include(fc => fc.Steps)
                     .ThenInclude(s => s.StepConditions)
+                .Include(fc => fc.Steps)
+                    .ThenInclude(s => s.ChildFormSteps)
+                        .ThenInclude(cs => cs.Fields)
+                            .ThenInclude(f => f.Validations)
                 .FirstOrDefaultAsync(fc => fc.Id == id);
         }
 
@@ -46,6 +54,10 @@ namespace knkwebapi_v2.Repositories
                         .ThenInclude(f => f.Validations)
                 .Include(fc => fc.Steps)
                     .ThenInclude(s => s.StepConditions)
+                .Include(fc => fc.Steps)
+                    .ThenInclude(s => s.ChildFormSteps)
+                        .ThenInclude(cs => cs.Fields)
+                            .ThenInclude(f => f.Validations)
                 .Where(fc => fc.EntityTypeName == entityName);
 
             if (defaultOnly)
@@ -64,6 +76,10 @@ namespace knkwebapi_v2.Repositories
                         .ThenInclude(f => f.Validations)
                 .Include(fc => fc.Steps)
                     .ThenInclude(s => s.StepConditions)
+                .Include(fc => fc.Steps)
+                    .ThenInclude(s => s.ChildFormSteps)
+                        .ThenInclude(cs => cs.Fields)
+                            .ThenInclude(f => f.Validations)
                 .Where(fc => fc.EntityTypeName == entityName)
                 .ToListAsync();
         }
@@ -76,6 +92,10 @@ namespace knkwebapi_v2.Repositories
                         .ThenInclude(f => f.Validations)
                 .Include(fc => fc.Steps)
                     .ThenInclude(s => s.StepConditions)
+                .Include(fc => fc.Steps)
+                    .ThenInclude(s => s.ChildFormSteps)
+                        .ThenInclude(cs => cs.Fields)
+                            .ThenInclude(f => f.Validations)
                 .FirstOrDefaultAsync(fc => fc.EntityTypeName == entityName && fc.IsDefault);
         }
 
@@ -94,6 +114,10 @@ namespace knkwebapi_v2.Repositories
                         .ThenInclude(f => f.Validations)
                 .Include(fc => fc.Steps)
                     .ThenInclude(s => s.StepConditions)
+                .Include(fc => fc.Steps)
+                    .ThenInclude(s => s.ChildFormSteps)
+                        .ThenInclude(cs => cs.Fields)
+                            .ThenInclude(f => f.Validations)
                 .FirstOrDefaultAsync(fc => fc.Id == config.Id);
 
             if (existing == null)
@@ -130,6 +154,10 @@ namespace knkwebapi_v2.Repositories
                         IsReusable = step.IsReusable,
                         SourceStepId = step.SourceStepId,
                         FieldOrderJson = step.FieldOrderJson,
+                        IsManyToManyRelationship = step.IsManyToManyRelationship,
+                        RelatedEntityPropertyName = step.RelatedEntityPropertyName,
+                        JoinEntityType = step.JoinEntityType,
+                        ParentStepId = step.ParentStepId,
                         FormConfigurationId = existing.Id,
                         // StepGuid stays auto-generated
                         CreatedAt = DateTime.UtcNow
@@ -145,6 +173,10 @@ namespace knkwebapi_v2.Repositories
                     match.IsReusable = step.IsReusable;
                     match.SourceStepId = step.SourceStepId;
                     match.FieldOrderJson = step.FieldOrderJson;
+                    match.IsManyToManyRelationship = step.IsManyToManyRelationship;
+                    match.RelatedEntityPropertyName = step.RelatedEntityPropertyName;
+                    match.JoinEntityType = step.JoinEntityType;
+                    match.ParentStepId = step.ParentStepId;
                 }
 
                 // ----- Merge StepConditions -----
@@ -250,6 +282,120 @@ namespace knkwebapi_v2.Repositories
                             valMatch.Type = val.Type;
                             valMatch.ParametersJson = val.ParametersJson;
                             valMatch.ErrorMessage = val.ErrorMessage;
+                        }
+                    }
+                }
+
+                // ----- Merge ChildFormSteps (for M2M relationships) -----
+                var incomingChildStepIds = step.ChildFormSteps.Where(cs => cs.Id != 0).Select(cs => cs.Id).ToHashSet();
+                foreach (var removeChild in match.ChildFormSteps.Where(cs => !incomingChildStepIds.Contains(cs.Id)).ToList())
+                    _context.FormSteps.Remove(removeChild);
+
+                foreach (var childStep in step.ChildFormSteps)
+                {
+                    var childMatch = childStep.Id != 0 ? match.ChildFormSteps.FirstOrDefault(cs => cs.Id == childStep.Id) : null;
+                    if (childMatch == null)
+                    {
+                        var newChild = new FormStep
+                        {
+                            StepName = childStep.StepName,
+                            Description = childStep.Description,
+                            IsReusable = childStep.IsReusable,
+                            SourceStepId = childStep.SourceStepId,
+                            FieldOrderJson = childStep.FieldOrderJson,
+                            ParentStepId = match.Id,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        match.ChildFormSteps.Add(newChild);
+                        childMatch = newChild;
+                    }
+                    else
+                    {
+                        childMatch.StepName = childStep.StepName;
+                        childMatch.Description = childStep.Description;
+                        childMatch.IsReusable = childStep.IsReusable;
+                        childMatch.SourceStepId = childStep.SourceStepId;
+                        childMatch.FieldOrderJson = childStep.FieldOrderJson;
+                    }
+
+                    // Merge child step fields
+                    var incomingChildFieldIds = childStep.Fields.Where(f => f.Id != 0).Select(f => f.Id).ToHashSet();
+                    foreach (var removeField in childMatch.Fields.Where(f => !incomingChildFieldIds.Contains(f.Id)).ToList())
+                        _context.FormFields.Remove(removeField);
+
+                    foreach (var field in childStep.Fields)
+                    {
+                        var fieldMatch = field.Id != 0 ? childMatch.Fields.FirstOrDefault(f => f.Id == field.Id) : null;
+                        if (fieldMatch == null)
+                        {
+                            var newField = new FormField
+                            {
+                                FieldName = field.FieldName,
+                                Label = field.Label,
+                                Placeholder = field.Placeholder,
+                                Description = field.Description,
+                                FieldType = field.FieldType,
+                                ElementType = field.ElementType,
+                                ObjectType = field.ObjectType,
+                                EnumType = field.EnumType,
+                                DefaultValue = field.DefaultValue,
+                                Required = field.Required,
+                                ReadOnly = field.ReadOnly,
+                                IsReusable = field.IsReusable,
+                                SourceFieldId = field.SourceFieldId,
+                                DependsOnFieldId = field.DependsOnFieldId,
+                                DependencyConditionJson = field.DependencyConditionJson,
+                                SubConfigurationId = field.SubConfigurationId,
+                                FormStepId = childMatch.Id,
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            childMatch.Fields.Add(newField);
+                            fieldMatch = newField;
+                        }
+                        else
+                        {
+                            fieldMatch.FieldName = field.FieldName;
+                            fieldMatch.Label = field.Label;
+                            fieldMatch.Placeholder = field.Placeholder;
+                            fieldMatch.Description = field.Description;
+                            fieldMatch.FieldType = field.FieldType;
+                            fieldMatch.ElementType = field.ElementType;
+                            fieldMatch.ObjectType = field.ObjectType;
+                            fieldMatch.EnumType = field.EnumType;
+                            fieldMatch.DefaultValue = field.DefaultValue;
+                            fieldMatch.Required = field.Required;
+                            fieldMatch.ReadOnly = field.ReadOnly;
+                            fieldMatch.IsReusable = field.IsReusable;
+                            fieldMatch.SourceFieldId = field.SourceFieldId;
+                            fieldMatch.DependsOnFieldId = field.DependsOnFieldId;
+                            fieldMatch.DependencyConditionJson = field.DependencyConditionJson;
+                            fieldMatch.SubConfigurationId = field.SubConfigurationId;
+                        }
+
+                        // Merge child field validations
+                        var incomingValidationIds = field.Validations.Where(v => v.Id != 0).Select(v => v.Id).ToHashSet();
+                        foreach (var removeVal in fieldMatch.Validations.Where(v => !incomingValidationIds.Contains(v.Id)).ToList())
+                            _context.FieldValidations.Remove(removeVal);
+
+                        foreach (var val in field.Validations)
+                        {
+                            var valMatch = val.Id != 0 ? fieldMatch.Validations.FirstOrDefault(v => v.Id == val.Id) : null;
+                            if (valMatch == null)
+                            {
+                                fieldMatch.Validations.Add(new FieldValidation
+                                {
+                                    Type = val.Type,
+                                    ParametersJson = val.ParametersJson,
+                                    ErrorMessage = val.ErrorMessage,
+                                    FormFieldId = fieldMatch.Id
+                                });
+                            }
+                            else
+                            {
+                                valMatch.Type = val.Type;
+                                valMatch.ParametersJson = val.ParametersJson;
+                                valMatch.ErrorMessage = val.ErrorMessage;
+                            }
                         }
                     }
                 }

@@ -1,6 +1,8 @@
 using knkwebapi_v2.Attributes;
 using knkwebapi_v2.Models;
 
+namespace knkwebapi_v2.Models;
+
 [FormConfigurableEntity("EnchantmentDefinition")]
 public class EnchantmentDefinition
 {
@@ -15,11 +17,19 @@ public class EnchantmentDefinition
     public bool IsCustom { get; set; } = false;
     public int MaxLevel { get; set; } = 1;
 
-    [NavigationPair(nameof(MinecraftEnchantmentRef))]
+    // Many-to-One: EnchantmentDefinition → MinecraftEnchantmentRef (base enchantment reference)
+    [NavigationPair(nameof(BaseEnchantmentRef))]
     [RelatedEntityField(typeof(MinecraftEnchantmentRef))]
-    public List<int> DefaultForBlueprintIds { get; set; } = new();
+    public int? MinecraftEnchantmentRefId { get; set; }
+    
+    [RelatedEntityField(typeof(MinecraftEnchantmentRef))]
+    public MinecraftEnchantmentRef? BaseEnchantmentRef { get; set; }
+
+    // Many-to-Many: EnchantmentDefinition ↔ ItemBlueprint (via ItemBlueprintDefaultEnchantment)
+    [NavigationPair(nameof(ItemBlueprintDefaultEnchantment))]
     [RelatedEntityField(typeof(ItemBlueprintDefaultEnchantment))]
-    public List<ItemBlueprintDefaultEnchantment> DefaultForBlueprints { get; set; } = new();
+    public ICollection<ItemBlueprintDefaultEnchantment> DefaultForBlueprints { get; set; } = new List<ItemBlueprintDefaultEnchantment>();
+    
     // TODO: Add ItemInstanceEnchantment when item instances are implemented
-    // public List<ItemInstanceEnchantment> AppliedToInstances { get; set; } = new();
+    // public ICollection<ItemInstanceEnchantment> AppliedToInstances { get; set; } = new List<ItemInstanceEnchantment>();
 }

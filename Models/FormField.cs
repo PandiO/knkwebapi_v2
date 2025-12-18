@@ -229,6 +229,20 @@ namespace knkwebapi_v2.Models
         public List<FieldValidation> Validations { get; set; } = new();
         
         /// <summary>
+        /// Field-level validation rules (NEW).
+        /// 
+        /// These rules are executed when the field value changes or before form submission.
+        /// Each rule can depend on another field's value for cross-field validation.
+        /// 
+        /// EXAMPLE:
+        /// - Field: "SpawnLocationId" (Location)
+        /// - Rule: "LocationInsideRegion" (depends on "WgRegionId")
+        /// - Validation: Location coordinates must be inside the WorldGuard region
+        /// - Result: ✅ success or ❌ failure with error message (blocking or warning)
+        /// </summary>
+        public List<FieldValidationRule> ValidationRules { get; set; } = new();
+        
+        /// <summary>
         /// Collection of fields that depend on THIS field.
         /// Inverse navigation property for DependsOnField.
         /// 

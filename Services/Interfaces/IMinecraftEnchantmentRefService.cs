@@ -12,4 +12,5 @@ public interface IMinecraftEnchantmentRefService
     Task DeleteAsync(int id);
     Task<List<MinecraftHybridEnchantmentOptionDto>> GetHybridAsync(string? search = null, string? category = null, int? take = null);
     Task<PagedResultDto<MinecraftEnchantmentRefListDto>> SearchAsync(PagedQueryDto query);
+    Task<PagedResultDto<MinecraftEnchantmentRefListDto>> SearchHybridAsync(PagedQueryDto query);
 }

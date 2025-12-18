@@ -10,6 +10,7 @@ namespace knkwebapi_v2.Enums
         Enum = 5,
         Object = 6,
         List = 7,
-        HybridMinecraftMaterialRefPicker = 8
+        HybridMinecraftMaterialRefPicker = 8,
+        HybridMinecraftEnchantmentRefPicker = 9 // Custom picker for enchantment references
     }
 }

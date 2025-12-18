@@ -111,6 +111,13 @@ public class MinecraftEnchantmentRefsController : ControllerBase
     public async Task<ActionResult<PagedResultDto<MinecraftEnchantmentRefListDto>>> Search([FromBody] PagedQueryDto? query)
     {
         query ??= new PagedQueryDto();
+
+        if (query.Filters != null && query.Filters.TryGetValue("SearchHybrid", out var hybridValue) && hybridValue?.ToString()?.ToLower() == "true")
+        {
+            var hybridResult = await _service.SearchHybridAsync(query);
+            return Ok(hybridResult);
+        }
+
         var result = await _service.SearchAsync(query);
         return Ok(result);
     }

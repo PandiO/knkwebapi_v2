@@ -5,11 +5,13 @@ namespace knkwebapi_v2.Models;
 [FormConfigurableEntity("ItemBlueprintDefaultEnchantment")]
 public class ItemBlueprintDefaultEnchantment
 {
+    // Composite primary key (ItemBlueprint + Enchantment combo)
     [NavigationPair(nameof(ItemBlueprint))]
     [RelatedEntityField(typeof(ItemBlueprint))]
     public int ItemBlueprintId { get; set; }
     [RelatedEntityField(typeof(ItemBlueprint))]
     public ItemBlueprint ItemBlueprint { get; set; } = null!;
+    
     [NavigationPair(nameof(EnchantmentDefinition))]
     [RelatedEntityField(typeof(EnchantmentDefinition))]
     public int EnchantmentDefinitionId { get; set; }

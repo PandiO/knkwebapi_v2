@@ -47,6 +47,10 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<IFormSubmissionProgressService, FormSubmissionProgressService>();
             services.AddScoped<IGateStructureRepository, GateStructureRepository>();
             services.AddScoped<IGateStructureService, GateStructureService>();
+            services.AddScoped<IItemBlueprintRepository, ItemBlueprintRepository>();
+            services.AddScoped<IItemBlueprintService, ItemBlueprintService>();
+            services.AddScoped<IEnchantmentDefinitionRepository, EnchantmentDefinitionRepository>();
+            services.AddScoped<IEnchantmentDefinitionService, EnchantmentDefinitionService>();
             
             // DisplayConfiguration repositories
             services.AddScoped<IDisplayConfigurationRepository, DisplayConfigurationRepository>();
