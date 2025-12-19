@@ -84,6 +84,14 @@ namespace knkwebapi_v2.Dtos
         public List<string>? CompatibilityIssues { get; set; }
         [JsonPropertyName("validations")]
         public List<FieldValidationDto> Validations { get; set; } = new();
+        [JsonPropertyName("settingsJson")]
+        public string? SettingsJson { get; set; }
+        [JsonPropertyName("minSelection")]
+        public int? MinSelection { get; set; }
+        [JsonPropertyName("maxSelection")]
+        public int? MaxSelection { get; set; }
+        [JsonPropertyName("canCreate")]
+        public bool? CanCreate { get; set; }
     }
 
     public class FormStepDto

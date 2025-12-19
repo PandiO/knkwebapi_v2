@@ -583,6 +583,9 @@ namespace knkwebapi_v2.Migrations
                     b.Property<bool>("Required")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("SettingsJson")
+                        .HasColumnType("longtext");
+
                     b.Property<int?>("SourceFieldId")
                         .HasColumnType("int");
 

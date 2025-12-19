@@ -260,5 +260,16 @@ namespace knkwebapi_v2.Models
         /// Backend uses this for validation: if Field A is true, ensure Field B and Field C are filled.
         /// </summary>
         public List<FormField> DependentFields { get; set; } = new();
+        
+        /// <summary>
+        /// JSON string for additional field settings that don't fit into dedicated properties.
+        /// Used for field-specific configurations like:
+        /// - HybridMinecraftMaterialRefPicker: { "categoryFilter": "ICON", "multiSelect": false }
+        /// - World task integration: { "worldTask": { "enabled": true, "taskType": "VerifyLocation" } }
+        /// - Custom field behaviors: { "allowCustom": true, "maxItems": 5 }
+        /// 
+        /// This provides extensibility without requiring schema changes for every new field configuration option.
+        /// </summary>
+        public string? SettingsJson { get; set; }
     }
 }
