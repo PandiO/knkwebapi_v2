@@ -305,9 +305,6 @@ namespace knkwebapi_v2.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("ParentDomainId")
-                        .HasColumnType("int");
-
                     b.Property<string>("WgRegionId")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -317,8 +314,6 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("LocationId")
                         .IsUnique();
-
-                    b.HasIndex("ParentDomainId");
 
                     b.ToTable("domains", (string)null);
 
@@ -1271,13 +1266,7 @@ namespace knkwebapi_v2.Migrations
                         .HasForeignKey("knkwebapi_v2.Models.Domain", "LocationId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("knkwebapi_v2.Models.Domain", "ParentDomain")
-                        .WithMany("ChildDomains")
-                        .HasForeignKey("ParentDomainId");
-
                     b.Navigation("Location");
-
-                    b.Navigation("ParentDomain");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.EnchantmentDefinition", b =>
@@ -1537,11 +1526,6 @@ namespace knkwebapi_v2.Migrations
                     b.Navigation("Fields");
 
                     b.Navigation("SubSections");
-                });
-
-            modelBuilder.Entity("knkwebapi_v2.Models.Domain", b =>
-                {
-                    b.Navigation("ChildDomains");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.EnchantmentDefinition", b =>

@@ -30,7 +30,4 @@ public class Domain
     public int? ParentDomainId { get; set; }
     [RelatedEntityField(typeof(Domain))]
     public Domain? ParentDomain { get; set; }
-    
-    [RelatedEntityField(typeof(Domain))]
-    public ICollection<Domain?> ChildDomains { get; set; } = new List<Domain>();
 }
