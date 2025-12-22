@@ -24,4 +24,10 @@ public class Domain
     public int? LocationId { get; set; }
     [RelatedEntityField(typeof(Location))]
     public Location? Location { get; set; }
+
+    [NavigationPair(nameof(ParentDomain))]
+    [RelatedEntityField(typeof(Domain))]
+    public int? ParentDomainId { get; set; }
+    [RelatedEntityField(typeof(Domain))]
+    public Domain? ParentDomain { get; set; }
 }

@@ -15,12 +15,32 @@ namespace knkwebapi_v2.Repositories
 
         public async Task<IEnumerable<Domain>> GetAllAsync()
         {
-            return await _context.Domains.ToListAsync();
+            return await _context.Domains.Include(d => d.ParentDomain).ToListAsync();
         }
 
         public async Task<Domain?> GetByIdAsync(int id)
         {
-            return await _context.Domains.FirstOrDefaultAsync(d => d.Id == id);
+            return await _context.Domains.Include(d => d.ParentDomain).FirstOrDefaultAsync(d => d.Id == id);
+        }
+
+        public async Task<Domain?> GetByWgRegionNameAsync(string regionName)
+        {
+            if (string.IsNullOrWhiteSpace(regionName)) return null;
+            var v = regionName.ToLower();
+            var domain = await _context.Domains.FirstOrDefaultAsync(d => d.WgRegionId.ToLower() == v);
+            
+            if (domain == null) return null;
+
+            // Explicitly load the entire ParentDomain chain (unknown depth)
+            var current = domain;
+            while (current.ParentDomainId.HasValue)
+            {
+                await _context.Entry(current).Reference(d => d.ParentDomain).LoadAsync();
+                if (current.ParentDomain == null) break;
+                current = current.ParentDomain;
+            }
+
+            return domain;
         }
 
         public async Task AddDomainAsync(Domain domain)

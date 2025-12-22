@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Services;
 
@@ -12,10 +14,12 @@ namespace KnKWebAPI.Controllers
     public class DomainsController : ControllerBase
     {
         private readonly IDomainService _service;
+        private readonly IMapper _mapper;
 
-        public DomainsController(IDomainService service)
+        public DomainsController(IDomainService service, IMapper mapper)
         {
             _service = service;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -85,6 +89,24 @@ namespace KnKWebAPI.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        [HttpGet("by-region/{regionName}")]
+        public async Task<ActionResult<DomainRegionDecisionDto>> GetByRegionName(string regionName)
+        {
+            if (string.IsNullOrWhiteSpace(regionName)) return BadRequest("regionName is required.");
+            var dto = await _service.GetByWgRegionNameAsync(regionName);
+            if (dto == null) return NotFound();
+            return Ok(dto);
+        }
+
+        [HttpPost("search-region-decisions")]
+        public async Task<ActionResult<DomainRegionDecisionDto>> SearchDomainRegionDecisionDto([FromBody] DomainRegionQueryDto queryDto)
+        {
+            if (queryDto.WgRegionIds == null) return BadRequest("WgRegionIds is required.");
+
+            var result = await _service.SearchDomainRegionDecisionAsync(queryDto);
+            return Ok(result);
         }
     }
 }
