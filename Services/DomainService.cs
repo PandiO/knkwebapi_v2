@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoMapper;
-using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
 
@@ -11,12 +9,10 @@ namespace knkwebapi_v2.Services
     public class DomainService : IDomainService
     {
         private readonly IDomainRepository _repo;
-        private readonly IMapper _mapper;
 
-        public DomainService(IDomainRepository repo, IMapper mapper)
+        public DomainService(IDomainRepository repo)
         {
             _repo = repo;
-            _mapper = mapper;
         }
 
         public async Task<IEnumerable<Domain>> GetAllAsync()
@@ -64,45 +60,6 @@ namespace knkwebapi_v2.Services
             if (existing == null) throw new KeyNotFoundException($"Domain with id {id} not found.");
 
             await _repo.DeleteDomainAsync(id);
-        }
-
-        public async Task<DomainRegionDecisionDto?> GetByWgRegionNameAsync(string regionName)
-        {
-            if (string.IsNullOrWhiteSpace(regionName)) return null;
-            var domain = await _repo.GetByWgRegionNameAsync(regionName);
-            if (domain == null) return null;
-            return _mapper.Map<DomainRegionDecisionDto>(domain);
-        }
-
-        /// <summary>
-        /// Searches for domain region decisions based on the provided query criteria.
-        /// </summary>
-        /// <param name="queryDto">The query data transfer object containing WgRegionIds to search for.</param>
-        /// <returns>
-        /// A task that represents the asynchronous operation. The task result contains the domain region decision 
-        /// with the lowest count of ParentDomainDecisions, or null if no decisions are found or queryDto.WgRegionIds is null.
-        /// </returns>
-        /// <remarks>
-        /// This method retrieves domains by region IDs, maps them to DomainRegionDecisionDto objects, and returns 
-        /// the one with the minimum number of parent domain decisions. Results are sorted in ascending order by 
-        /// ParentDomainDecisions count.
-        /// </remarks>
-        public async Task<DomainRegionDecisionDto?> SearchDomainRegionDecisionAsync(DomainRegionQueryDto queryDto)
-        {
-            if (queryDto.WgRegionIds == null) return null;
-            var domainDecisions = new List<DomainRegionDecisionDto>();
-            foreach (var regionId in queryDto.WgRegionIds)
-            {
-                var domain = await _repo.GetByWgRegionNameAsync(regionId);
-                if (domain != null)
-                {
-                    domainDecisions.Add(_mapper.Map<DomainRegionDecisionDto>(domain));
-                }
-            }
-            domainDecisions.Sort((a, b) => Comparer<int>.Default.Compare(a.ParentDomainDecisions.Count, b.ParentDomainDecisions.Count));
-            return queryDto.TopDownHierarchy == true
-                ? (domainDecisions.Count > 0 ? domainDecisions[0] : null)
-                : (domainDecisions.Count > 0 ? domainDecisions[^1] : null);
         }
     }
 }
