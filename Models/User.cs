@@ -12,5 +12,6 @@ public class User
     public string Email { get; set; } = null!;
     public string PasswordHash { get; set; } = null!;
     public DateTime CreatedAt { get; set; } = DateTime.Now;
-    public int cash { get; set; } = 0;
+    public int Coins { get; set; } = 0;
+    public int Gems { get; set; } = 0;
 }

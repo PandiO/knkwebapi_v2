@@ -6,6 +6,7 @@ namespace knkwebapi_v2.Repositories
     {
         Task<IEnumerable<Domain>> GetAllAsync();
         Task<Domain?> GetByIdAsync(int id);
+        Task<Domain?> GetByWgRegionNameAsync(string regionName);
         Task AddDomainAsync(Domain domain);
         Task UpdateDomainAsync(Domain domain);
         Task DeleteDomainAsync(int id);
