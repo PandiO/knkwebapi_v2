@@ -31,6 +31,23 @@ namespace KnKWebAPI.Controllers
             return Ok(item);
         }
 
+        // Get task by link code
+        [HttpGet("by-link-code/{linkCode}")]
+        public async Task<IActionResult> GetByLinkCode(string linkCode)
+        {
+            var item = await _service.GetByLinkCodeAsync(linkCode);
+            if (item == null) return NotFound();
+            return Ok(item);
+        }
+
+        // List tasks by status
+        [HttpGet("status/{status}")]
+        public async Task<IActionResult> ListByStatus(string status, [FromQuery] string? serverId = null)
+        {
+            var items = await _service.ListByStatusAsync(status, serverId);
+            return Ok(items);
+        }
+
         // List by session
         [HttpGet("session/{sessionId:int}")]
         public async Task<IActionResult> GetBySession(int sessionId)
@@ -65,6 +82,57 @@ namespace KnKWebAPI.Controllers
             try
             {
                 var updated = await _service.UpdateStatusAsync(id, body.Status, body.PayloadJson);
+                return Ok(updated);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+
+        // Claim a task
+        [HttpPost("{id:int}/claim")]
+        public async Task<IActionResult> ClaimTask(int id, [FromBody] ClaimTaskDto dto)
+        {
+            try
+            {
+                var updated = await _service.ClaimAsync(id, dto);
+                return Ok(updated);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // Complete a task
+        [HttpPost("{id:int}/complete")]
+        public async Task<IActionResult> CompleteTask(int id, [FromBody] CompleteTaskDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.OutputJson)) return BadRequest();
+            try
+            {
+                var updated = await _service.CompleteAsync(id, dto);
+                return Ok(updated);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+
+        // Fail a task
+        [HttpPost("{id:int}/fail")]
+        public async Task<IActionResult> FailTask(int id, [FromBody] FailTaskDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.ErrorMessage)) return BadRequest();
+            try
+            {
+                var updated = await _service.FailAsync(id, dto);
                 return Ok(updated);
             }
             catch (KeyNotFoundException)

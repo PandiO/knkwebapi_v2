@@ -65,7 +65,7 @@ namespace KnKWebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] UserDto user)
+        public async Task<IActionResult> Create([FromBody] UserCreateDto user)
         {
             if (user == null) return BadRequest();
             try

@@ -83,5 +83,38 @@ namespace knkwebapi_v2.Services
         {
             await _workflowRepo.DeleteSessionAsync(id);
         }
+
+        public async Task<WorkflowSessionReadDto> UpdateStepAsync(int sessionId, int stepNumber, object stepData)
+        {
+            var session = await _workflowRepo.GetSessionByIdAsync(sessionId);
+            if (session == null) throw new KeyNotFoundException($"Workflow session {sessionId} not found.");
+
+            // TODO: Implement step validation and data persistence to draft entity
+            // For now, just mark the step as completed
+            var stepKey = $"step_{stepNumber}";
+            await SetStepCompletedAsync(sessionId, stepKey, stepNumber);
+
+            session.UpdatedAt = DateTime.UtcNow;
+            await _workflowRepo.UpdateSessionAsync(session);
+
+            return _mapper.Map<WorkflowSessionReadDto>(session);
+        }
+
+        public async Task<WorkflowSessionReadDto> FinalizeAsync(int sessionId)
+        {
+            var session = await _workflowRepo.GetSessionByIdAsync(sessionId);
+            if (session == null) throw new KeyNotFoundException($"Workflow session {sessionId} not found.");
+
+            // TODO: Check all steps completed, all tasks completed
+            // TODO: Merge world-bound outputs into entity
+            // TODO: Transition entity to Active state
+
+            session.Status = "Completed";
+            session.CompletedAt = DateTime.UtcNow;
+            session.UpdatedAt = DateTime.UtcNow;
+            await _workflowRepo.UpdateSessionAsync(session);
+
+            return _mapper.Map<WorkflowSessionReadDto>(session);
+        }
     }
 }

@@ -46,11 +46,11 @@ namespace knkwebapi_v2.Services
             return _mapper.Map<UserDto>(user);
         }
 
-        public async Task<UserDto> CreateAsync(UserDto userDto)
+        public async Task<UserDto> CreateAsync(UserCreateDto userDto)
         {
             if (userDto == null) throw new ArgumentNullException(nameof(userDto));
             if (string.IsNullOrWhiteSpace(userDto.Username)) throw new ArgumentException("Username is required.", nameof(userDto));
-            if (string.IsNullOrWhiteSpace(userDto.Email)) throw new ArgumentException("Email is required.", nameof(userDto));
+            // if (string.IsNullOrWhiteSpace(userDto.Email)) throw new ArgumentException("Email is required.", nameof(userDto));
 
             var user = _mapper.Map<User>(userDto);
             user.CreatedAt = DateTime.UtcNow;

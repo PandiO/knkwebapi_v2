@@ -1,7 +1,22 @@
+using System;
 using System.Text.Json.Serialization;
 
 namespace knkwebapi_v2.Dtos
 {
+    public class UserCreateDto
+    {
+        [JsonPropertyName("username")]
+        public string Username { get; set; } = null!;
+
+        [JsonPropertyName("uuid")]
+        public Guid Uuid { get; set; }
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; } = null!;
+
+        [JsonPropertyName("createdAt")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
     public class UserDto
     {
         [JsonPropertyName("id")]

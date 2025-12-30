@@ -37,6 +37,17 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.uuid, src => src.MapFrom(src => src.Uuid))
                 .ForMember(dest => dest.email, src => src.MapFrom(src => src.Email))
                 .ForMember(dest => dest.Coins, src => src.MapFrom(src => src.Coins));
+        
+            CreateMap<UserCreateDto, User>()
+                .ForMember(dest => dest.Id, src => src.Ignore())
+                .ForMember(dest => dest.Username, src => src.MapFrom(src => src.Username))
+                .ForMember(dest => dest.Uuid, src => src.MapFrom(src => src.Uuid))
+                .ForMember(dest => dest.Email, src => src.MapFrom(src => src.Email))
+                .ForMember(dest => dest.Coins, src => src.Ignore())
+                .ForMember(dest => dest.CreatedAt, src => src.MapFrom(src => src.CreatedAt))
+                .ForMember(dest => dest.PasswordHash, src => src.Ignore());
         }
+
+
     }
 }

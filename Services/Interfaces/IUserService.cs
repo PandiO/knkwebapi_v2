@@ -9,7 +9,7 @@ namespace knkwebapi_v2.Services
         Task<UserDto?> GetByIdAsync(int id);
         Task<UserDto?> GetByUuidAsync(string uuid);
         Task<UserDto?> GetByUsernameAsync(string username);
-        Task<UserDto> CreateAsync(UserDto user);
+        Task<UserDto> CreateAsync(UserCreateDto user);
         Task UpdateAsync(int id, UserDto user);
         Task UpdateCoinsAsync(int id, int coins);
         Task UpdateCoinsByUuidAsync(string uuid, int coins);
