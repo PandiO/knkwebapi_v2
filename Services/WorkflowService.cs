@@ -3,6 +3,8 @@ using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories.Interfaces;
 using knkwebapi_v2.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 
 namespace knkwebapi_v2.Services
 {
@@ -58,24 +60,44 @@ namespace knkwebapi_v2.Services
 
         public async Task<StepProgressReadDto> SetStepCompletedAsync(int sessionId, string stepKey, int? stepIndex = null)
         {
-            if (string.IsNullOrWhiteSpace(stepKey)) throw new ArgumentException("stepKey is required", nameof(stepKey));
-            var step = await _workflowRepo.GetStepAsync(sessionId, stepKey);
+            var normalizedStepKey = stepKey?.Trim();
+            if (string.IsNullOrWhiteSpace(normalizedStepKey)) throw new ArgumentException("stepKey is required", nameof(stepKey));
+
+            var now = DateTime.UtcNow;
+            var step = await _workflowRepo.GetStepAsync(sessionId, normalizedStepKey);
+
             if (step == null)
             {
                 step = new StepProgress
                 {
                     WorkflowSessionId = sessionId,
-                    StepKey = stepKey,
+                    StepKey = normalizedStepKey,
                     StepIndex = stepIndex ?? 0,
-                    Status = "Pending",
-                    CreatedAt = DateTime.UtcNow
+                    Status = "Completed",
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                    CompletedAt = now
                 };
-                await _workflowRepo.AddStepAsync(step);
+
+                try
+                {
+                    await _workflowRepo.AddStepAsync(step);
+                    return _mapper.Map<StepProgressReadDto>(step);
+                }
+                catch (DbUpdateException ex) when (IsDuplicateStepKeyException(ex))
+                {
+                    step = await _workflowRepo.GetStepAsync(sessionId, normalizedStepKey) ?? throw new InvalidOperationException($"Step '{normalizedStepKey}' not found after duplicate key exception.");
+                }
             }
-            step.Status = "Completed";
-            step.UpdatedAt = DateTime.UtcNow;
-            step.CompletedAt = DateTime.UtcNow;
-            await _workflowRepo.UpdateStepAsync(step);
+
+            if (step.Status != "Completed" || step.CompletedAt == null)
+            {
+                step.Status = "Completed";
+                step.UpdatedAt = now;
+                step.CompletedAt = now;
+                await _workflowRepo.UpdateStepAsync(step);
+            }
+
             return _mapper.Map<StepProgressReadDto>(step);
         }
 
@@ -116,5 +138,8 @@ namespace knkwebapi_v2.Services
 
             return _mapper.Map<WorkflowSessionReadDto>(session);
         }
+
+        private static bool IsDuplicateStepKeyException(DbUpdateException ex) =>
+            ex.InnerException is MySqlException { Number: 1062 };
     }
 }

@@ -3,6 +3,9 @@ using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories.Interfaces;
 using knkwebapi_v2.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
+using System.Text.Json;
 
 namespace knkwebapi_v2.Services
 {
@@ -21,8 +24,42 @@ namespace knkwebapi_v2.Services
 
         public async Task<WorldTaskReadDto> CreateAsync(WorldTaskCreateDto dto)
         {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            // Validate that critical routing fields are provided
+            if (dto.WorkflowSessionId <= 0)
+                throw new ArgumentException("WorkflowSessionId must be greater than 0", nameof(dto.WorkflowSessionId));
+
+            if (dto.StepNumber < 0)
+                throw new ArgumentException("StepNumber must be >= 0", nameof(dto.StepNumber));
+
+            dto.StepKey = dto.StepKey?.Trim();
+            if (string.IsNullOrWhiteSpace(dto.StepKey))
+                throw new ArgumentException("StepKey is required for workflow context", nameof(dto.StepKey));
+
+            var payloadJson = dto.InputJson ?? dto.PayloadJson;
+            var normalizedFieldName = string.IsNullOrWhiteSpace(dto.FieldName) ? null : dto.FieldName.Trim();
+            if (normalizedFieldName == null && !string.IsNullOrWhiteSpace(payloadJson))
+            {
+                normalizedFieldName = ExtractFieldNameFromPayload(payloadJson);
+            }
+
+            if (string.IsNullOrWhiteSpace(normalizedFieldName))
+                throw new ArgumentException("FieldName is required for plugin field routing", nameof(dto.FieldName));
+
+            dto.FieldName = normalizedFieldName;
+
+            if (string.IsNullOrWhiteSpace(dto.TaskType))
+                throw new ArgumentException("TaskType is required", nameof(dto.TaskType));
+
             var entity = _mapper.Map<WorldTask>(dto);
             entity.CreatedAt = DateTime.UtcNow;
+            entity.FieldName = normalizedFieldName;
+            if (payloadJson != null)
+            {
+                entity.InputJson ??= payloadJson;
+                entity.PayloadJson ??= payloadJson;
+            }
             
             // Generate unique LinkCode (6-digit random code)
             entity.LinkCode = GenerateLinkCode();
@@ -92,28 +129,20 @@ namespace knkwebapi_v2.Services
             entity.UpdatedAt = DateTime.UtcNow;
             if (string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase))
             {
-                entity.CompletedAt = DateTime.UtcNow;
+                var now = DateTime.UtcNow;
+                entity.CompletedAt = now;
 
-                // Link to StepProgress if configured
+                // Link to StepProgress if configured (idempotent, handles duplicate keys)
                 if (!string.IsNullOrWhiteSpace(entity.StepKey))
                 {
-                    var step = await _workflowRepo.GetStepAsync(entity.WorkflowSessionId, entity.StepKey!);
-                    if (step == null)
+                    var step = await GetOrCreateStepAsync(entity.WorkflowSessionId, entity.StepKey!, entity.StepNumber ?? 0);
+                    if (step.Status != "Completed" || step.CompletedAt == null)
                     {
-                        step = new StepProgress
-                        {
-                            WorkflowSessionId = entity.WorkflowSessionId,
-                            StepKey = entity.StepKey!,
-                            StepIndex = 0,
-                            Status = "Pending",
-                            CreatedAt = DateTime.UtcNow
-                        };
-                        await _workflowRepo.AddStepAsync(step);
+                        step.Status = "Completed";
+                        step.UpdatedAt = now;
+                        step.CompletedAt = now;
+                        await _workflowRepo.UpdateStepAsync(step);
                     }
-                    step.Status = "Completed";
-                    step.UpdatedAt = DateTime.UtcNow;
-                    step.CompletedAt = DateTime.UtcNow;
-                    await _workflowRepo.UpdateStepAsync(step);
                 }
             }
 
@@ -164,23 +193,15 @@ namespace knkwebapi_v2.Services
             // Link to StepProgress if configured
             if (!string.IsNullOrWhiteSpace(entity.StepKey))
             {
-                var step = await _workflowRepo.GetStepAsync(entity.WorkflowSessionId, entity.StepKey!);
-                if (step == null)
+                var step = await GetOrCreateStepAsync(entity.WorkflowSessionId, entity.StepKey!, entity.StepNumber ?? 0);
+                var now = DateTime.UtcNow;
+                if (step.Status != "Completed" || step.CompletedAt == null)
                 {
-                    step = new StepProgress
-                    {
-                        WorkflowSessionId = entity.WorkflowSessionId,
-                        StepKey = entity.StepKey!,
-                        StepIndex = entity.StepNumber ?? 0,
-                        Status = "Pending",
-                        CreatedAt = DateTime.UtcNow
-                    };
-                    await _workflowRepo.AddStepAsync(step);
+                    step.Status = "Completed";
+                    step.UpdatedAt = now;
+                    step.CompletedAt = now;
+                    await _workflowRepo.UpdateStepAsync(step);
                 }
-                step.Status = "Completed";
-                step.UpdatedAt = DateTime.UtcNow;
-                step.CompletedAt = DateTime.UtcNow;
-                await _workflowRepo.UpdateStepAsync(step);
             }
 
             await _taskRepo.UpdateAsync(entity);
@@ -203,6 +224,30 @@ namespace knkwebapi_v2.Services
         {
             await _taskRepo.DeleteAsync(id);
         }
+        /// <summary>
+        /// Creates a world task from FormField context with guaranteed step/field information.
+        /// </summary>
+        public async Task<WorldTaskReadDto> CreateFromFormFieldAsync(
+            int workflowSessionId,
+            int stepNumber,
+            string stepKey,
+            string fieldName,
+            string taskType,
+            string? inputJson = null,
+            int? assignedUserId = null)
+        {
+            var dto = new WorldTaskCreateDto
+            {
+                WorkflowSessionId = workflowSessionId,
+                StepNumber = stepNumber,
+                StepKey = stepKey,
+                FieldName = fieldName,
+                TaskType = taskType,
+                InputJson = inputJson,
+                AssignedUserId = assignedUserId
+            };
+            return await CreateAsync(dto);
+        }
 
         private static string GenerateLinkCode()
         {
@@ -211,6 +256,100 @@ namespace knkwebapi_v2.Services
             var random = new Random();
             return new string(Enumerable.Repeat(chars, 6)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        private async Task<StepProgress> GetOrCreateStepAsync(int sessionId, string stepKey, int stepIndex)
+        {
+            var normalizedStepKey = stepKey?.Trim();
+            if (string.IsNullOrWhiteSpace(normalizedStepKey)) throw new ArgumentException("stepKey is required", nameof(stepKey));
+
+            var existing = await _workflowRepo.GetStepAsync(sessionId, normalizedStepKey);
+            if (existing != null) return existing;
+
+            var now = DateTime.UtcNow;
+            var step = new StepProgress
+            {
+                WorkflowSessionId = sessionId,
+                StepKey = normalizedStepKey,
+                StepIndex = stepIndex,
+                Status = "Pending",
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+
+            try
+            {
+                await _workflowRepo.AddStepAsync(step);
+                return step;
+            }
+            catch (DbUpdateException ex) when (IsDuplicateStepKeyException(ex))
+            {
+                return await _workflowRepo.GetStepAsync(sessionId, normalizedStepKey)
+                    ?? throw new InvalidOperationException($"Step '{normalizedStepKey}' not found after duplicate key exception.");
+            }
+        }
+
+        private static bool IsDuplicateStepKeyException(DbUpdateException ex) =>
+            ex.InnerException is MySqlException { Number: 1062 };
+
+        private static string? ExtractFieldNameFromPayload(string payloadJson)
+        {
+            if (string.IsNullOrWhiteSpace(payloadJson)) return null;
+
+            // Try raw payload first, then a JSON-unescaped version in case the payload arrived double-encoded.
+            foreach (var candidate in EnumeratePayloadCandidates(payloadJson))
+            {
+                var value = TryParseFieldName(candidate);
+                if (!string.IsNullOrWhiteSpace(value)) return value;
+            }
+
+            return null;
+        }
+
+        private static IEnumerable<string> EnumeratePayloadCandidates(string payload)
+        {
+            yield return payload;
+
+            // If payload looks escaped (contains \" or starts/ends with quotes), attempt to unescape once.
+            var looksEscaped = payload.Contains("\\\"") || (payload.StartsWith("\"") && payload.EndsWith("\""));
+            if (looksEscaped)
+            {
+                string? unescaped = null;
+                try
+                {
+                    unescaped = JsonSerializer.Deserialize<string>(payload);
+                }
+                catch (JsonException)
+                {
+                    // Ignore; the raw candidate may still work.
+                }
+
+                if (!string.IsNullOrWhiteSpace(unescaped)) yield return unescaped;
+            }
+        }
+
+        private static string? TryParseFieldName(string json)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.ValueKind != JsonValueKind.Object) return null;
+
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                {
+                    if (string.Equals(prop.Name, "fieldName", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var value = prop.Value.GetString();
+                        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+                // Ignore malformed payloads; caller will handle missing field names.
+            }
+
+            return null;
         }
     }
 }

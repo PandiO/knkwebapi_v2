@@ -1,6 +1,7 @@
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Properties;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 
 namespace knkwebapi_v2.Repositories
 {
@@ -67,8 +68,15 @@ namespace knkwebapi_v2.Repositories
 
         public async Task AddStepAsync(StepProgress step)
         {
-            await _context.StepProgresses.AddAsync(step);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.StepProgresses.AddAsync(step);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (IsDuplicateStepKeyException(ex))
+            {
+                // Swallow duplicate key races; caller should re-query
+            }
         }
 
         public async Task UpdateStepAsync(StepProgress step)
@@ -76,5 +84,8 @@ namespace knkwebapi_v2.Repositories
             _context.StepProgresses.Update(step);
             await _context.SaveChangesAsync();
         }
+
+        private static bool IsDuplicateStepKeyException(DbUpdateException ex) =>
+            ex.InnerException is MySqlException { Number: 1062 };
     }
 }

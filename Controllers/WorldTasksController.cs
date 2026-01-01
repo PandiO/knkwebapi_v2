@@ -19,8 +19,59 @@ namespace KnKWebAPI.Controllers
         public async Task<IActionResult> Create([FromBody] WorldTaskCreateDto dto)
         {
             if (dto == null) return BadRequest();
-            var created = await _service.CreateAsync(dto);
-            return CreatedAtRoute("GetWorldTaskById", new { id = created.Id }, created);
+            try
+            {
+                var created = await _service.CreateAsync(dto);
+                return CreatedAtRoute("GetWorldTaskById", new { id = created.Id }, created);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    error = "Invalid WorldTask creation request",
+                    details = ex.Message,
+                    hint = "Ensure StepNumber, StepKey, FieldName, and TaskType are all provided. These are critical for Minecraft plugin field routing."
+                });
+            }
+        }
+
+        // Create from FormField context (ensures required context is present)
+        public class CreateFromFieldRequest
+        {
+            public int WorkflowSessionId { get; set; }
+            public int StepNumber { get; set; }
+            public string StepKey { get; set; } = null!;
+            public string FieldName { get; set; } = null!;
+            public string TaskType { get; set; } = null!;
+            public string? InputJson { get; set; }
+            public int? AssignedUserId { get; set; }
+        }
+
+        [HttpPost("from-field")]
+        public async Task<IActionResult> CreateFromField([FromBody] CreateFromFieldRequest body)
+        {
+            try
+            {
+                var created = await _service.CreateFromFormFieldAsync(
+                    body.WorkflowSessionId,
+                    body.StepNumber,
+                    body.StepKey,
+                    body.FieldName,
+                    body.TaskType,
+                    body.InputJson,
+                    body.AssignedUserId);
+
+                return CreatedAtRoute("GetWorldTaskById", new { id = created.Id }, created);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    error = "Invalid WorldTask creation request",
+                    details = ex.Message,
+                    hint = "Ensure StepNumber, StepKey, FieldName, and TaskType are all provided. These are critical for Minecraft plugin field routing."
+                });
+            }
         }
 
         [HttpGet("{id:int}", Name = "GetWorldTaskById")]

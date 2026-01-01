@@ -62,12 +62,14 @@ public class StepProgressReadDto
 public class WorldTaskCreateDto
 {
     [JsonPropertyName("workflowSessionId")] public int WorkflowSessionId { get; set; }
-    [JsonPropertyName("stepNumber")] public int? StepNumber { get; set; }
-    [JsonPropertyName("stepKey")] public string? StepKey { get; set; }
-    [JsonPropertyName("fieldName")] public string? FieldName { get; set; }
+    [JsonPropertyName("stepNumber")] public int StepNumber { get; set; }
+    [JsonPropertyName("stepKey")] public string StepKey { get; set; } = null!;
+    [JsonPropertyName("fieldName")] public string FieldName { get; set; } = null!;
     [JsonPropertyName("taskType")] public string TaskType { get; set; } = null!;
     [JsonPropertyName("assignedUserId")] public int? AssignedUserId { get; set; }
     [JsonPropertyName("inputJson")] public string? InputJson { get; set; }
+    // Legacy client payload support (maps to InputJson when provided)
+    [JsonPropertyName("payloadJson")] public string? PayloadJson { get; set; }
 }
 
 public class WorldTaskUpdateDto

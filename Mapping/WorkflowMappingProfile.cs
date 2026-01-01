@@ -48,6 +48,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.LinkCode, o => o.Ignore()) // Generated in service
                 .ForMember(d => d.Status, o => o.MapFrom(_ => "Pending"))
                 .ForMember(d => d.CreatedAt, o => o.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(d => d.InputJson, o => o.MapFrom(s => s.InputJson ?? s.PayloadJson))
                 .ForMember(d => d.ClaimedAt, o => o.Ignore())
                 .ForMember(d => d.UpdatedAt, o => o.Ignore())
                 .ForMember(d => d.CompletedAt, o => o.Ignore())
@@ -55,7 +56,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.ClaimedByMinecraftUsername, o => o.Ignore())
                 .ForMember(d => d.OutputJson, o => o.Ignore())
                 .ForMember(d => d.ErrorMessage, o => o.Ignore())
-                .ForMember(d => d.PayloadJson, o => o.Ignore())
+                .ForMember(d => d.PayloadJson, o => o.MapFrom(s => s.PayloadJson ?? s.InputJson))
                 .ForMember(d => d.WorkflowSession, o => o.Ignore())
                 .ForMember(d => d.AssignedUser, o => o.Ignore());
 
