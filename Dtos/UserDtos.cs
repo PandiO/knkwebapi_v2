@@ -33,6 +33,13 @@ namespace knkwebapi_v2.Dtos
         public string? Password { get; set; }
 
         /// <summary>
+        /// Password confirmation (must match Password).
+        /// Required when Password is provided.
+        /// </summary>
+        [JsonPropertyName("passwordConfirmation")]
+        public string? PasswordConfirmation { get; set; }
+
+        /// <summary>
         /// Link code for account linking flows (optional).
         /// Used when linking existing Minecraft account to new web app account.
         /// </summary>

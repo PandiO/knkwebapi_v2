@@ -5,6 +5,7 @@ namespace knkwebapi_v2.Services
 {
     public interface IUserService
     {
+        // ===== EXISTING METHODS =====
         Task<IEnumerable<UserDto>> GetAllAsync();
         Task<UserDto?> GetByIdAsync(int id);
         Task<UserDto?> GetByUuidAsync(string uuid);
@@ -15,5 +16,101 @@ namespace knkwebapi_v2.Services
         Task UpdateCoinsByUuidAsync(string uuid, int coins);
         Task DeleteAsync(int id);
         Task<PagedResultDto<UserListDto>> SearchAsync(PagedQueryDto query);
+
+        // ===== NEW METHODS: VALIDATION =====
+        /// <summary>
+        /// Validates user creation DTO (username, email, password, etc.).
+        /// Checks uniqueness constraints and password policy.
+        /// </summary>
+        Task<(bool IsValid, string? ErrorMessage)> ValidateUserCreationAsync(UserCreateDto dto);
+
+        /// <summary>
+        /// Validates a password against security policy (length, weak password list, etc.).
+        /// </summary>
+        Task<(bool IsValid, string? ErrorMessage)> ValidatePasswordAsync(string password);
+
+        // ===== NEW METHODS: UNIQUE CONSTRAINT CHECKS =====
+        /// <summary>
+        /// Check if a username is already taken.
+        /// Returns conflicting user ID if taken.
+        /// </summary>
+        Task<(bool IsTaken, int? ConflictingUserId)> CheckUsernameTakenAsync(string username, int? excludeUserId = null);
+
+        /// <summary>
+        /// Check if an email is already taken.
+        /// Returns conflicting user ID if taken.
+        /// </summary>
+        Task<(bool IsTaken, int? ConflictingUserId)> CheckEmailTakenAsync(string email, int? excludeUserId = null);
+
+        /// <summary>
+        /// Check if a UUID is already taken.
+        /// Returns conflicting user ID if taken.
+        /// </summary>
+        Task<(bool IsTaken, int? ConflictingUserId)> CheckUuidTakenAsync(string uuid, int? excludeUserId = null);
+
+        // ===== NEW METHODS: CREDENTIALS MANAGEMENT =====
+        /// <summary>
+        /// Change user password.
+        /// Verifies current password before updating.
+        /// </summary>
+        Task ChangePasswordAsync(int userId, string currentPassword, string newPassword, string passwordConfirmation);
+
+        /// <summary>
+        /// Verify a plain text password against a stored hash.
+        /// </summary>
+        Task<bool> VerifyPasswordAsync(string plainPassword, string? passwordHash);
+
+        /// <summary>
+        /// Update user email (with optional current password verification).
+        /// </summary>
+        Task UpdateEmailAsync(int userId, string newEmail, string? currentPassword = null);
+
+        // ===== NEW METHODS: BALANCES (COINS, GEMS, XP) =====
+        /// <summary>
+        /// Adjust user balances (Coins, Gems, ExperiencePoints).
+        /// All mutations are atomic; rejects underflows; requires reason for audit.
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="coinsDelta">Coins change (can be negative)</param>
+        /// <param name="gemsDelta">Gems change (can be negative)</param>
+        /// <param name="experienceDelta">Experience change (can be negative)</param>
+        /// <param name="reason">Reason for balance change (required for audit)</param>
+        /// <param name="metadata">Optional metadata for audit trail</param>
+        Task AdjustBalancesAsync(int userId, int coinsDelta, int gemsDelta, int experienceDelta, string reason, string? metadata = null);
+
+        // ===== NEW METHODS: LINK CODES =====
+        /// <summary>
+        /// Generate a link code for a user (or null for web-first flow).
+        /// </summary>
+        Task<LinkCodeResponseDto> GenerateLinkCodeAsync(int? userId);
+
+        /// <summary>
+        /// Consume a link code and return associated user.
+        /// Marks code as used.
+        /// </summary>
+        Task<(bool IsValid, UserDto? User)> ConsumeLinkCodeAsync(string code);
+
+        /// <summary>
+        /// Get all expired link codes.
+        /// </summary>
+        Task<IEnumerable<LinkCode>> GetExpiredLinkCodesAsync();
+
+        /// <summary>
+        /// Clean up expired link codes.
+        /// </summary>
+        Task CleanupExpiredLinksAsync();
+
+        // ===== NEW METHODS: MERGING & LINKING =====
+        /// <summary>
+        /// Check for duplicate accounts (same UUID + Username).
+        /// Returns secondary user ID if conflict exists.
+        /// </summary>
+        Task<(bool HasConflict, int? SecondaryUserId)> CheckForDuplicateAsync(string uuid, string username);
+
+        /// <summary>
+        /// Merge two user accounts.
+        /// Keeps primary account intact, soft-deletes secondary account.
+        /// </summary>
+        Task<UserDto> MergeAccountsAsync(int primaryUserId, int secondaryUserId);
     }
 }
