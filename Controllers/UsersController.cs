@@ -19,6 +19,11 @@ namespace KnKWebAPI.Controllers
             _service = service;
         }
 
+        /// <summary>
+        /// Get all users
+        /// </summary>
+        /// <returns>List of all users with full details</returns>
+        /// <response code="200">Returns list of users</response>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -26,6 +31,13 @@ namespace KnKWebAPI.Controllers
             return Ok(items);
         }
 
+        /// <summary>
+        /// Get user by ID
+        /// </summary>
+        /// <param name="id">User ID</param>
+        /// <returns>User with full details</returns>
+        /// <response code="200">Returns the user</response>
+        /// <response code="404">User not found</response>
         [HttpGet("{id:int}", Name = nameof(GetUserById))]
         public async Task<IActionResult> GetUserById(int id)
         {
@@ -34,6 +46,13 @@ namespace KnKWebAPI.Controllers
             return Ok(item);
         }
 
+        /// <summary>
+        /// Get user summary by UUID (Minecraft plugin uses this)
+        /// </summary>
+        /// <param name="uuid">Minecraft player UUID</param>
+        /// <returns>User summary with coins, gems, and experience points</returns>
+        /// <response code="200">Returns the user summary</response>
+        /// <response code="404">User not found</response>
         [HttpGet("uuid/{uuid}", Name = nameof(GetUserSummaryByUuid))]
         public async Task<IActionResult> GetUserSummaryByUuid(string uuid)
         {
@@ -51,6 +70,13 @@ namespace KnKWebAPI.Controllers
             return Ok(dto);
         }
 
+        /// <summary>
+        /// Get user summary by username
+        /// </summary>
+        /// <param name="username">Username</param>
+        /// <returns>User summary with coins, gems, and experience points</returns>
+        /// <response code="200">Returns the user summary</response>
+        /// <response code="404">User not found</response>
         [HttpGet("username/{username}", Name = nameof(GetUserSummaryByUsername))]
         public async Task<IActionResult> GetUserSummaryByUsername(string username)
         {
@@ -68,6 +94,21 @@ namespace KnKWebAPI.Controllers
             return Ok(dto);
         }
 
+        /// <summary>
+        /// Create a new user account
+        /// </summary>
+        /// <remarks>
+        /// Supports two flows:
+        /// 1. Web app first: Provide email + password (optional UUID/username)
+        /// 2. Minecraft first: Provide UUID + username only
+        /// 
+        /// Password policy: 8-128 characters, no forced complexity, weak password blacklist
+        /// </remarks>
+        /// <param name="user">User creation data</param>
+        /// <returns>Created user with link code if applicable</returns>
+        /// <response code="201">User created successfully</response>
+        /// <response code="400">Validation failed</response>
+        /// <response code="409">Duplicate username, email, or UUID</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] UserCreateDto user)
         {
@@ -138,6 +179,15 @@ namespace KnKWebAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Update user details
+        /// </summary>
+        /// <param name="id">User ID</param>
+        /// <param name="user">Updated user data</param>
+        /// <returns>No content</returns>
+        /// <response code="204">User updated successfully</response>
+        /// <response code="400">Validation failed</response>
+        /// <response code="404">User not found</response>
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] UserDto user)
         {
@@ -157,6 +207,15 @@ namespace KnKWebAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Update user coins balance
+        /// </summary>
+        /// <param name="id">User ID</param>
+        /// <param name="coins">New coins balance</param>
+        /// <returns>No content</returns>
+        /// <response code="204">Coins updated successfully</response>
+        /// <response code="400">Validation failed</response>
+        /// <response code="404">User not found</response>
         [HttpPut("{id:int}/coins")]
         public async Task<IActionResult> UpdateCoins(int id, [FromBody] int coins)
         {
@@ -175,6 +234,15 @@ namespace KnKWebAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Update user coins balance by UUID (Minecraft plugin uses this)
+        /// </summary>
+        /// <param name="uuid">Minecraft player UUID</param>
+        /// <param name="coins">New coins balance</param>
+        /// <returns>No content</returns>
+        /// <response code="204">Coins updated successfully</response>
+        /// <response code="400">Validation failed</response>
+        /// <response code="404">User not found</response>
         [HttpPut("{uuid}/coins")]
         public async Task<IActionResult> UpdateCoinsByUuid(string uuid, [FromBody] int coins)
         {
@@ -196,9 +264,17 @@ namespace KnKWebAPI.Controllers
         // ===== PHASE 4.3: AUTHENTICATION ENDPOINTS =====
 
         /// <summary>
-        /// Generate a new link code for a user.
-        /// POST /api/users/generate-link-code
+        /// Generate a new link code for a user
         /// </summary>
+        /// <remarks>
+        /// Link codes are valid for 20 minutes and used to link Minecraft accounts with web accounts.
+        /// Format: 8 alphanumeric characters (e.g., ABC12XYZ)
+        /// </remarks>
+        /// <param name="request">Request containing user ID</param>
+        /// <returns>Link code with expiration time</returns>
+        /// <response code="200">Link code generated successfully</response>
+        /// <response code="400">Invalid request</response>
+        /// <response code="404">User not found</response>
         [HttpPost("generate-link-code")]
         public async Task<IActionResult> GenerateLinkCode([FromBody] LinkCodeRequestDto request)
         {
@@ -220,9 +296,16 @@ namespace KnKWebAPI.Controllers
         }
 
         /// <summary>
-        /// Validate a link code and return associated user information.
-        /// POST /api/users/validate-link-code/{code}
+        /// Validate a link code and return associated user information
         /// </summary>
+        /// <remarks>
+        /// Consumes the link code (marks it as used) and returns user details if valid.
+        /// Link codes expire after 20 minutes.
+        /// </remarks>
+        /// <param name="code">8-character link code</param>
+        /// <returns>Validation result with user information if valid</returns>
+        /// <response code="200">Validation result (check IsValid field)</response>
+        /// <response code="400">Invalid request</response>
         [HttpPost("validate-link-code/{code}")]
         public async Task<IActionResult> ValidateLinkCode(string code)
         {
@@ -254,9 +337,19 @@ namespace KnKWebAPI.Controllers
         }
 
         /// <summary>
-        /// Change user password.
-        /// PUT /api/users/{id}/change-password
+        /// Change user password
         /// </summary>
+        /// <remarks>
+        /// Requires current password for verification.
+        /// New password must meet policy: 8-128 characters, not in weak password blacklist.
+        /// </remarks>
+        /// <param name="id">User ID</param>
+        /// <param name="request">Password change request</param>
+        /// <returns>No content</returns>
+        /// <response code="204">Password changed successfully</response>
+        /// <response code="400">Validation failed (weak password, mismatch, etc.)</response>
+        /// <response code="401">Current password incorrect</response>
+        /// <response code="404">User not found</response>
         [HttpPut("{id:int}/change-password")]
         public async Task<IActionResult> ChangePassword(int id, [FromBody] ChangePasswordDto request)
         {
@@ -282,9 +375,20 @@ namespace KnKWebAPI.Controllers
         }
 
         /// <summary>
-        /// Update user email.
-        /// PUT /api/users/{id}/update-email
+        /// Update user email address
         /// </summary>
+        /// <remarks>
+        /// Optionally requires current password for additional security.
+        /// Email must be unique across all accounts.
+        /// </remarks>
+        /// <param name="id">User ID</param>
+        /// <param name="request">Email update request</param>
+        /// <returns>No content</returns>
+        /// <response code="204">Email updated successfully</response>
+        /// <response code="400">Validation failed (invalid email format)</response>
+        /// <response code="401">Current password incorrect</response>
+        /// <response code="404">User not found</response>
+        /// <response code="409">Email already in use</response>
         [HttpPut("{id:int}/update-email")]
         public async Task<IActionResult> UpdateEmail(int id, [FromBody] UpdateEmailDto request)
         {
@@ -317,9 +421,16 @@ namespace KnKWebAPI.Controllers
         }
 
         /// <summary>
-        /// Check for duplicate accounts (Minecraft server uses this).
-        /// POST /api/users/check-duplicate
+        /// Check for duplicate accounts based on UUID and username
         /// </summary>
+        /// <remarks>
+        /// Used by Minecraft server to detect when a player has multiple accounts.
+        /// Returns both the primary (UUID-based) and conflicting (username-based) accounts.
+        /// </remarks>
+        /// <param name="request">Duplicate check request with UUID and username</param>
+        /// <returns>Duplicate check result</returns>
+        /// <response code="200">Check completed (check HasDuplicate field)</response>
+        /// <response code="400">Invalid request</response>
         [HttpPost("check-duplicate")]
         public async Task<IActionResult> CheckDuplicate([FromBody] DuplicateCheckDto request)
         {
@@ -373,9 +484,18 @@ namespace KnKWebAPI.Controllers
         // ===== PHASE 4.4: ACCOUNT MERGE ENDPOINTS =====
 
         /// <summary>
-        /// Merge two user accounts.
-        /// POST /api/users/merge
+        /// Merge two user accounts into one
         /// </summary>
+        /// <remarks>
+        /// Keeps the primary account and soft-deletes the secondary account.
+        /// Primary account retains all its data (winner takes all strategy).
+        /// Foreign key relationships are updated to point to primary account.
+        /// </remarks>
+        /// <param name="request">Merge request with primary and secondary user IDs</param>
+        /// <returns>Merged user account</returns>
+        /// <response code="200">Accounts merged successfully</response>
+        /// <response code="400">Invalid request or operation failed</response>
+        /// <response code="404">One or both users not found</response>
         [HttpPost("merge")]
         public async Task<IActionResult> MergeAccounts([FromBody] AccountMergeDto request)
         {
@@ -415,9 +535,18 @@ namespace KnKWebAPI.Controllers
         }
 
         /// <summary>
-        /// Link an existing Minecraft account with email/password from web app.
-        /// POST /api/users/link-account
+        /// Link an existing Minecraft account with email and password from web app
         /// </summary>
+        /// <remarks>
+        /// Used when a player creates account in Minecraft first, then wants to add web access.
+        /// Requires a valid link code generated from Minecraft.
+        /// Sets initial password (no current password needed for first-time setup).
+        /// </remarks>
+        /// <param name="request">Link account request with code, email, and password</param>
+        /// <returns>Linked user account</returns>
+        /// <response code="200">Account linked successfully</response>
+        /// <response code="400">Invalid link code, weak password, or validation failed</response>
+        /// <response code="409">Email already in use</response>
         [HttpPost("link-account")]
         public async Task<IActionResult> LinkAccount([FromBody] LinkAccountDto request)
         {

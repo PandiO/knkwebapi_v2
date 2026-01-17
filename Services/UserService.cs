@@ -8,6 +8,10 @@ using knkwebapi_v2.Repositories;
 
 namespace knkwebapi_v2.Services
 {
+    /// <summary>
+    /// Service for managing user accounts, authentication, and account linking.
+    /// Implements OWASP 2023 password guidelines and secure account management.
+    /// </summary>
     public class UserService : IUserService
     {
         private readonly IUserRepository _repo;
@@ -124,6 +128,7 @@ namespace knkwebapi_v2.Services
 
         // ===== NEW METHODS: VALIDATION =====
 
+        /// <inheritdoc/>
         public async Task<(bool IsValid, string? ErrorMessage)> ValidateUserCreationAsync(UserCreateDto dto)
         {
             if (dto == null)
@@ -193,6 +198,7 @@ namespace knkwebapi_v2.Services
             return (true, null);
         }
 
+        /// <inheritdoc/>
         public async Task<(bool IsValid, string? ErrorMessage)> ValidatePasswordAsync(string password)
         {
             return await _passwordService.ValidatePasswordAsync(password);
@@ -200,6 +206,7 @@ namespace knkwebapi_v2.Services
 
         // ===== NEW METHODS: UNIQUE CONSTRAINT CHECKS =====
 
+        /// <inheritdoc/>
         public async Task<(bool IsTaken, int? ConflictingUserId)> CheckUsernameTakenAsync(string username, int? excludeUserId = null)
         {
             if (string.IsNullOrWhiteSpace(username))
@@ -218,6 +225,7 @@ namespace knkwebapi_v2.Services
             return (false, null);
         }
 
+        /// <inheritdoc/>
         public async Task<(bool IsTaken, int? ConflictingUserId)> CheckEmailTakenAsync(string email, int? excludeUserId = null)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -236,6 +244,7 @@ namespace knkwebapi_v2.Services
             return (false, null);
         }
 
+        /// <inheritdoc/>
         public async Task<(bool IsTaken, int? ConflictingUserId)> CheckUuidTakenAsync(string uuid, int? excludeUserId = null)
         {
             if (string.IsNullOrWhiteSpace(uuid))
@@ -256,6 +265,7 @@ namespace knkwebapi_v2.Services
 
         // ===== NEW METHODS: CREDENTIALS MANAGEMENT =====
 
+        /// <inheritdoc/>
         public async Task ChangePasswordAsync(int userId, string currentPassword, string newPassword, string passwordConfirmation)
         {
             if (userId <= 0)
@@ -306,6 +316,7 @@ namespace knkwebapi_v2.Services
             await _repo.UpdatePasswordHashAsync(userId, newHash);
         }
 
+        /// <inheritdoc/>
         public async Task<bool> VerifyPasswordAsync(string plainPassword, string? passwordHash)
         {
             if (string.IsNullOrEmpty(passwordHash))
@@ -316,6 +327,7 @@ namespace knkwebapi_v2.Services
             return await _passwordService.VerifyPasswordAsync(plainPassword, passwordHash);
         }
 
+        /// <inheritdoc/>
         public async Task UpdateEmailAsync(int userId, string newEmail, string? currentPassword = null)
         {
             if (userId <= 0)
@@ -361,6 +373,7 @@ namespace knkwebapi_v2.Services
 
         // ===== NEW METHODS: BALANCES (COINS, GEMS, XP) =====
 
+        /// <inheritdoc/>
         public async Task AdjustBalancesAsync(int userId, int coinsDelta, int gemsDelta, int experienceDelta, string reason, string? metadata = null)
         {
             if (userId <= 0)
@@ -413,6 +426,7 @@ namespace knkwebapi_v2.Services
 
         // ===== NEW METHODS: LINK CODES =====
 
+        /// <inheritdoc/>
         public async Task<LinkCodeResponseDto> GenerateLinkCodeAsync(int? userId)
         {
             if (userId.HasValue)
@@ -427,6 +441,7 @@ namespace knkwebapi_v2.Services
             return await _linkCodeService.GenerateLinkCodeAsync(userId);
         }
 
+        /// <inheritdoc/>
         public async Task<(bool IsValid, UserDto? User)> ConsumeLinkCodeAsync(string code)
         {
             var (success, linkCode, error) = await _linkCodeService.ConsumeLinkCodeAsync(code);
@@ -448,11 +463,13 @@ namespace knkwebapi_v2.Services
             return (false, null);
         }
 
+        /// <inheritdoc/>
         public async Task<IEnumerable<LinkCode>> GetExpiredLinkCodesAsync()
         {
             return await _linkCodeService.GetExpiredCodesAsync();
         }
 
+        /// <inheritdoc/>
         public async Task CleanupExpiredLinksAsync()
         {
             await _linkCodeService.CleanupExpiredCodesAsync();
@@ -460,6 +477,7 @@ namespace knkwebapi_v2.Services
 
         // ===== NEW METHODS: MERGING & LINKING =====
 
+        /// <inheritdoc/>
         public async Task<(bool HasConflict, int? SecondaryUserId)> CheckForDuplicateAsync(string uuid, string username)
         {
             if (string.IsNullOrWhiteSpace(uuid) || string.IsNullOrWhiteSpace(username))
@@ -476,6 +494,7 @@ namespace knkwebapi_v2.Services
             return (false, null);
         }
 
+        /// <inheritdoc/>
         public async Task<UserDto> MergeAccountsAsync(int primaryUserId, int secondaryUserId)
         {
             if (primaryUserId <= 0)
