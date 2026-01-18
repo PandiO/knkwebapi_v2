@@ -2,6 +2,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Services;
 using knkwebapi_v2.Services.Interfaces;
@@ -77,6 +78,18 @@ namespace knkwebapi_v2.DependencyInjection
             // Add FormTemplate services for reusable step/field management
             services.AddScoped<IFormTemplateValidationService, FormTemplateValidationService>();
             services.AddScoped<IFormTemplateReusableService, FormTemplateReusableService>();
+
+            // Register HttpClient for HTTP calls to external services
+            services.AddHttpClient();
+
+            // Region management service - requires configuration from appsettings
+            string? minecraftPluginBaseUrl = configuration?.GetSection("MinecraftPlugin:BaseUrl").Value ?? "http://localhost:8081";
+            services.AddScoped<IRegionService>(sp => 
+                new RegionService(sp.GetRequiredService<IHttpClientFactory>(), sp.GetRequiredService<ILogger<RegionService>>(), minecraftPluginBaseUrl)
+            );
+
+            // Retention policy service - background task for cleaning up old records
+            services.AddHostedService<RetentionPolicyService>();
 
             // convention-based registrations for other services/repositories in the same assembly
             var asm = Assembly.GetExecutingAssembly();
