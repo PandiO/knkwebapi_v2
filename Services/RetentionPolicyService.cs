@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using knkwebapi_v2.Repositories;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -14,18 +15,18 @@ namespace knkwebapi_v2.Services
     /// </summary>
     public class RetentionPolicyService : BackgroundService
     {
-        private readonly IFormSubmissionProgressRepository _formProgressRepository;
+        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<RetentionPolicyService> _logger;
         private readonly int _retentionDays;
         private readonly TimeSpan _runInterval;
 
         public RetentionPolicyService(
-            IFormSubmissionProgressRepository formProgressRepository,
+            IServiceProvider serviceProvider,
             ILogger<RetentionPolicyService> logger,
             int retentionDays = 14,
             TimeSpan? runInterval = null)
         {
-            _formProgressRepository = formProgressRepository;
+            _serviceProvider = serviceProvider;
             _logger = logger;
             _retentionDays = retentionDays;
             _runInterval = runInterval ?? TimeSpan.FromHours(24); // Default: run daily
@@ -68,11 +69,16 @@ namespace knkwebapi_v2.Services
                     "Running retention policy cleanup. Deleting FormSubmissionProgress records completed before {CutoffDate}",
                     cutoffDate);
 
-                int deletedCount = await _formProgressRepository.DeleteCompletedOlderThanAsync(cutoffDate);
+                // Create a new scope for the scoped repository
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var repository = scope.ServiceProvider.GetRequiredService<IFormSubmissionProgressRepository>();
+                    int deletedCount = await repository.DeleteCompletedOlderThanAsync(cutoffDate);
 
-                _logger.LogInformation(
-                    "Retention policy cleanup completed. Deleted {Count} completed form submissions",
-                    deletedCount);
+                    _logger.LogInformation(
+                        "Retention policy cleanup completed. Deleted {Count} completed form submissions",
+                        deletedCount);
+                }
             }
             catch (Exception ex)
             {

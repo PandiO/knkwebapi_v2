@@ -94,19 +94,26 @@ namespace knkwebapi_v2.Services.ValidationMethods
         /// </summary>
         private bool EvaluateCondition(object? dependencyValue, string op, object? conditionValue)
         {
-            if (dependencyValue == null)
+            if (dependencyValue == null || string.IsNullOrEmpty(op))
                 return false;
 
-            return op.ToLowerInvariant() switch
+            switch (op.ToLowerInvariant())
             {
-                "equals" => Equals(dependencyValue, conditionValue),
-                "notequals" => !Equals(dependencyValue, conditionValue),
-                "greaterthan" => Compare(dependencyValue, conditionValue) > 0,
-                "lessthan" => Compare(dependencyValue, conditionValue) < 0,
-                "contains" => dependencyValue.ToString()?.Contains(conditionValue?.ToString() ?? "") ?? false,
-                "in" => IsInList(dependencyValue, conditionValue),
-                _ => false
-            };
+                case "equals":
+                    return Equals(dependencyValue, conditionValue);
+                case "notequals":
+                    return !Equals(dependencyValue, conditionValue);
+                case "greaterthan":
+                    return Compare(dependencyValue, conditionValue) > 0;
+                case "lessthan":
+                    return Compare(dependencyValue, conditionValue) < 0;
+                case "contains":
+                    return dependencyValue.ToString()?.Contains(conditionValue?.ToString() ?? "") ?? false;
+                case "in":
+                    return IsInList(dependencyValue, conditionValue);
+                default:
+                    return false;
+            }
         }
 
         /// <summary>
@@ -117,8 +124,7 @@ namespace knkwebapi_v2.Services.ValidationMethods
             return value == null
                 || string.Empty.Equals(value.ToString())
                 || (value is string str && string.IsNullOrWhiteSpace(str))
-                || (value is int intVal && intVal == 0)
-                || (value is int? intNullVal && (!intNullVal.HasValue || intNullVal.Value == 0));
+                || (value is int intVal && intVal == 0);
         }
 
         /// <summary>

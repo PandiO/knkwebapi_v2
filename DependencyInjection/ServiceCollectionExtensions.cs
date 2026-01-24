@@ -8,16 +8,6 @@ using knkwebapi_v2.Services;
 using knkwebapi_v2.Services.Interfaces;
 using AutoMapper;
 using knkwebapi_v2.Repositories.Interfaces;
-using System.Linq;
-using System.Reflection;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using knkwebapi_v2.Repositories;
-using knkwebapi_v2.Services;
-using knkwebapi_v2.Services.Interfaces;
-using AutoMapper;
-using knkwebapi_v2.Repositories.Interfaces;
 using knkwebapi_v2.Services.ValidationMethods;
 
 namespace knkwebapi_v2.DependencyInjection
