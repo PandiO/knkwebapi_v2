@@ -3,6 +3,7 @@ using AutoMapper;
 using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
+using Microsoft.Extensions.Options;
 
 namespace knkwebapi_v2.Services
 {
@@ -12,16 +13,23 @@ namespace knkwebapi_v2.Services
     /// </summary>
     public class LinkCodeService : ILinkCodeService
     {
+        private readonly ILinkCodeRepository _linkCodeRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly SecuritySettings _securitySettings;
         private const string ValidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         private const int CodeLength = 8;
-        private const int ExpirationMinutes = 20;
 
-        public LinkCodeService(IUserRepository userRepository, IMapper mapper)
+        public LinkCodeService(
+            ILinkCodeRepository linkCodeRepository,
+            IUserRepository userRepository,
+            IMapper mapper,
+            IOptions<SecuritySettings> securitySettings)
         {
+            _linkCodeRepository = linkCodeRepository;
             _userRepository = userRepository;
             _mapper = mapper;
+            _securitySettings = securitySettings.Value;
         }
 
         /// <inheritdoc/>
@@ -55,7 +63,7 @@ namespace knkwebapi_v2.Services
             do
             {
                 code = await GenerateCodeAsync();
-                existing = await _userRepository.GetLinkCodeByCodeAsync(code);
+                existing = await _linkCodeRepository.GetLinkCodeByCodeAsync(code);
                 attempts++;
 
                 if (attempts >= maxAttempts)
@@ -69,11 +77,11 @@ namespace knkwebapi_v2.Services
                 UserId = userId,
                 Code = code,
                 CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(ExpirationMinutes),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(_securitySettings.LinkCodeExpirationMinutes),
                 Status = LinkCodeStatus.Active
             };
 
-            var created = await _userRepository.CreateLinkCodeAsync(linkCode);
+            var created = await _linkCodeRepository.CreateAsync(linkCode);
             return _mapper.Map<LinkCodeResponseDto>(created);
         }
 
@@ -93,7 +101,7 @@ namespace knkwebapi_v2.Services
                 return (false, null, "Invalid link code format.");
             }
 
-            var linkCode = await _userRepository.GetLinkCodeByCodeAsync(normalizedCode);
+            var linkCode = await _linkCodeRepository.GetLinkCodeByCodeAsync(normalizedCode);
 
             if (linkCode == null)
             {
@@ -110,7 +118,7 @@ namespace knkwebapi_v2.Services
                 // Auto-update status to Expired if not already
                 if (linkCode.Status != LinkCodeStatus.Expired)
                 {
-                    await _userRepository.UpdateLinkCodeStatusAsync(linkCode.Id, LinkCodeStatus.Expired);
+                    await _linkCodeRepository.UpdateLinkCodeStatusAsync(linkCode.Id, LinkCodeStatus.Expired);
                 }
                 return (false, linkCode, "Link code has expired.");
             }
@@ -129,7 +137,7 @@ namespace knkwebapi_v2.Services
             }
 
             // Mark as used
-            await _userRepository.UpdateLinkCodeStatusAsync(linkCode.Id, LinkCodeStatus.Used);
+            await _linkCodeRepository.UpdateLinkCodeStatusAsync(linkCode.Id, LinkCodeStatus.Used);
             linkCode.Status = LinkCodeStatus.Used;
             linkCode.UsedAt = DateTime.UtcNow;
 
@@ -139,13 +147,13 @@ namespace knkwebapi_v2.Services
         /// <inheritdoc/>
         public async Task<IEnumerable<LinkCode>> GetExpiredCodesAsync()
         {
-            return await _userRepository.GetExpiredLinkCodesAsync();
+            return await _linkCodeRepository.GetExpiredLinkCodesAsync();
         }
 
         /// <inheritdoc/>
         public async Task<int> CleanupExpiredCodesAsync()
         {
-            var expiredCodes = await _userRepository.GetExpiredLinkCodesAsync();
+            var expiredCodes = await _linkCodeRepository.GetExpiredLinkCodesAsync();
             var count = 0;
 
             foreach (var linkCode in expiredCodes)
@@ -153,7 +161,7 @@ namespace knkwebapi_v2.Services
                 // Update status to Expired if still Active
                 if (linkCode.Status == LinkCodeStatus.Active)
                 {
-                    await _userRepository.UpdateLinkCodeStatusAsync(linkCode.Id, LinkCodeStatus.Expired);
+                    await _linkCodeRepository.UpdateLinkCodeStatusAsync(linkCode.Id, LinkCodeStatus.Expired);
                     count++;
                 }
             }

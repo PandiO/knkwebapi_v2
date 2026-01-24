@@ -1,8 +1,7 @@
 using Xunit;
 using Moq;
 using knkwebapi_v2.Services;
-using knkwebapi_v2.Services.Interfaces;
-using knkwebapi_v2.Repositories.Interfaces;
+using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Dtos;
 using AutoMapper;

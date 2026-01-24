@@ -6,6 +6,7 @@ using knkwebapi_v2.Repositories.Interfaces;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Dtos;
 using AutoMapper;
+using knkwebapi_v2.Repositories;
 
 namespace knkwebapi_v2.Tests.Services;
 
@@ -30,9 +31,9 @@ public class UserServiceTests
 
         _userService = new UserService(
             _mockUserRepository.Object,
+            _mockMapper.Object,
             _mockPasswordService.Object,
-            _mockLinkCodeService.Object,
-            _mockMapper.Object
+            _mockLinkCodeService.Object
         );
     }
 
@@ -649,9 +650,10 @@ public class UserServiceTests
         const string code = "ABC12XYZ";
         var userDto = new UserDto { Id = 1, Username = "player" };
 
+        var linkCode = new LinkCode { /* set properties as needed */ };
         _mockLinkCodeService
             .Setup(s => s.ConsumeLinkCodeAsync(code))
-            .ReturnsAsync((true, userDto));
+            .ReturnsAsync((true, linkCode, null));
 
         // Act
         var result = await _userService.ConsumeLinkCodeAsync(code);

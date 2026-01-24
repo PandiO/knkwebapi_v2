@@ -3,6 +3,7 @@ using knkwebapi_v2.Models;
 using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Services;
 using knkwebapi_v2.Repositories;
+using knkwebapi_v2.Properties;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 
@@ -15,7 +16,7 @@ namespace knkwebapi_v2.Tests.Integration;
 /// </summary>
 public class AccountManagementIntegrationTests
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly KnKDbContext _dbContext;
     private readonly UserRepository _userRepository;
     private readonly LinkCodeRepository _linkCodeRepository;
     private readonly PasswordService _passwordService;
@@ -26,11 +27,11 @@ public class AccountManagementIntegrationTests
     public AccountManagementIntegrationTests()
     {
         // Set up in-memory database
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+        var options = new DbContextOptionsBuilder<KnKDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        _dbContext = new ApplicationDbContext(options);
+        _dbContext = new KnKDbContext(options);
         _dbContext.Database.EnsureCreated();
 
         // Initialize repositories

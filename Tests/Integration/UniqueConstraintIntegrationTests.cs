@@ -1,6 +1,7 @@
 using Xunit;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
+using knkwebapi_v2.Properties;
 using Microsoft.EntityFrameworkCore;
 
 namespace knkwebapi_v2.Tests.Integration;
@@ -11,16 +12,16 @@ namespace knkwebapi_v2.Tests.Integration;
 /// </summary>
 public class UniqueConstraintIntegrationTests : IDisposable
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly KnKDbContext _dbContext;
     private readonly UserRepository _userRepository;
 
     public UniqueConstraintIntegrationTests()
     {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+        var options = new DbContextOptionsBuilder<KnKDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        _dbContext = new ApplicationDbContext(options);
+        _dbContext = new KnKDbContext(options);
         _dbContext.Database.EnsureCreated();
         _userRepository = new UserRepository(_dbContext);
     }

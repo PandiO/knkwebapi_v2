@@ -2,7 +2,7 @@ using Xunit;
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using knkwebapi_v2.Controllers;
-using knkwebapi_v2.Services.Interfaces;
+using knkwebapi_v2.Services;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Dtos;
 using AutoMapper;
@@ -77,12 +77,12 @@ public class UsersControllerTests
             .ReturnsAsync(linkCodeDto);
 
         // Act
-        var result = await _controller.CreateAsync(createDto);
+        var result = await _controller.Create(createDto);
 
         // Assert
-        var createdResult = Assert.IsType<CreatedAtActionResult>(result);
+        var createdResult = Assert.IsType<CreatedAtRouteResult>(result);
         Assert.Equal(201, createdResult.StatusCode);
-        Assert.Equal(nameof(UsersController.GetByIdAsync), createdResult.ActionName);
+        Assert.Equal(nameof(UsersController.GetUserById), createdResult.RouteName);
     }
 
     [Fact]

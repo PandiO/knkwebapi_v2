@@ -4,19 +4,22 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Services;
+using AutoMapper;
 using knkwebapi_v2.Dtos;
 
-namespace KnKWebAPI.Controllers
+namespace knkwebapi_v2.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _service;
+        private readonly IMapper _mapper;
 
-        public UsersController(IUserService service)
+        public UsersController(IUserService service, IMapper mapper)
         {
             _service = service;
+            _mapper = mapper;
         }
 
         /// <summary>
