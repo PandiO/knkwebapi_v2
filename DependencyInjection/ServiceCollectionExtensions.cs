@@ -44,6 +44,8 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<IFormStepService, FormStepService>();
             services.AddScoped<IFormFieldRepository, FormFieldRepository>();
             services.AddScoped<IFormFieldService, FormFieldService>();
+            services.AddScoped<IFieldValidationRuleRepository, FieldValidationRuleRepository>();
+            services.AddScoped<IValidationService, ValidationService>();
             services.AddScoped<IFormSubmissionProgressRepository, FormSubmissionProgressRepository>();
             services.AddScoped<IFormSubmissionProgressService, FormSubmissionProgressService>();
             services.AddScoped<IGateStructureRepository, GateStructureRepository>();
