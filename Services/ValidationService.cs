@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
@@ -19,17 +20,84 @@ namespace knkwebapi_v2.Services
         private readonly IFormFieldRepository _fieldRepository;
         private readonly IFormConfigurationRepository _configRepository;
         private readonly IEnumerable<IValidationMethod> _validationMethods;
+        private readonly IMapper _mapper;
 
         public ValidationService(
             IFieldValidationRuleRepository ruleRepository,
             IFormFieldRepository fieldRepository,
             IFormConfigurationRepository configRepository,
-            IEnumerable<IValidationMethod> validationMethods)
+            IEnumerable<IValidationMethod> validationMethods,
+            IMapper mapper)
         {
             _ruleRepository = ruleRepository;
             _fieldRepository = fieldRepository;
             _configRepository = configRepository;
             _validationMethods = validationMethods;
+            _mapper = mapper;
+        }
+
+        public async Task<FieldValidationRuleDto?> GetByIdAsync(int id)
+        {
+            if (id <= 0) return null;
+            var entity = await _ruleRepository.GetByIdAsync(id);
+            return entity == null ? null : _mapper.Map<FieldValidationRuleDto>(entity);
+        }
+
+        public async Task<IEnumerable<FieldValidationRuleDto>> GetByFormFieldIdAsync(int fieldId)
+        {
+            var list = await _ruleRepository.GetByFormFieldIdAsync(fieldId);
+            return _mapper.Map<IEnumerable<FieldValidationRuleDto>>(list);
+        }
+
+        public async Task<IEnumerable<FieldValidationRuleDto>> GetByFormConfigurationIdAsync(int formConfigurationId)
+        {
+            var list = await _ruleRepository.GetByFormConfigurationIdAsync(formConfigurationId);
+            return _mapper.Map<IEnumerable<FieldValidationRuleDto>>(list);
+        }
+
+        public async Task<FieldValidationRuleDto> CreateAsync(CreateFieldValidationRuleDto dto)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var field = await _fieldRepository.GetByIdAsync(dto.FormFieldId);
+            if (field == null) throw new ArgumentException($"FormField {dto.FormFieldId} not found", nameof(dto.FormFieldId));
+
+            if (dto.DependsOnFieldId.HasValue)
+            {
+                var dependsOn = await _fieldRepository.GetByIdAsync(dto.DependsOnFieldId.Value);
+                if (dependsOn == null) throw new ArgumentException($"DependsOnField {dto.DependsOnFieldId.Value} not found", nameof(dto.DependsOnFieldId));
+
+                var hasCircular = await _ruleRepository.HasCircularDependencyAsync(dto.FormFieldId, dto.DependsOnFieldId.Value);
+                if (hasCircular) throw new ArgumentException("Circular dependency detected between fields.");
+            }
+
+            var entity = _mapper.Map<FieldValidationRule>(dto);
+            var created = await _ruleRepository.CreateAsync(entity);
+            return _mapper.Map<FieldValidationRuleDto>(created);
+        }
+
+        public async Task UpdateAsync(int id, UpdateFieldValidationRuleDto dto)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+            var existing = await _ruleRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException();
+
+            if (dto.DependsOnFieldId.HasValue)
+            {
+                var dependsOn = await _fieldRepository.GetByIdAsync(dto.DependsOnFieldId.Value);
+                if (dependsOn == null) throw new ArgumentException($"DependsOnField {dto.DependsOnFieldId.Value} not found", nameof(dto.DependsOnFieldId));
+
+                var hasCircular = await _ruleRepository.HasCircularDependencyAsync(existing.FormFieldId, dto.DependsOnFieldId.Value);
+                if (hasCircular) throw new ArgumentException("Circular dependency detected between fields.");
+            }
+
+            _mapper.Map(dto, existing);
+            await _ruleRepository.UpdateAsync(existing);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var existing = await _ruleRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException();
+            await _ruleRepository.DeleteAsync(existing.Id);
         }
 
         public async Task<ValidationResultDto> ValidateFieldAsync(
@@ -83,6 +151,16 @@ namespace knkwebapi_v2.Services
                 IsBlocking = false,
                 Message = successMessages.Any() ? string.Join("; ", successMessages) : "Validation passed"
             };
+        }
+
+        public async Task<ValidationResultDto> ValidateFieldAsync(ValidateFieldRequestDto request)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+            return await ValidateFieldAsync(
+                request.FieldId,
+                request.FieldValue,
+                request.DependencyValue,
+                request.FormContextData);
         }
 
         public async Task<Dictionary<int, ValidationResultDto>> ValidateMultipleFieldsAsync(
@@ -211,6 +289,11 @@ namespace knkwebapi_v2.Services
             }
 
             return issues;
+        }
+
+        public async Task<IEnumerable<ValidationIssueDto>> ValidateConfigurationHealthAsync(int formConfigurationId)
+        {
+            return await PerformConfigurationHealthCheckAsync(formConfigurationId);
         }
 
         public async Task<IEnumerable<int>> GetDependentFieldIdsAsync(int fieldId)
