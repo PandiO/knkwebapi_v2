@@ -115,6 +115,53 @@ namespace knkwebapi_v2.Services
             if (string.IsNullOrWhiteSpace(incoming.StepOrderJson))
                 incoming.StepOrderJson = exists.StepOrderJson;
 
+            // Apply field ordering based on FieldOrderJson (parse GUID order and reorder fields)
+            foreach (var step in incoming.Steps)
+            {
+                if (!string.IsNullOrWhiteSpace(step.FieldOrderJson))
+                {
+                    try
+                    {
+                        var guidOrder = System.Text.Json.JsonSerializer.Deserialize<List<string>>(step.FieldOrderJson) ?? new List<string>();
+                        if (guidOrder.Count > 0 && step.Fields.Count > 0)
+                        {
+                            // Reorder fields based on the GUID order
+                            var fieldsByGuid = step.Fields.ToDictionary(f => f.FieldGuid.ToString());
+                            var reorderedFields = new List<FormField>();
+                            
+                            foreach (var guidStr in guidOrder)
+                            {
+                                if (fieldsByGuid.TryGetValue(guidStr, out var field))
+                                {
+                                    reorderedFields.Add(field);
+                                }
+                            }
+                            
+                            // Add any fields that weren't in the order list (shouldn't happen, but be safe)
+                            foreach (var field in step.Fields)
+                            {
+                                if (!reorderedFields.Contains(field))
+                                {
+                                    reorderedFields.Add(field);
+                                }
+                            }
+                            
+                            // Replace the fields list with the reordered version
+                            step.Fields.Clear();
+                            foreach (var field in reorderedFields)
+                            {
+                                step.Fields.Add(field);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log but don't fail if field reordering has issues
+                        System.Diagnostics.Debug.WriteLine($"Warning: Failed to reorder fields: {ex.Message}");
+                    }
+                }
+            }
+
             // Validate configuration before saving
             var validationResult = await _validationService.ValidateConfigurationAsync(incoming, _metadataService);
             if (!validationResult.IsValid)
