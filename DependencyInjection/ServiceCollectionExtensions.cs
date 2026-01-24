@@ -8,6 +8,17 @@ using knkwebapi_v2.Services;
 using knkwebapi_v2.Services.Interfaces;
 using AutoMapper;
 using knkwebapi_v2.Repositories.Interfaces;
+using System.Linq;
+using System.Reflection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using knkwebapi_v2.Repositories;
+using knkwebapi_v2.Services;
+using knkwebapi_v2.Services.Interfaces;
+using AutoMapper;
+using knkwebapi_v2.Repositories.Interfaces;
+using knkwebapi_v2.Services.ValidationMethods;
 
 namespace knkwebapi_v2.DependencyInjection
 {
@@ -92,6 +103,11 @@ namespace knkwebapi_v2.DependencyInjection
 
             // Retention policy service - background task for cleaning up old records
             services.AddHostedService<RetentionPolicyService>();
+
+            // Validation method implementations (Phase 3)
+            services.AddScoped<IValidationMethod, LocationInsideRegionValidator>();
+            services.AddScoped<IValidationMethod, RegionContainmentValidator>();
+            services.AddScoped<IValidationMethod, ConditionalRequiredValidator>();
 
             // convention-based registrations for other services/repositories in the same assembly
             var asm = Assembly.GetExecutingAssembly();
