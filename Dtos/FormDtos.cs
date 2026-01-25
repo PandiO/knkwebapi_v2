@@ -42,6 +42,8 @@ namespace knkwebapi_v2.Dtos
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
+        [JsonPropertyName("fieldGuid")]
+        public string? FieldGuid { get; set; }
         [JsonPropertyName("formStepId")]
         public string? FormStepId { get; set; }
         [JsonPropertyName("fieldName")]
@@ -98,6 +100,8 @@ namespace knkwebapi_v2.Dtos
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
+        [JsonPropertyName("stepGuid")]
+        public string? StepGuid { get; set; }
         [JsonPropertyName("formConfigurationId")]
         public string? FormConfigurationId { get; set; }
         [JsonPropertyName("stepName")]
