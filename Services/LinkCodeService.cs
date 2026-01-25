@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using AutoMapper;
+using knkwebapi_v2.Configuration;
 using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;

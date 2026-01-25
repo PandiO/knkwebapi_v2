@@ -434,6 +434,24 @@ namespace knkwebapi_v2.Controllers
         /// <returns>Duplicate check result</returns>
         /// <response code="200">Check completed (check HasDuplicate field)</response>
         /// <response code="400">Invalid request</response>
+        [HttpGet("check-duplicate")]
+        public async Task<IActionResult> CheckDuplicateAvailability([FromQuery] string? email, [FromQuery] string? username, [FromQuery] int? excludeUserId)
+        {
+            if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(username))
+            {
+                return BadRequest(new { error = "InvalidRequest", message = "Email or username is required" });
+            }
+
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                var (isTaken, conflictingUserId) = await _service.CheckEmailTakenAsync(email, excludeUserId);
+                return Ok(new { available = !isTaken, conflictingUserId });
+            }
+
+            var (usernameTaken, usernameConflictId) = await _service.CheckUsernameTakenAsync(username!, excludeUserId);
+            return Ok(new { available = !usernameTaken, conflictingUserId = usernameConflictId });
+        }
+
         [HttpPost("check-duplicate")]
         public async Task<IActionResult> CheckDuplicate([FromBody] DuplicateCheckDto request)
         {

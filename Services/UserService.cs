@@ -470,9 +470,9 @@ namespace knkwebapi_v2.Services
         }
 
         /// <inheritdoc/>
-        public async Task CleanupExpiredLinksAsync()
+        public async Task<int> CleanupExpiredLinksAsync()
         {
-            await _linkCodeService.CleanupExpiredCodesAsync();
+            return await _linkCodeService.CleanupExpiredCodesAsync();
         }
 
         // ===== NEW METHODS: MERGING & LINKING =====

@@ -96,9 +96,9 @@ namespace knkwebapi_v2.Services
         Task<IEnumerable<LinkCode>> GetExpiredLinkCodesAsync();
 
         /// <summary>
-        /// Clean up expired link codes.
+        /// Clean up expired link codes and return count of cleaned codes.
         /// </summary>
-        Task CleanupExpiredLinksAsync();
+        Task<int> CleanupExpiredLinksAsync();
 
         // ===== NEW METHODS: MERGING & LINKING =====
         /// <summary>

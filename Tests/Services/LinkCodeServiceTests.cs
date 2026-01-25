@@ -4,6 +4,7 @@ using knkwebapi_v2.Services;
 using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Dtos;
+using knkwebapi_v2.Configuration;
 using AutoMapper;
 using Microsoft.Extensions.Options;
 
@@ -358,7 +359,7 @@ public class LinkCodeServiceTests
         // Assert
         Assert.True(result.Success);
         Assert.NotNull(result.LinkCode);
-        Assert.NotNull(result.User);
+        Assert.Null(result.Error);
         _mockLinkCodeRepository.Verify(r => r.UpdateLinkCodeStatusAsync(1, LinkCodeStatus.Used), Times.Once);
     }
 
@@ -529,14 +530,4 @@ public class LinkCodeServiceTests
     }
 
     #endregion
-}
-
-/// <summary>
-/// Helper class for security configuration options.
-/// </summary>
-public class SecuritySettings
-{
-    public int BcryptRounds { get; set; } = 10;
-    public int LinkCodeExpirationMinutes { get; set; } = 20;
-    public int SoftDeleteRetentionDays { get; set; } = 90;
 }

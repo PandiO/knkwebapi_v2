@@ -4,8 +4,10 @@ using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Services;
 using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Properties;
+using knkwebapi_v2.Configuration;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
+using Microsoft.Extensions.Configuration;
 
 namespace knkwebapi_v2.Tests.Integration;
 
@@ -41,15 +43,19 @@ public class AccountManagementIntegrationTests
         // Initialize services
         var mapperConfig = new MapperConfiguration(cfg =>
         {
-            cfg.AddProfile<UserMappingProfile>();
+            // Use default automapper profiles
         });
         _mapper = mapperConfig.CreateMapper();
 
-        var passwordServiceMock = new PasswordService();
-        var securityOptions = Microsoft.Extensions.Options.Options.Create(new SecuritySettings());
+        var inMemorySettings = new Dictionary<string, string> {};
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings as IEnumerable<KeyValuePair<string, string?>>)
+            .Build();
+        var passwordServiceMock = new PasswordService(config);
+        var securityOptions = Microsoft.Extensions.Options.Options.Create(new SecuritySettings { LinkCodeExpirationMinutes = 20, BcryptRounds = 10 });
         _linkCodeService = new LinkCodeService(_linkCodeRepository, _userRepository, _mapper, securityOptions);
         _passwordService = passwordServiceMock;
-        _userService = new UserService(_userRepository, passwordServiceMock, _linkCodeService, _mapper);
+        _userService = new UserService(_userRepository, _mapper, _passwordService, _linkCodeService);
     }
 
     #region Web App First Flow Tests
@@ -75,11 +81,12 @@ public class AccountManagementIntegrationTests
         Assert.NotNull(createdUser);
         Assert.Equal("webplayer", createdUser.Username);
         Assert.Equal("web@example.com", createdUser.Email);
-        Assert.NotNull(createdUser.PasswordHash);
         Assert.Equal(AccountCreationMethod.WebApp, createdUser.AccountCreatedVia);
 
-        // Verify password is hashed, not plaintext
-        Assert.NotEqual("SecurePass123!", createdUser.PasswordHash);
+        // Verify user was created with password hashed in the database
+        var storedUser = await _userRepository.GetByIdAsync(createdUser.Id);
+        Assert.NotNull(storedUser?.PasswordHash);
+        Assert.NotEqual("SecurePass123!", storedUser.PasswordHash);
     }
 
     [Fact]
@@ -165,8 +172,11 @@ public class AccountManagementIntegrationTests
         Assert.Equal("mcplayer", createdUser.Username);
         Assert.Equal(uuid, createdUser.Uuid);
         Assert.Null(createdUser.Email);
-        Assert.Null(createdUser.PasswordHash);
         Assert.Equal(AccountCreationMethod.MinecraftServer, createdUser.AccountCreatedVia);
+
+        // Verify user was created without password
+        var storedUser = await _userRepository.GetByIdAsync(createdUser.Id);
+        Assert.Null(storedUser?.PasswordHash);
     }
 
     [Fact]
@@ -527,14 +537,4 @@ public class AccountManagementIntegrationTests
     {
         _dbContext?.Dispose();
     }
-}
-
-/// <summary>
-/// Helper class for security configuration.
-/// </summary>
-public class SecuritySettings
-{
-    public int BcryptRounds { get; set; } = 10;
-    public int LinkCodeExpirationMinutes { get; set; } = 20;
-    public int SoftDeleteRetentionDays { get; set; } = 90;
 }
