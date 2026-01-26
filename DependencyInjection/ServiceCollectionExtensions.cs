@@ -27,6 +27,7 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ILinkCodeRepository, LinkCodeRepository>();
             services.AddScoped<ILinkCodeService, LinkCodeService>();
             services.AddScoped<ILocationRepository, LocationRepository>();
