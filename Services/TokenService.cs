@@ -90,6 +90,7 @@ namespace knkwebapi_v2.Services
                 new Claim(JwtRegisteredClaimNames.Email, user.Email ?? "", ClaimValueTypes.String),
                 new Claim("uid", user.Id.ToString(), ClaimValueTypes.String),
                 new Claim("token_type", "refresh", ClaimValueTypes.String),
+                new Claim("remember_me", rememberMe ? "true" : "false", ClaimValueTypes.Boolean),
             };
 
             // Refresh token lifetime: rememberMe = 30 days, otherwise shorter (7 days)
