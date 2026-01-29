@@ -307,6 +307,160 @@ namespace knkwebapi_v2.Services
             return rules.Select(r => r.FormFieldId).Distinct();
         }
 
+        public async Task<IEnumerable<ValidationIssueDto>> ValidateDraftConfigurationAsync(FormConfigurationDto configDto)
+        {
+            var issues = new List<ValidationIssueDto>();
+
+            if (configDto.Steps == null || !configDto.Steps.Any())
+            {
+                return issues;
+            }
+
+            // For draft validation, we focus on field ordering issues based on stored validation rules
+            // We can't validate dependency rules from FieldValidationDto since they don't include dependency info
+            // Instead, we check if any saved rules exist for fields and whether ordering is correct
+
+            // If config has ID, load its validation rules from database
+            if (!string.IsNullOrEmpty(configDto.Id) && int.TryParse(configDto.Id, out var configId))
+            {
+                // Load validation rules for this configuration
+                var rules = await _ruleRepository.GetByFormConfigurationIdAsync(configId);
+                
+                // Build field position map from draft config
+                var fieldPositionMap = new Dictionary<int, (int stepIndex, int fieldIndex)>();
+                
+                for (int stepIdx = 0; stepIdx < configDto.Steps.Count; stepIdx++)
+                {
+                    var step = configDto.Steps[stepIdx];
+                    var orderedFieldDtos = GetOrderedFieldDtos(step);
+                    
+                    for (int fieldIdx = 0; fieldIdx < orderedFieldDtos.Count; fieldIdx++)
+                    {
+                        var fieldDto = orderedFieldDtos[fieldIdx];
+                        if (!string.IsNullOrEmpty(fieldDto.Id) && int.TryParse(fieldDto.Id, out var fieldId))
+                        {
+                            fieldPositionMap[fieldId] = (stepIdx, fieldIdx);
+                        }
+                    }
+                }
+
+                // Check each rule's dependency ordering
+                foreach (var rule in rules)
+                {
+                    if (!rule.DependsOnFieldId.HasValue)
+                        continue;
+
+                    if (!fieldPositionMap.ContainsKey(rule.FormFieldId))
+                    {
+                        issues.Add(new ValidationIssueDto
+                        {
+                            Severity = "Error",
+                            Message = $"Validation rule {rule.Id} references field ID {rule.FormFieldId} which is not in the current configuration",
+                                FieldId = rule.FormFieldId,
+                            RuleId = rule.Id
+                        });
+                        continue;
+                    }
+
+                    if (!fieldPositionMap.ContainsKey(rule.DependsOnFieldId.Value))
+                    {
+                        issues.Add(new ValidationIssueDto
+                        {
+                            Severity = "Error",
+                            Message = $"Validation rule {rule.Id} references non-existent dependency field ID {rule.DependsOnFieldId.Value}",
+                                FieldId = rule.FormFieldId,
+                            RuleId = rule.Id
+                        });
+                        continue;
+                    }
+
+                    // Check dependency field ordering
+                    var dependentFieldOrder = fieldPositionMap[rule.FormFieldId];
+                    var dependencyFieldOrder = fieldPositionMap[rule.DependsOnFieldId.Value];
+
+                    if (dependencyFieldOrder.stepIndex > dependentFieldOrder.stepIndex)
+                    {
+                        issues.Add(new ValidationIssueDto
+                        {
+                            Severity = "Warning",
+                            Message = $"Dependency field (ID {rule.DependsOnFieldId.Value}) appears AFTER dependent field (ID {rule.FormFieldId}). Consider reordering fields.",
+                                FieldId = rule.FormFieldId,
+                            RuleId = rule.Id
+                        });
+                    }
+                    else if (dependencyFieldOrder.stepIndex == dependentFieldOrder.stepIndex && 
+                             dependencyFieldOrder.fieldIndex >= dependentFieldOrder.fieldIndex)
+                    {
+                        issues.Add(new ValidationIssueDto
+                        {
+                            Severity = "Warning",
+                            Message = $"Dependency field (ID {rule.DependsOnFieldId.Value}) appears AFTER or at same position as dependent field (ID {rule.FormFieldId}) in step {dependentFieldOrder.stepIndex + 1}. Reorder fields.",
+                            FieldId = rule.FormFieldId,
+                            RuleId = rule.Id
+                        });
+                    }
+                }
+            }
+
+            return issues;
+        }
+
+        /// <summary>
+        /// Get fields in the correct visual order based on FieldOrderJson for DTOs.
+        /// </summary>
+        private List<FormFieldDto> GetOrderedFieldDtos(FormStepDto step)
+        {
+            if (string.IsNullOrWhiteSpace(step.FieldOrderJson) || step.Fields == null)
+            {
+                return step.Fields?.ToList() ?? new List<FormFieldDto>();
+            }
+
+            try
+            {
+                var guidOrder = System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(step.FieldOrderJson);
+                if (guidOrder == null || guidOrder.Count == 0)
+                {
+                    return step.Fields.ToList();
+                }
+
+                // Create a map of fieldGuid -> field
+                    // Parse string GUIDs to Guid for comparison
+                    var fieldMap = new Dictionary<Guid, FormFieldDto>();
+                    foreach (var field in step.Fields)
+                    {
+                        if (!string.IsNullOrEmpty(field.FieldGuid) && Guid.TryParse(field.FieldGuid, out var parsedGuid))
+                        {
+                            fieldMap[parsedGuid] = field;
+                        }
+                    }
+
+                // Reorder fields based on the GUID order
+                var reordered = new List<FormFieldDto>();
+                foreach (var guid in guidOrder)
+                {
+                    if (fieldMap.TryGetValue(guid, out var field))
+                    {
+                        reordered.Add(field);
+                    }
+                }
+
+                // Add any fields that weren't in the order array
+                foreach (var field in step.Fields)
+                {
+                    if (!reordered.Contains(field))
+                    {
+                        reordered.Add(field);
+                    }
+                }
+
+                return reordered;
+            }
+            catch
+            {
+                return step.Fields.ToList();
+            }
+        }
+
         /// <summary>
         /// Execute a single validation rule.
         /// </summary>

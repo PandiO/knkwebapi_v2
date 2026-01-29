@@ -103,6 +103,14 @@ namespace knkwebapi_v2.Services.Interfaces
         Task<IEnumerable<ValidationIssueDto>> ValidateConfigurationHealthAsync(int formConfigurationId);
         
         /// <summary>
+        /// Validate a draft form configuration that hasn't been saved yet.
+        /// Performs the same health checks as ValidateConfigurationHealthAsync but on in-memory config.
+        /// </summary>
+        /// <param name="configDto">The draft form configuration DTO</param>
+        /// <returns>Collection of validation issues (errors, warnings, info)</returns>
+        Task<IEnumerable<ValidationIssueDto>> ValidateDraftConfigurationAsync(FormConfigurationDto configDto);
+        
+        /// <summary>
         /// Get all fields that depend on a specific field (for re-validation when dependency changes).
         /// </summary>
         /// <param name="fieldId">The dependency field ID</param>

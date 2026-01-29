@@ -116,5 +116,24 @@ namespace KnKWebAPI.Controllers
                 return NotFound();
             }
         }
+
+        [HttpPost("health-check/configuration/draft")]
+        public async Task<IActionResult> ValidateDraftConfiguration([FromBody] FormConfigurationDto configDto)
+        {
+            try
+            {
+                if (configDto == null)
+                {
+                    return BadRequest(new { message = "Configuration data is required" });
+                }
+
+                var issues = await _service.ValidateDraftConfigurationAsync(configDto);
+                return Ok(issues);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Draft validation failed", error = ex.Message });
+            }
+        }
     }
 }
