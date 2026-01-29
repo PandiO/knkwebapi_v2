@@ -203,13 +203,18 @@ namespace knkwebapi_v2.Services
             }
 
             // Build a field order map (stepIndex, fieldIndex in step)
+            // CRITICAL: Use FieldOrderJson to get the correct visual order, not database order
             var fieldOrderMap = new Dictionary<int, (int stepIndex, int fieldIndex)>();
             for (int stepIdx = 0; stepIdx < config.Steps.Count; stepIdx++)
             {
                 var step = config.Steps[stepIdx];
-                for (int fieldIdx = 0; fieldIdx < step.Fields.Count; fieldIdx++)
+                
+                // Get the ordered fields based on FieldOrderJson
+                var orderedFields = GetOrderedFields(step);
+                
+                for (int fieldIdx = 0; fieldIdx < orderedFields.Count; fieldIdx++)
                 {
-                    var field = step.Fields[fieldIdx];
+                    var field = orderedFields[fieldIdx];
                     fieldOrderMap[field.Id] = (stepIdx, fieldIdx);
                 }
             }
@@ -384,6 +389,56 @@ namespace knkwebapi_v2.Services
                         ExecutedAt = DateTime.UtcNow.ToString("o")
                     }
                 };
+            }
+        }
+
+        /// <summary>
+        /// Get fields in the correct visual order based on FieldOrderJson.
+        /// Falls back to database order if FieldOrderJson is not available.
+        /// </summary>
+        private List<FormField> GetOrderedFields(FormStep step)
+        {
+            if (string.IsNullOrWhiteSpace(step.FieldOrderJson))
+            {
+                return step.Fields.ToList();
+            }
+
+            try
+            {
+                var guidOrder = System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(step.FieldOrderJson);
+                if (guidOrder == null || guidOrder.Count == 0)
+                {
+                    return step.Fields.ToList();
+                }
+
+                // Create a map of fieldGuid -> field
+                var fieldMap = step.Fields.ToDictionary(f => f.FieldGuid, f => f);
+
+                // Reorder fields based on the GUID order in FieldOrderJson
+                var reordered = new List<FormField>();
+                foreach (var guid in guidOrder)
+                {
+                    if (fieldMap.TryGetValue(guid, out var field))
+                    {
+                        reordered.Add(field);
+                    }
+                }
+
+                // Add any fields that weren't in the order array (shouldn't happen, but be safe)
+                foreach (var field in step.Fields)
+                {
+                    if (!reordered.Contains(field))
+                    {
+                        reordered.Add(field);
+                    }
+                }
+
+                return reordered;
+            }
+            catch
+            {
+                // If parsing fails, return fields as-is
+                return step.Fields.ToList();
             }
         }
     }
