@@ -19,6 +19,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.ExperiencePoints, src => src.MapFrom(src => src.ExperiencePoints))
                 .ForMember(dest => dest.EmailVerified, src => src.MapFrom(src => src.EmailVerified))
                 .ForMember(dest => dest.AccountCreatedVia, src => src.MapFrom(src => src.AccountCreatedVia))
+                .ForMember(dest => dest.IsFullAccount, src => src.MapFrom(src => src.IsFullAccount))
                 .ForMember(dest => dest.IsActive, src => src.MapFrom(src => src.IsActive))
                 .ForMember(dest => dest.CreatedAt, src => src.MapFrom(src => src.CreatedAt.ToString("O")));
 

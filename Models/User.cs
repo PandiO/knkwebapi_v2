@@ -82,6 +82,21 @@ public class User
     public bool EmailVerified { get; set; } = false;
 
     /// <summary>
+    /// Indicates whether this is a full account (email + password registered on web app).
+    /// Full accounts can log into the web app. Minecraft-only accounts cannot.
+    /// 
+    /// Determined by presence of email and password hash:
+    /// - True: Email is set AND PasswordHash is not null → Web login capable
+    /// - False: Either email is null OR PasswordHash is null → Minecraft-only
+    /// 
+    /// Used to:
+    /// 1. Guide registration flow (prevent username conflicts with minecraft-only accounts)
+    /// 2. Filter eligible accounts for web login
+    /// 3. Determine account linking strategies
+    /// </summary>
+    public bool IsFullAccount => !string.IsNullOrEmpty(Email) && !string.IsNullOrEmpty(PasswordHash);
+
+    /// <summary>
     /// Indicates how the account was originally created (web app vs Minecraft server).
     /// Used for analytics and account recovery flows.
     /// </summary>

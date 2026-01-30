@@ -83,6 +83,9 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("accountCreatedVia")]
         public AccountCreationMethod AccountCreatedVia { get; set; }
 
+        [JsonPropertyName("isFullAccount")]
+        public bool IsFullAccount { get; set; }
+
         [JsonPropertyName("createdAt")]
         public string CreatedAt { get; set; } = DateTime.UtcNow.ToString("O");
 

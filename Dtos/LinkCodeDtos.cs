@@ -112,4 +112,15 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("passwordConfirmation")]
         public string PasswordConfirmation { get; set; } = null!;
     }
+
+    /// <summary>
+    /// DTO for generating a link code.
+    /// Supports both web app (via JWT, no body) and Minecraft plugin (via userId in body, no auth).
+    /// </summary>
+    public class GenerateLinkCodeRequestDto
+    {
+        [JsonPropertyName("userId")]
+        public int? UserId { get; set; }
+    }
 }
+

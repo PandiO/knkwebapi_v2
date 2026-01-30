@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Services;
@@ -146,8 +149,30 @@ namespace knkwebapi_v2.Controllers
                 // If not linked to existing pre-registered account, proceed with normal validation and creation
                 if (created == null)
                 {
-                    // Phase 4.2: Validate user creation
-                    var (isValid, errorMessage) = await _service.ValidateUserCreationAsync(user);
+                    // Check if link code is provided (minecraft-only account linking)
+                    int? minecraftOnlyAccountId = null;
+                    if (!string.IsNullOrEmpty(user.LinkCode))
+                    {
+                        var (isLinkCodeValid, linkCodeUser) = await _service.ValidateLinkCodeAsync(user.LinkCode);
+                        if (!isLinkCodeValid || linkCodeUser == null)
+                        {
+                            return BadRequest(new { error = "InvalidLinkCode", message = "Invalid or expired link code" });
+                        }
+
+                        // Verify the minecraft account matches the username provided (if username is provided)
+                        if (!string.IsNullOrEmpty(user.Username) && !string.IsNullOrEmpty(linkCodeUser.Username))
+                        {
+                            if (!user.Username.Equals(linkCodeUser.Username, StringComparison.OrdinalIgnoreCase))
+                            {
+                                return BadRequest(new { error = "UsernameConflict", message = "Username does not match the minecraft account associated with this link code" });
+                            }
+                        }
+
+                        minecraftOnlyAccountId = linkCodeUser.Id;
+                    }
+
+                    // Phase 4.2: Validate user creation (pass minecraftOnlyAccountId to skip username duplicate check)
+                    var (isValid, errorMessage) = await _service.ValidateUserCreationAsync(user, minecraftOnlyAccountId);
                     if (!isValid)
                     {
                         return BadRequest(new { error = "ValidationFailed", message = errorMessage });
@@ -156,33 +181,76 @@ namespace knkwebapi_v2.Controllers
                     // Check for duplicates
                     if (!string.IsNullOrEmpty(user.Username))
                     {
-                        var (usernameTaken, _) = await _service.CheckUsernameTakenAsync(user.Username);
+                        var (usernameTaken, conflictingUserId) = await _service.CheckUsernameTakenAsync(user.Username);
                         if (usernameTaken)
                         {
-                            return Conflict(new { error = "DuplicateUsername", message = "Username is already taken" });
+                            // If link code is valid for this username, link the minecraft-only account now
+                            if (minecraftOnlyAccountId.HasValue && conflictingUserId.HasValue && conflictingUserId.Value == minecraftOnlyAccountId.Value && !string.IsNullOrEmpty(user.LinkCode))
+                            {
+                                var (isConsumed, _) = await _service.ConsumeLinkCodeAsync(user.LinkCode);
+                                if (!isConsumed)
+                                {
+                                    return BadRequest(new { error = "InvalidLinkCode", message = "Invalid or expired link code" });
+                                }
+
+                                if (!string.IsNullOrEmpty(user.Email))
+                                {
+                                    await _service.UpdateEmailAsync(minecraftOnlyAccountId.Value, user.Email, null);
+                                }
+
+                                if (!string.IsNullOrEmpty(user.Password))
+                                {
+                                    var confirmation = user.PasswordConfirmation ?? user.Password;
+                                    await _service.ChangePasswordAsync(minecraftOnlyAccountId.Value, user.Password, user.Password, confirmation);
+                                }
+
+                                created = await _service.GetByIdAsync(minecraftOnlyAccountId.Value);
+                            }
+                            else
+                            {
+                                // Check if the conflicting account is minecraft-only (can be linked instead)
+                                var conflictingUser = conflictingUserId.HasValue ? await _service.GetByIdAsync(conflictingUserId.Value) : null;
+                                if (conflictingUser != null && conflictingUser.IsFullAccount == false && !string.IsNullOrEmpty(conflictingUser.Uuid))
+                                {
+                                    // Minecraft-only account found - offer linking instead of rejection
+                                    return Conflict(new 
+                                    { 
+                                        error = "MinecraftOnlyAccountExists", 
+                                        message = "Username matches your Minecraft account. Please use the link code from /account link in-game to complete registration.",
+                                        conflictingUserId = conflictingUserId,
+                                        isMinecraftOnly = true
+                                    });
+                                }
+
+                                // Regular duplicate (full account) - reject
+                                return Conflict(new { error = "DuplicateUsername", message = "Username is already taken" });
+                            }
                         }
                     }
 
-                    if (!string.IsNullOrEmpty(user.Email))
+                    if (created == null)
                     {
-                        var (emailTaken, _) = await _service.CheckEmailTakenAsync(user.Email);
-                        if (emailTaken)
+                        if (!string.IsNullOrEmpty(user.Email))
                         {
-                            return Conflict(new { error = "DuplicateEmail", message = "Email is already in use" });
+                            var (emailTaken, _) = await _service.CheckEmailTakenAsync(user.Email);
+                            if (emailTaken)
+                            {
+                                return Conflict(new { error = "DuplicateEmail", message = "Email is already in use" });
+                            }
                         }
-                    }
 
-                    if (!string.IsNullOrEmpty(user.Uuid))
-                    {
-                        var (uuidTaken, _) = await _service.CheckUuidTakenAsync(user.Uuid);
-                        if (uuidTaken)
+                        if (!string.IsNullOrEmpty(user.Uuid))
                         {
-                            return Conflict(new { error = "DuplicateUuid", message = "UUID is already registered" });
+                            var (uuidTaken, _) = await _service.CheckUuidTakenAsync(user.Uuid);
+                            if (uuidTaken)
+                            {
+                                return Conflict(new { error = "DuplicateUuid", message = "UUID is already registered" });
+                            }
                         }
-                    }
 
-                    // Create the user (service handles password hashing, link code validation/consumption, etc.)
-                    created = await _service.CreateAsync(user);
+                        // Create the user (service handles password hashing, link code validation/consumption, etc.)
+                        created = await _service.CreateAsync(user);
+                    }
                 }
                 
                 // Generate link code for response if web app first (has email but no uuid yet)
@@ -295,29 +363,50 @@ namespace knkwebapi_v2.Controllers
         // ===== PHASE 4.3: AUTHENTICATION ENDPOINTS =====
 
         /// <summary>
-        /// Generate a new link code for a user
+        /// Generate a new link code for the authenticated user
         /// </summary>
         /// <remarks>
         /// Link codes are valid for 20 minutes and used to link Minecraft accounts with web accounts.
         /// Format: 8 alphanumeric characters (e.g., ABC12XYZ)
+        /// 
+        /// Two ways to use this endpoint:
+        /// 1. WEB APP (Authenticated): POST with Authorization header, no body required
+        /// 2. MINECRAFT PLUGIN (Server-side): POST with userId in body, no auth required
         /// </remarks>
-        /// <param name="request">Request containing user ID</param>
+        /// <param name="request">Optional request body with userId (for Minecraft plugin use)</param>
         /// <returns>Link code with expiration time</returns>
         /// <response code="200">Link code generated successfully</response>
-        /// <response code="400">Invalid request</response>
+        /// <response code="401">User not authenticated (web app) or missing userId (plugin)</response>
         /// <response code="404">User not found</response>
         [HttpPost("generate-link-code")]
-        public async Task<IActionResult> GenerateLinkCode([FromBody] LinkCodeRequestDto request)
+        public async Task<IActionResult> GenerateLinkCode([FromBody] GenerateLinkCodeRequestDto? request = null)
         {
             try
             {
-                var user = await _service.GetByIdAsync(request.UserId);
-                if (user == null)
+                int? userId = null;
+
+                // Check if request has userId (Minecraft plugin use case)
+                if (request?.UserId.HasValue == true)
                 {
-                    return NotFound(new { error = "UserNotFound", message = $"User with ID {request.UserId} not found" });
+                    userId = request.UserId;
+                }
+                else
+                {
+                    // Extract from JWT claims (web app use case)
+                    userId = GetUserIdFromClaims(User);
+                    if (!userId.HasValue)
+                    {
+                        return Unauthorized(new { error = "InvalidToken", message = "User claim missing or not authenticated." });
+                    }
                 }
 
-                var linkCode = await _service.GenerateLinkCodeAsync(request.UserId);
+                var user = await _service.GetByIdAsync(userId.Value);
+                if (user == null)
+                {
+                    return NotFound(new { error = "UserNotFound", message = $"User with ID {userId.Value} not found" });
+                }
+
+                var linkCode = await _service.GenerateLinkCodeAsync(userId.Value);
                 return Ok(linkCode);
             }
             catch (ArgumentException ex)
@@ -678,6 +767,20 @@ namespace knkwebapi_v2.Controllers
         {
             var result = await _service.SearchAsync(query);
             return Ok(result);
+        }
+
+        private int? GetUserIdFromClaims(ClaimsPrincipal principal)
+        {
+            var userIdClaim = principal.FindFirst("uid")
+                ?? principal.FindFirst(JwtRegisteredClaimNames.Sub)
+                ?? principal.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                return null;
+            }
+
+            return int.TryParse(userIdClaim.Value, out var userId) ? userId : (int?)null;
         }
     }
 }

@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using Xunit;
 using Moq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using knkwebapi_v2.Controllers;
 using knkwebapi_v2.Services;
@@ -41,8 +43,9 @@ public class UsersControllerTests
             PasswordConfirmation = "SecurePass123!"
         };
 
+        // ValidateUserCreationAsync mock without expression tree (optional param issue)
         _mockUserService
-            .Setup(s => s.ValidateUserCreationAsync(createDto))
+            .Setup(s => s.ValidateUserCreationAsync(It.IsAny<UserCreateDto>(), It.IsAny<int?>()))
             .ReturnsAsync((true, null));
 
         _mockUserService
@@ -69,8 +72,9 @@ public class UsersControllerTests
             PasswordConfirmation = "SecurePass123!"
         };
 
+        // ValidateUserCreationAsync mock without expression tree (optional param issue)
         _mockUserService
-            .Setup(s => s.ValidateUserCreationAsync(createDto))
+            .Setup(s => s.ValidateUserCreationAsync(It.IsAny<UserCreateDto>(), It.IsAny<int?>()))
             .ReturnsAsync((true, null));
 
         _mockUserService
@@ -101,8 +105,9 @@ public class UsersControllerTests
             PasswordConfirmation = "weak"
         };
 
+        // ValidateUserCreationAsync mock without expression tree (optional param issue)
         _mockUserService
-            .Setup(s => s.ValidateUserCreationAsync(createDto))
+            .Setup(s => s.ValidateUserCreationAsync(It.IsAny<UserCreateDto>(), It.IsAny<int?>()))
             .ReturnsAsync((false, "Username is required"));
 
         // Act
@@ -118,26 +123,39 @@ public class UsersControllerTests
     #region GenerateLinkCode Tests
 
     [Fact]
-    public async Task GenerateLinkCode_WithValidUserId_Returns200WithCode()
+    public async Task GenerateLinkCode_WithAuthenticatedUser_Returns200WithCode()
     {
         // Arrange
-        var request = new LinkCodeRequestDto { UserId = 1 };
+        var userId = 1;
         var linkCodeDto = new LinkCodeResponseDto
         {
             Code = "ABC12XYZ",
             ExpiresAt = DateTime.UtcNow.AddMinutes(20)
         };
 
-        _mockUserService
-            .Setup(s => s.GetByIdAsync(1))
-            .ReturnsAsync(new UserDto { Id = 1, Username = "player" });
+        // Setup authenticated user claims
+        var claims = new List<Claim>
+        {
+            new Claim("uid", userId.ToString())
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+        
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
 
         _mockUserService
-            .Setup(s => s.GenerateLinkCodeAsync(1))
+            .Setup(s => s.GetByIdAsync(userId))
+            .ReturnsAsync(new UserDto { Id = userId, Username = "player" });
+
+        _mockUserService
+            .Setup(s => s.GenerateLinkCodeAsync(userId))
             .ReturnsAsync(linkCodeDto);
 
         // Act
-        var result = await _controller.GenerateLinkCode(request);
+        var result = await _controller.GenerateLinkCode();
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);

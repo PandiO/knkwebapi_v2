@@ -22,7 +22,9 @@ namespace knkwebapi_v2.Services
         /// Validates user creation DTO (username, email, password, etc.).
         /// Checks uniqueness constraints and password policy.
         /// </summary>
-        Task<(bool IsValid, string? ErrorMessage)> ValidateUserCreationAsync(UserCreateDto dto);
+        /// <param name="dto">User creation data to validate</param>
+        /// <param name="minecraftOnlyAccountIdBeingLinked">If provided, skips username uniqueness check (for linking minecraft-only accounts)</param>
+        Task<(bool IsValid, string? ErrorMessage)> ValidateUserCreationAsync(UserCreateDto dto, int? minecraftOnlyAccountIdBeingLinked = null);
 
         Task<(bool IsValid, UserDto? User)> ValidateLinkCodeAsync(string code);
 

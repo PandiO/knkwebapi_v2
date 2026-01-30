@@ -129,10 +129,13 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy
+                .WithOrigins(
+                    "http://localhost:3000",   // Frontend dev server (HTTP)
+                    "https://localhost:3000"   // Frontend dev server (HTTPS)
+                )
                 .AllowAnyHeader()
-                .AllowAnyOrigin()
-                .SetIsOriginAllowed(origin => true)
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials(); // Enable credentials (cookies, authorization headers)
         });
 });
 

@@ -135,7 +135,7 @@ namespace knkwebapi_v2.Services
         // ===== NEW METHODS: VALIDATION =====
 
         /// <inheritdoc/>
-        public async Task<(bool IsValid, string? ErrorMessage)> ValidateUserCreationAsync(UserCreateDto dto)
+        public async Task<(bool IsValid, string? ErrorMessage)> ValidateUserCreationAsync(UserCreateDto dto, int? minecraftOnlyAccountIdBeingLinked = null)
         {
             if (dto == null)
             {
@@ -153,11 +153,14 @@ namespace knkwebapi_v2.Services
                 return (false, "Username must be between 3 and 50 characters.");
             }
 
-            // Check username uniqueness
-            var (usernameTaken, _) = await CheckUsernameTakenAsync(dto.Username);
-            if (usernameTaken)
+            // Check username uniqueness (skip if linking to minecraft-only account)
+            if (!minecraftOnlyAccountIdBeingLinked.HasValue)
             {
-                return (false, "Username is already taken.");
+                var (usernameTaken, _) = await CheckUsernameTakenAsync(dto.Username);
+                if (usernameTaken)
+                {
+                    return (false, "Username is already taken.");
+                }
             }
 
             // Validate email (if provided)
