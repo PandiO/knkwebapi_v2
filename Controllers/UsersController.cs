@@ -119,43 +119,71 @@ namespace knkwebapi_v2.Controllers
             
             try
             {
-                // Phase 4.2: Validate user creation
-                var (isValid, errorMessage) = await _service.ValidateUserCreationAsync(user);
-                if (!isValid)
+                // Web app first linking (BEFORE validation): If providing UUID + username, check for existing pre-registered account
+                // A pre-registered account has the same username but uuid = null (awaiting Minecraft join)
+                UserDto? created = null;
+                if (!string.IsNullOrEmpty(user.Uuid) && !string.IsNullOrEmpty(user.Username))
                 {
-                    return BadRequest(new { error = "ValidationFailed", message = errorMessage });
-                }
-
-                // Check for duplicates
-                if (!string.IsNullOrEmpty(user.Username))
-                {
-                    var (usernameTaken, _) = await _service.CheckUsernameTakenAsync(user.Username);
-                    if (usernameTaken)
+                    var existingByUsername = await _service.GetByUsernameAsync(user.Username);
+                    if (existingByUsername != null && string.IsNullOrEmpty(existingByUsername.Uuid))
                     {
-                        return Conflict(new { error = "DuplicateUsername", message = "Username is already taken" });
+                        // Found pre-registered account: link by setting UUID
+                        var updatedDto = new UserDto
+                        {
+                            Id = existingByUsername.Id,
+                            Username = existingByUsername.Username,
+                            Email = existingByUsername.Email,
+                            Uuid = user.Uuid,  // Set UUID from Minecraft join
+                            Coins = existingByUsername.Coins,
+                            Gems = existingByUsername.Gems,
+                            ExperiencePoints = existingByUsername.ExperiencePoints
+                        };
+                        await _service.UpdateAsync(existingByUsername.Id, updatedDto);
+                        created = await _service.GetByIdAsync(existingByUsername.Id);
                     }
                 }
 
-                if (!string.IsNullOrEmpty(user.Email))
+                // If not linked to existing pre-registered account, proceed with normal validation and creation
+                if (created == null)
                 {
-                    var (emailTaken, _) = await _service.CheckEmailTakenAsync(user.Email);
-                    if (emailTaken)
+                    // Phase 4.2: Validate user creation
+                    var (isValid, errorMessage) = await _service.ValidateUserCreationAsync(user);
+                    if (!isValid)
                     {
-                        return Conflict(new { error = "DuplicateEmail", message = "Email is already in use" });
+                        return BadRequest(new { error = "ValidationFailed", message = errorMessage });
                     }
-                }
 
-                if (!string.IsNullOrEmpty(user.Uuid))
-                {
-                    var (uuidTaken, _) = await _service.CheckUuidTakenAsync(user.Uuid);
-                    if (uuidTaken)
+                    // Check for duplicates
+                    if (!string.IsNullOrEmpty(user.Username))
                     {
-                        return Conflict(new { error = "DuplicateUuid", message = "UUID is already registered" });
+                        var (usernameTaken, _) = await _service.CheckUsernameTakenAsync(user.Username);
+                        if (usernameTaken)
+                        {
+                            return Conflict(new { error = "DuplicateUsername", message = "Username is already taken" });
+                        }
                     }
-                }
 
-                // Create the user (service handles password hashing, link code validation/consumption, etc.)
-                var created = await _service.CreateAsync(user);
+                    if (!string.IsNullOrEmpty(user.Email))
+                    {
+                        var (emailTaken, _) = await _service.CheckEmailTakenAsync(user.Email);
+                        if (emailTaken)
+                        {
+                            return Conflict(new { error = "DuplicateEmail", message = "Email is already in use" });
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(user.Uuid))
+                    {
+                        var (uuidTaken, _) = await _service.CheckUuidTakenAsync(user.Uuid);
+                        if (uuidTaken)
+                        {
+                            return Conflict(new { error = "DuplicateUuid", message = "UUID is already registered" });
+                        }
+                    }
+
+                    // Create the user (service handles password hashing, link code validation/consumption, etc.)
+                    created = await _service.CreateAsync(user);
+                }
                 
                 // Generate link code for response if web app first (has email but no uuid yet)
                 LinkCodeResponseDto? linkCode = null;
@@ -314,7 +342,7 @@ namespace knkwebapi_v2.Controllers
         {
             try
             {
-                var (isValid, user) = await _service.ConsumeLinkCodeAsync(code);
+                var (isValid, user) = await _service.ValidateLinkCodeAsync(code);
                 
                 if (!isValid || user == null)
                 {

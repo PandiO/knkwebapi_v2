@@ -84,6 +84,12 @@ namespace knkwebapi_v2.Services
             existing.Username = userDto.Username;
             existing.Email = userDto.Email;
             existing.Coins = userDto.Coins;
+            
+                // Update UUID if provided (for web app first linking)
+                if (!string.IsNullOrEmpty(userDto.Uuid))
+                {
+                    existing.Uuid = userDto.Uuid;
+                }
 
             await _repo.UpdateUserAsync(existing);
         }
@@ -439,6 +445,28 @@ namespace knkwebapi_v2.Services
             }
 
             return await _linkCodeService.GenerateLinkCodeAsync(userId);
+        }
+
+        /// <inheritdoc/>
+        public async Task<(bool IsValid, UserDto? User)> ValidateLinkCodeAsync(string code)
+        {
+            var (isValid, linkCode, _) = await _linkCodeService.ValidateLinkCodeAsync(code);
+
+            if (!isValid || linkCode == null)
+            {
+                return (false, null);
+            }
+
+            if (linkCode.UserId.HasValue)
+            {
+                var user = await _repo.GetByIdAsync(linkCode.UserId.Value);
+                if (user != null)
+                {
+                    return (true, _mapper.Map<UserDto>(user));
+                }
+            }
+
+            return (false, null);
         }
 
         /// <inheritdoc/>

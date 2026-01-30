@@ -24,6 +24,11 @@ namespace knkwebapi_v2.Services
         /// </summary>
         Task<(bool IsValid, string? ErrorMessage)> ValidateUserCreationAsync(UserCreateDto dto);
 
+        Task<(bool IsValid, UserDto? User)> ValidateLinkCodeAsync(string code);
+
+        /// <summary>
+        /// Consume a link code (single-use) and return associated user if valid.
+        /// </summary>
         /// <summary>
         /// Validates a password against security policy (length, weak password list, etc.).
         /// </summary>
