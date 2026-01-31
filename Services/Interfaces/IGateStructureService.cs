@@ -22,6 +22,7 @@ namespace knkwebapi_v2.Services
         // Block snapshot operations
         Task<IEnumerable<GateBlockSnapshotDto>> GetBlockSnapshotsAsync(int gateId);
         Task AddBlockSnapshotsAsync(int gateId, IEnumerable<GateBlockSnapshotDto> snapshots);
+        Task AddBlockSnapshotsAsync(int gateId, IEnumerable<GateBlockSnapshotCreateDto> snapshots);
         Task ClearBlockSnapshotsAsync(int gateId);
     }
 }
