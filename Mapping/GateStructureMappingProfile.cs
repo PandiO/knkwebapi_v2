@@ -8,6 +8,45 @@ namespace knkwebapi_v2.Mapping
     {
         public GateStructureMappingProfile()
         {
+            // GateStructure -> GateStructureReadDto (full read for v2 API)
+            CreateMap<GateStructure, GateStructureReadDto>()
+                .ForMember(dest => dest.Street, opt => opt.MapFrom(src => src.Street))
+                .ForMember(dest => dest.District, opt => opt.MapFrom(src => src.District))
+                .ForMember(dest => dest.IconMaterialRef, opt => opt.MapFrom(src => src.IconMaterial))
+                .ForMember(dest => dest.FallbackMaterialRef, opt => opt.MapFrom(src => src.FallbackMaterial));
+
+            // GateStructureCreateDto -> GateStructure
+            CreateMap<GateStructureCreateDto, GateStructure>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.BlockSnapshots, opt => opt.Ignore())
+                .ForMember(dest => dest.Street, opt => opt.Ignore())
+                .ForMember(dest => dest.District, opt => opt.Ignore())
+                .ForMember(dest => dest.Location, opt => opt.Ignore())
+                .ForMember(dest => dest.IconMaterial, opt => opt.Ignore())
+                .ForMember(dest => dest.FallbackMaterial, opt => opt.Ignore());
+
+            // GateStructureUpdateDto -> GateStructure
+            CreateMap<GateStructureUpdateDto, GateStructure>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.BlockSnapshots, opt => opt.Ignore())
+                .ForMember(dest => dest.Street, opt => opt.Ignore())
+                .ForMember(dest => dest.District, opt => opt.Ignore())
+                .ForMember(dest => dest.Location, opt => opt.Ignore())
+                .ForMember(dest => dest.IconMaterial, opt => opt.Ignore())
+                .ForMember(dest => dest.FallbackMaterial, opt => opt.Ignore());
+
+            // GateStructure -> GateStructureNavDto
+            CreateMap<GateStructure, GateStructureNavDto>();
+
+            // GateBlockSnapshotCreateDto -> GateBlockSnapshot
+            CreateMap<GateBlockSnapshotCreateDto, GateBlockSnapshot>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.GateStructure, opt => opt.Ignore());
+
+            // Lightweight nav mappings
+            CreateMap<Street, GateStructureStreetDto>();
+            CreateMap<District, GateStructureDistrictDto>();
+
             // GateStructure -> GateStructureDto (full read with embedded navigations)
             CreateMap<GateStructure, GateStructureDto>()
                 // Base Structure/Domain fields

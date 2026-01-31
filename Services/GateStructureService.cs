@@ -200,6 +200,27 @@ namespace knkwebapi_v2.Services
             await _repo.AddBlockSnapshotsAsync(snapshotEntities);
         }
 
+        public async Task AddBlockSnapshotsAsync(int gateId, IEnumerable<GateBlockSnapshotCreateDto> snapshots)
+        {
+            if (gateId <= 0)
+                throw new ArgumentException("Invalid gateId.", nameof(gateId));
+            if (snapshots == null || !snapshots.Any())
+                throw new ArgumentException("Snapshots collection cannot be null or empty.", nameof(snapshots));
+
+            var existing = await _repo.GetByIdAsync(gateId);
+            if (existing == null)
+                throw new KeyNotFoundException($"GateStructure with id {gateId} not found.");
+
+            var snapshotEntities = _mapper.Map<IEnumerable<GateBlockSnapshot>>(snapshots);
+
+            foreach (var snapshot in snapshotEntities)
+            {
+                snapshot.GateStructureId = gateId;
+            }
+
+            await _repo.AddBlockSnapshotsAsync(snapshotEntities);
+        }
+
         public async Task ClearBlockSnapshotsAsync(int gateId)
         {
             if (gateId <= 0)
