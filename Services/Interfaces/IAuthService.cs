@@ -36,5 +36,13 @@ namespace knkwebapi_v2.Services
         /// <param name="userId">Authenticated user ID</param>
         /// <returns>UserDto or null if not found/inactive</returns>
         Task<UserDto?> GetCurrentUserAsync(int userId);
+
+        /// <summary>
+        /// Update user account (email and/or password).
+        /// </summary>
+        /// <param name="userId">Authenticated user ID</param>
+        /// <param name="request">Update request DTO</param>
+        /// <returns>Tuple with success flag, updated user DTO, and optional error message</returns>
+        Task<(bool Ok, UserDto? Result, string? Error)> UpdateUserAsync(int userId, AuthUpdateRequestDto request);
     }
 }

@@ -115,6 +115,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("experiencePoints")]
         public int ExperiencePoints { get; set; }
+
+        [JsonPropertyName("isFullAccount")]
+        public bool IsFullAccount { get; set; }
     }
 
     /// <summary>

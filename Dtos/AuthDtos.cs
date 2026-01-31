@@ -84,4 +84,41 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("expiresAt")]
         public DateTime? ExpiresAt { get; set; }
     }
+
+    /// <summary>
+    /// DTO for updating user account (email and/or password).
+    /// At least one field must be provided for update.
+    /// </summary>
+    public class AuthUpdateRequestDto
+    {
+        /// <summary>
+        /// New email address (optional).
+        /// </summary>
+        [JsonPropertyName("email")]
+        public string? Email { get; set; }
+
+        /// <summary>
+        /// Current password (required for password change, optional for email change).
+        /// </summary>
+        [JsonPropertyName("currentPassword")]
+        public string? CurrentPassword { get; set; }
+
+        /// <summary>
+        /// New password (optional).
+        /// </summary>
+        [JsonPropertyName("newPassword")]
+        public string? NewPassword { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for update user response.
+    /// </summary>
+    public class AuthUpdateResponseDto
+    {
+        [JsonPropertyName("user")]
+        public UserDto User { get; set; } = null!;
+
+        [JsonPropertyName("message")]
+        public string Message { get; set; } = null!;
+    }
 }

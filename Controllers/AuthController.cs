@@ -120,6 +120,37 @@ namespace knkwebapi_v2.Controllers
             return Ok(user);
         }
 
+        [HttpPut("update")]
+        [Authorize]
+        public async Task<IActionResult> Update([FromBody] AuthUpdateRequestDto request)
+        {
+            var userId = GetUserIdFromClaims(User);
+            if (!userId.HasValue)
+            {
+                return Unauthorized(new { error = "InvalidToken", message = "User claim missing." });
+            }
+
+            if (request == null)
+            {
+                return BadRequest(new { error = "InvalidRequest", message = "Update payload is required." });
+            }
+
+            var (ok, result, error) = await _authService.UpdateUserAsync(userId.Value, request);
+            if (!ok || result == null)
+            {
+                _logger.LogWarning("Update failed for user {UserId}: {Reason}", userId, error ?? "Unknown error");
+                return BadRequest(new { error = "UpdateFailed", message = error ?? "Failed to update user account." });
+            }
+
+            _logger.LogInformation("User account updated for user {UserId}", userId);
+
+            return Ok(new AuthUpdateResponseDto
+            {
+                User = result,
+                Message = "Account updated successfully."
+            });
+        }
+
         [HttpPost("validate-token")]
         [AllowAnonymous]
         public async Task<IActionResult> ValidateToken([FromBody] AuthValidateTokenRequestDto request)

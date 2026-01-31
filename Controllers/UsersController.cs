@@ -71,7 +71,8 @@ namespace knkwebapi_v2.Controllers
                 Coins = item.Coins,
                 Gems = item.Gems,
                 ExperiencePoints = item.ExperiencePoints,
-                Uuid = item.Uuid
+                Uuid = item.Uuid,
+                IsFullAccount = item.IsFullAccount
             };
             return Ok(dto);
         }
@@ -95,7 +96,8 @@ namespace knkwebapi_v2.Controllers
                 Coins = item.Coins,
                 Gems = item.Gems,
                 ExperiencePoints = item.ExperiencePoints,
-                Uuid = item.Uuid
+                Uuid = item.Uuid,
+                IsFullAccount = item.IsFullAccount
             };
             return Ok(dto);
         }

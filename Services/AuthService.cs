@@ -151,6 +151,94 @@ namespace knkwebapi_v2.Services
             return _mapper.Map<UserDto>(user);
         }
 
+        /// <inheritdoc/>
+        public async Task<(bool Ok, UserDto? Result, string? Error)> UpdateUserAsync(int userId, AuthUpdateRequestDto request)
+        {
+            if (userId <= 0)
+            {
+                return (false, null, "Invalid user ID.");
+            }
+
+            if (request == null)
+            {
+                return (false, null, "Update request is required.");
+            }
+
+            // Validate that at least one field is being updated
+            var hasEmailUpdate = !string.IsNullOrWhiteSpace(request.Email);
+            var hasPasswordUpdate = !string.IsNullOrWhiteSpace(request.NewPassword);
+
+            if (!hasEmailUpdate && !hasPasswordUpdate)
+            {
+                return (false, null, "At least one field (email or password) must be provided for update.");
+            }
+
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null || !user.IsActive || user.DeletedAt.HasValue)
+            {
+                _logger.LogWarning("Update failed for user {UserId}: not found or inactive", userId);
+                return (false, null, "User not found or inactive.");
+            }
+
+            // Handle password update
+            if (hasPasswordUpdate)
+            {
+                if (string.IsNullOrWhiteSpace(request.CurrentPassword))
+                {
+                    return (false, null, "Current password is required to change password.");
+                }
+
+                if (string.IsNullOrWhiteSpace(user.PasswordHash))
+                {
+                    return (false, null, "Cannot update password for account without existing password.");
+                }
+
+                // Verify current password
+                var passwordValid = await _passwordService.VerifyPasswordAsync(request.CurrentPassword, user.PasswordHash);
+                if (!passwordValid)
+                {
+                    _logger.LogWarning("Password update failed for user {UserId}: incorrect current password", userId);
+                    return (false, null, "Current password is incorrect.");
+                }
+
+                // Validate new password
+                if (request.NewPassword.Length < 8)
+                {
+                    return (false, null, "New password must be at least 8 characters long.");
+                }
+
+                // Hash and update password
+                var newPasswordHash = await _passwordService.HashPasswordAsync(request.NewPassword);
+                user.PasswordHash = newPasswordHash;
+
+                _logger.LogInformation("Password updated for user {UserId}", userId);
+            }
+
+            // Handle email update
+            if (hasEmailUpdate)
+            {
+                var normalizedEmail = request.Email!.Trim().ToLowerInvariant();
+
+                // Check if email is already in use by another user
+                var existingUser = await _userRepository.GetByEmailAsync(normalizedEmail);
+                if (existingUser != null && existingUser.Id != userId)
+                {
+                    return (false, null, "Email is already in use by another account.");
+                }
+
+                user.Email = normalizedEmail;
+                user.EmailVerified = false; // Reset verification status when email changes
+
+                _logger.LogInformation("Email updated for user {UserId}", userId);
+            }
+
+            // Save changes
+            await _userRepository.UpdateUserAsync(user);
+
+            var updatedUserDto = _mapper.Map<UserDto>(user);
+            return (true, updatedUserDto, null);
+        }
+
         private async Task<int> CalculateExpiresInSecondsAsync(string accessToken)
         {
             var expiresAt = await _tokenService.ExtractExpirationAsync(accessToken);
