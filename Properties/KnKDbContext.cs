@@ -46,7 +46,6 @@ public partial class KnKDbContext : DbContext
     public virtual DbSet<MinecraftMaterialRef> MinecraftMaterialRefs { get; set; } = null!;
     public virtual DbSet<MinecraftBlockRef> MinecraftBlockRefs { get; set; } = null!;
     public virtual DbSet<MinecraftEnchantmentRef> MinecraftEnchantmentRefs { get; set; } = null!;
-    public virtual DbSet<ItemBlueprint> ItemBlueprints { get; set; } = null!;
     public virtual DbSet<EnchantmentDefinition> EnchantmentDefinitions { get; set; } = null!;
     // Workflow + Tasks
     public virtual DbSet<WorkflowSession> WorkflowSessions { get; set; } = null!;
