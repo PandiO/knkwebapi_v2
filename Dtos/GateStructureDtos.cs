@@ -385,6 +385,15 @@ namespace knkwebapi_v2.Dtos
         public string RegionOpenedId { get; set; } = string.Empty;
     }
 
+    public class GateStateUpdateDto
+    {
+        [JsonPropertyName("isOpened")]
+        public bool IsOpened { get; set; }
+
+        [JsonPropertyName("isDestroyed")]
+        public bool IsDestroyed { get; set; }
+    }
+
     public class GateStructureNavDto
     {
         [JsonPropertyName("id")]

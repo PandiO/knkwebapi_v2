@@ -42,6 +42,15 @@ namespace knkwebapi_v2.Services
             return _mapper.Map<GateStructureDto>(gateStructure);
         }
 
+        public async Task<IEnumerable<GateStructureDto>> GetGatesByDomainAsync(int domainId)
+        {
+            if (domainId <= 0)
+                throw new ArgumentException("Invalid domainId.", nameof(domainId));
+
+            var gateStructures = await _repo.GetGatesByDomainAsync(domainId);
+            return _mapper.Map<IEnumerable<GateStructureDto>>(gateStructures);
+        }
+
         public async Task<GateStructureDto> CreateAsync(GateStructureDto gateStructureDto)
         {
             if (gateStructureDto == null) 
