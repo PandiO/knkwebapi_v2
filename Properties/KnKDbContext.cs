@@ -40,6 +40,8 @@ public partial class KnKDbContext : DbContext
     public virtual DbSet<Town> Towns { get; set; } = null!;
     public virtual DbSet<District> Districts { get; set; } = null!;
     public virtual DbSet<Structure> Structures { get; set; } = null!;
+    public virtual DbSet<GateStructure> GateStructures { get; set; } = null!;
+    public virtual DbSet<GateBlockSnapshot> GateBlockSnapshots { get; set; } = null!;
     public virtual DbSet<ItemBlueprint> ItemBlueprints { get; set; } = null!;
     public virtual DbSet<MinecraftMaterialRef> MinecraftMaterialRefs { get; set; } = null!;
     public virtual DbSet<MinecraftBlockRef> MinecraftBlockRefs { get; set; } = null!;
@@ -284,6 +286,68 @@ public partial class KnKDbContext : DbContext
         modelBuilder.Entity<Structure>(entity =>
         {
             entity.ToTable("structures");
+        });
+
+        // GateStructure configuration
+        modelBuilder.Entity<GateStructure>(entity =>
+        {
+            entity.ToTable("gate_structures");
+            
+            // Indexes
+            entity.HasIndex(e => e.IsActive)
+                .HasDatabaseName("IX_GateStructure_IsActive");
+            
+            entity.HasIndex(e => e.GateType)
+                .HasDatabaseName("IX_GateStructure_GateType");
+            
+            entity.HasIndex(e => e.IsOpened)
+                .HasDatabaseName("IX_GateStructure_IsOpened");
+            
+            // Foreign key relationships
+            entity.HasOne(g => g.IconMaterial)
+                .WithMany()
+                .HasForeignKey(g => g.IconMaterialRefId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(g => g.FallbackMaterial)
+                .WithMany()
+                .HasForeignKey(g => g.FallbackMaterialRefId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            // One-to-many relationship with GateBlockSnapshot
+            entity.HasMany(g => g.BlockSnapshots)
+                .WithOne(bs => bs.GateStructure)
+                .HasForeignKey(bs => bs.GateStructureId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // GateBlockSnapshot configuration
+        modelBuilder.Entity<GateBlockSnapshot>(entity =>
+        {
+            entity.ToTable("gate_block_snapshots");
+            
+            entity.HasKey(e => e.Id);
+            
+            // Indexes for performance
+            entity.HasIndex(e => e.GateStructureId)
+                .HasDatabaseName("IX_GateBlockSnapshot_GateStructureId");
+            
+            entity.HasIndex(e => new { e.GateStructureId, e.SortOrder })
+                .HasDatabaseName("IX_GateBlockSnapshot_GateId_SortOrder");
+            
+            entity.HasIndex(e => new { e.WorldX, e.WorldY, e.WorldZ })
+                .HasDatabaseName("IX_GateBlockSnapshot_WorldCoordinates");
+            
+            // Required fields
+            entity.Property(e => e.MaterialName)
+                .IsRequired()
+                .HasMaxLength(191);
+            
+            entity.Property(e => e.BlockDataJson)
+                .HasMaxLength(1000);
+            
+            entity.Property(e => e.TileEntityJson)
+                .HasMaxLength(2000);
         });
 
         modelBuilder.Entity<MinecraftMaterialRef>(entity =>

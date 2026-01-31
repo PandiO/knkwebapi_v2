@@ -6,9 +6,24 @@ namespace knkwebapi_v2.Repositories
     {
         Task<IEnumerable<GateStructure>> GetAllAsync();
         Task<GateStructure?> GetByIdAsync(int id);
+        Task<GateStructure?> GetByIdWithSnapshotsAsync(int id);
         Task AddGateStructureAsync(GateStructure gateStructure);
         Task UpdateGateStructureAsync(GateStructure gateStructure);
         Task DeleteGateStructureAsync(int id);
         Task<PagedResult<GateStructure>> SearchAsync(PagedQuery query);
+        
+        // Gate-specific operations
+        Task<IEnumerable<GateStructure>> GetGatesByDomainAsync(int domainId);
+        Task<IEnumerable<GateStructure>> GetActiveGatesAsync();
+        Task<bool> IsGateNameUniqueAsync(string name, int domainId, int? excludeId = null);
+        Task<GateStructure?> FindGateByRegionAsync(string regionId);
+        Task UpdateGateHealthAsync(int id, double newHealth);
+        Task UpdateGateStateAsync(int id, bool isOpened, bool isDestroyed);
+        
+        // Block snapshot operations
+        Task<IEnumerable<GateBlockSnapshot>> GetBlockSnapshotsByGateIdAsync(int gateId);
+        Task AddBlockSnapshotAsync(GateBlockSnapshot snapshot);
+        Task AddBlockSnapshotsAsync(IEnumerable<GateBlockSnapshot> snapshots);
+        Task DeleteBlockSnapshotsByGateIdAsync(int gateId);
     }
 }

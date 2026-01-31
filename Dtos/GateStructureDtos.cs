@@ -37,7 +37,7 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("houseNumber")]
         public int HouseNumber { get; set; }
 
-        // GateStructure-specific fields
+        // === Core Gate State & Health System ===
         [JsonPropertyName("isActive")]
         public bool? IsActive { get; set; }
 
@@ -74,7 +74,141 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("regionOpenedId")]
         public string RegionOpenedId { get; set; } = string.Empty;
 
-        // Optional embedded lightweight navigations
+        // === Gate Type & Animation Configuration ===
+        [JsonPropertyName("gateType")]
+        public string GateType { get; set; } = "SLIDING";
+
+        [JsonPropertyName("geometryDefinitionMode")]
+        public string GeometryDefinitionMode { get; set; } = "PLANE_GRID";
+
+        [JsonPropertyName("motionType")]
+        public string MotionType { get; set; } = "VERTICAL";
+
+        [JsonPropertyName("animationDurationTicks")]
+        public int? AnimationDurationTicks { get; set; }
+
+        [JsonPropertyName("animationTickRate")]
+        public int? AnimationTickRate { get; set; }
+
+        // === Geometry Definition (PLANE_GRID mode) ===
+        [JsonPropertyName("anchorPoint")]
+        public string AnchorPoint { get; set; } = string.Empty;
+
+        [JsonPropertyName("referencePoint1")]
+        public string ReferencePoint1 { get; set; } = string.Empty;
+
+        [JsonPropertyName("referencePoint2")]
+        public string ReferencePoint2 { get; set; } = string.Empty;
+
+        [JsonPropertyName("geometryWidth")]
+        public int? GeometryWidth { get; set; }
+
+        [JsonPropertyName("geometryHeight")]
+        public int? GeometryHeight { get; set; }
+
+        [JsonPropertyName("geometryDepth")]
+        public int? GeometryDepth { get; set; }
+
+        // === Geometry Definition (FLOOD_FILL mode) ===
+        [JsonPropertyName("seedBlocks")]
+        public string SeedBlocks { get; set; } = string.Empty;
+
+        [JsonPropertyName("scanMaxBlocks")]
+        public int? ScanMaxBlocks { get; set; }
+
+        [JsonPropertyName("scanMaxRadius")]
+        public int? ScanMaxRadius { get; set; }
+
+        [JsonPropertyName("scanMaterialWhitelist")]
+        public string ScanMaterialWhitelist { get; set; } = string.Empty;
+
+        [JsonPropertyName("scanMaterialBlacklist")]
+        public string ScanMaterialBlacklist { get; set; } = string.Empty;
+
+        [JsonPropertyName("scanPlaneConstraint")]
+        public bool? ScanPlaneConstraint { get; set; }
+
+        // === Block Management ===
+        [JsonPropertyName("fallbackMaterialRefId")]
+        public int? FallbackMaterialRefId { get; set; }
+
+        [JsonPropertyName("tileEntityPolicy")]
+        public string TileEntityPolicy { get; set; } = "DECORATIVE_ONLY";
+
+        // === Rotation-Specific Fields ===
+        [JsonPropertyName("rotationMaxAngleDegrees")]
+        public int? RotationMaxAngleDegrees { get; set; }
+
+        [JsonPropertyName("hingeAxis")]
+        public string HingeAxis { get; set; } = string.Empty;
+
+        // === Double Doors Specific ===
+        [JsonPropertyName("leftDoorSeedBlock")]
+        public string LeftDoorSeedBlock { get; set; } = string.Empty;
+
+        [JsonPropertyName("rightDoorSeedBlock")]
+        public string RightDoorSeedBlock { get; set; } = string.Empty;
+
+        [JsonPropertyName("mirrorRotation")]
+        public bool? MirrorRotation { get; set; }
+
+        // === Pass-Through System ===
+        [JsonPropertyName("allowPassThrough")]
+        public bool? AllowPassThrough { get; set; }
+
+        [JsonPropertyName("passThroughDurationSeconds")]
+        public int? PassThroughDurationSeconds { get; set; }
+
+        [JsonPropertyName("passThroughConditionsJson")]
+        public string PassThroughConditionsJson { get; set; } = string.Empty;
+
+        // === Guard & Defense System ===
+        [JsonPropertyName("guardSpawnLocationsJson")]
+        public string GuardSpawnLocationsJson { get; set; } = string.Empty;
+
+        [JsonPropertyName("guardCount")]
+        public int? GuardCount { get; set; }
+
+        [JsonPropertyName("guardNpcTemplateId")]
+        public int? GuardNpcTemplateId { get; set; }
+
+        // === Health Display Configuration ===
+        [JsonPropertyName("showHealthDisplay")]
+        public bool? ShowHealthDisplay { get; set; }
+
+        [JsonPropertyName("healthDisplayMode")]
+        public string HealthDisplayMode { get; set; } = "ALWAYS";
+
+        [JsonPropertyName("healthDisplayYOffset")]
+        public int? HealthDisplayYOffset { get; set; }
+
+        // === Siege Integration ===
+        [JsonPropertyName("isOverridable")]
+        public bool? IsOverridable { get; set; }
+
+        [JsonPropertyName("animateDuringSiege")]
+        public bool? AnimateDuringSiege { get; set; }
+
+        [JsonPropertyName("currentSiegeId")]
+        public int? CurrentSiegeId { get; set; }
+
+        [JsonPropertyName("isSiegeObjective")]
+        public bool? IsSiegeObjective { get; set; }
+
+        // === Combat System: Continuous Damage ===
+        [JsonPropertyName("allowContinuousDamage")]
+        public bool? AllowContinuousDamage { get; set; }
+
+        [JsonPropertyName("continuousDamageMultiplier")]
+        public double? ContinuousDamageMultiplier { get; set; }
+
+        [JsonPropertyName("continuousDamageDurationSeconds")]
+        public int? ContinuousDamageDurationSeconds { get; set; }
+
+        // === Navigation Properties ===
+        [JsonPropertyName("blockSnapshots")]
+        public List<GateBlockSnapshotDto>? BlockSnapshots { get; set; }
+
         [JsonPropertyName("street")]
         public GateStructureStreetDto? Street { get; set; }
 
@@ -83,6 +217,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("iconMaterialRef")]
         public MinecraftMaterialRefDto? IconMaterialRef { get; set; }
+
+        [JsonPropertyName("fallbackMaterialRef")]
+        public MinecraftMaterialRefDto? FallbackMaterialRef { get; set; }
     }
 
     public class GateStructureListDto
@@ -120,8 +257,60 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("healthCurrent")]
         public double healthCurrent { get; set; }
 
+        [JsonPropertyName("healthMax")]
+        public double healthMax { get; set; }
+
         [JsonPropertyName("isDestroyed")]
         public bool isDestroyed { get; set; }
+
+        [JsonPropertyName("isOpened")]
+        public bool isOpened { get; set; }
+
+        [JsonPropertyName("gateType")]
+        public string gateType { get; set; } = "SLIDING";
+
+        [JsonPropertyName("faceDirection")]
+        public string faceDirection { get; set; } = "north";
+    }
+
+    // GateBlockSnapshot DTO
+    public class GateBlockSnapshotDto
+    {
+        [JsonPropertyName("id")]
+        public int? Id { get; set; }
+
+        [JsonPropertyName("gateStructureId")]
+        public int GateStructureId { get; set; }
+
+        [JsonPropertyName("relativeX")]
+        public int RelativeX { get; set; }
+
+        [JsonPropertyName("relativeY")]
+        public int RelativeY { get; set; }
+
+        [JsonPropertyName("relativeZ")]
+        public int RelativeZ { get; set; }
+
+        [JsonPropertyName("worldX")]
+        public int WorldX { get; set; }
+
+        [JsonPropertyName("worldY")]
+        public int WorldY { get; set; }
+
+        [JsonPropertyName("worldZ")]
+        public int WorldZ { get; set; }
+
+        [JsonPropertyName("materialName")]
+        public string MaterialName { get; set; } = null!;
+
+        [JsonPropertyName("blockDataJson")]
+        public string BlockDataJson { get; set; } = "{}";
+
+        [JsonPropertyName("tileEntityJson")]
+        public string TileEntityJson { get; set; } = "{}";
+
+        [JsonPropertyName("sortOrder")]
+        public int SortOrder { get; set; }
     }
 }
 
