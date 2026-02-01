@@ -62,10 +62,28 @@ namespace knkwebapi_v2.Services
         {
             if (userDto == null) throw new ArgumentNullException(nameof(userDto));
             if (string.IsNullOrWhiteSpace(userDto.Username)) throw new ArgumentException("Username is required.", nameof(userDto));
-            // if (string.IsNullOrWhiteSpace(userDto.Email)) throw new ArgumentException("Email is required.", nameof(userDto));
+            if (!string.IsNullOrWhiteSpace(userDto.Email) && string.IsNullOrWhiteSpace(userDto.Password))
+            {
+                throw new ArgumentException("Password is required when email is provided.", nameof(userDto));
+            }
+
+            if (!string.IsNullOrWhiteSpace(userDto.Password) && string.IsNullOrWhiteSpace(userDto.Email))
+            {
+                throw new ArgumentException("Email is required when password is provided.", nameof(userDto));
+            }
 
             var user = _mapper.Map<User>(userDto);
             user.CreatedAt = DateTime.UtcNow;
+
+            if (!string.IsNullOrWhiteSpace(userDto.Password))
+            {
+                user.PasswordHash = await _passwordService.HashPasswordAsync(userDto.Password);
+                user.LastPasswordChangeAt = DateTime.UtcNow;
+            }
+
+            user.AccountCreatedVia = string.IsNullOrWhiteSpace(userDto.Email)
+                ? AccountCreationMethod.MinecraftServer
+                : AccountCreationMethod.WebApp;
             
             await _repo.AddUserAsync(user);
             return _mapper.Map<UserDto>(user);
@@ -176,6 +194,11 @@ namespace knkwebapi_v2.Services
                 {
                     return (false, "Email is already registered.");
                 }
+
+                if (string.IsNullOrWhiteSpace(dto.Password))
+                {
+                    return (false, "Password is required when email is provided.");
+                }
             }
 
             // Validate UUID (if provided)
@@ -191,6 +214,11 @@ namespace knkwebapi_v2.Services
             // Validate password (if provided)
             if (!string.IsNullOrWhiteSpace(dto.Password))
             {
+                if (string.IsNullOrWhiteSpace(dto.Email))
+                {
+                    return (false, "Email is required when password is provided.");
+                }
+
                 var (isValidPassword, passwordError) = await ValidatePasswordAsync(dto.Password);
                 if (!isValidPassword)
                 {

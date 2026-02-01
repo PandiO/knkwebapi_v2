@@ -692,43 +692,50 @@ namespace knkwebapi_v2.Controllers
         {
             try
             {
-                // Validate link code and get associated user
-                var (isValid, user) = await _service.ConsumeLinkCodeAsync(request.LinkCode);
+                // Step 1: Validate link code WITHOUT consuming it (validate first)
+                var (isLinkCodeValid, linkCodeUser) = await _service.ValidateLinkCodeAsync(request.LinkCode);
                 
-                if (!isValid || user == null)
+                if (!isLinkCodeValid || linkCodeUser == null)
                 {
                     return BadRequest(new { error = "InvalidLinkCode", message = "Invalid or expired link code" });
                 }
 
-                // Validate password
+                // Step 2: Validate password
                 var (passwordValid, passwordError) = await _service.ValidatePasswordAsync(request.Password);
                 if (!passwordValid)
                 {
                     return BadRequest(new { error = "InvalidPassword", message = passwordError });
                 }
 
-                // Check password confirmation
+                // Step 3: Check password confirmation
                 if (request.Password != request.PasswordConfirmation)
                 {
                     return BadRequest(new { error = "PasswordMismatch", message = "Password and confirmation do not match" });
                 }
 
-                // Check if email is already taken
-                var (emailTaken, conflictingUserId) = await _service.CheckEmailTakenAsync(request.Email, user.Id);
+                // Step 4: Check if email is already taken
+                var (emailTaken, conflictingUserId) = await _service.CheckEmailTakenAsync(request.Email, linkCodeUser.Id);
                 if (emailTaken)
                 {
                     return Conflict(new { error = "DuplicateEmail", message = "Email is already in use by another account" });
                 }
 
-                // Update user with email
-                await _service.UpdateEmailAsync(user.Id, request.Email, null);
+                // Step 5: All validations passed - NOW consume the link code
+                var (isConsumed, consumedUser) = await _service.ConsumeLinkCodeAsync(request.LinkCode);
+                if (!isConsumed || consumedUser == null)
+                {
+                    return BadRequest(new { error = "InvalidLinkCode", message = "Link code could not be consumed" });
+                }
+
+                // Step 6: Update user with email
+                await _service.UpdateEmailAsync(linkCodeUser.Id, request.Email, null);
                 
-                // Set initial password (no current password needed since we're setting it for the first time)
+                // Step 7: Set initial password (no current password needed since we're setting it for the first time)
                 // Use empty string as currentPassword since ChangePasswordAsync allows null PasswordHash
-                await _service.ChangePasswordAsync(user.Id, "", request.Password, request.PasswordConfirmation);
+                await _service.ChangePasswordAsync(linkCodeUser.Id, "", request.Password, request.PasswordConfirmation);
                 
-                // Get updated user
-                var updatedUser = await _service.GetByIdAsync(user.Id);
+                // Step 8: Get updated user
+                var updatedUser = await _service.GetByIdAsync(linkCodeUser.Id);
                 
                 return Ok(new 
                 {
