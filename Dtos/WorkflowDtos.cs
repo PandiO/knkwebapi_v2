@@ -62,28 +62,57 @@ public class StepProgressReadDto
 public class WorldTaskCreateDto
 {
     [JsonPropertyName("workflowSessionId")] public int WorkflowSessionId { get; set; }
+    [JsonPropertyName("stepNumber")] public int StepNumber { get; set; }
+    [JsonPropertyName("stepKey")] public string StepKey { get; set; } = null!;
+    [JsonPropertyName("fieldName")] public string FieldName { get; set; } = null!;
     [JsonPropertyName("taskType")] public string TaskType { get; set; } = null!;
     [JsonPropertyName("assignedUserId")] public int? AssignedUserId { get; set; }
-    [JsonPropertyName("stepKey")] public string? StepKey { get; set; }
+    [JsonPropertyName("inputJson")] public string? InputJson { get; set; }
+    // Legacy client payload support (maps to InputJson when provided)
     [JsonPropertyName("payloadJson")] public string? PayloadJson { get; set; }
 }
 
 public class WorldTaskUpdateDto
 {
-    [JsonPropertyName("status")] public string? Status { get; set; } // Accepted, InProgress, Completed, Cancelled
-    [JsonPropertyName("payloadJson")] public string? PayloadJson { get; set; }
+    [JsonPropertyName("status")] public string? Status { get; set; }
+    [JsonPropertyName("outputJson")] public string? OutputJson { get; set; }
+    [JsonPropertyName("errorMessage")] public string? ErrorMessage { get; set; }
+}
+
+public class ClaimTaskDto
+{
+    [JsonPropertyName("claimedByServerId")] public string? ClaimedByServerId { get; set; }
+    [JsonPropertyName("claimedByMinecraftUsername")] public string? ClaimedByMinecraftUsername { get; set; }
+}
+
+public class CompleteTaskDto
+{
+    [JsonPropertyName("outputJson")] public string OutputJson { get; set; } = null!;
+}
+
+public class FailTaskDto
+{
+    [JsonPropertyName("errorMessage")] public string ErrorMessage { get; set; } = null!;
 }
 
 public class WorldTaskReadDto
 {
     [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("workflowSessionId")] public int WorkflowSessionId { get; set; }
+    [JsonPropertyName("stepNumber")] public int? StepNumber { get; set; }
+    [JsonPropertyName("stepKey")] public string? StepKey { get; set; }
+    [JsonPropertyName("fieldName")] public string? FieldName { get; set; }
     [JsonPropertyName("taskType")] public string TaskType { get; set; } = null!;
     [JsonPropertyName("status")] public string Status { get; set; } = "Pending";
+    [JsonPropertyName("linkCode")] public string? LinkCode { get; set; }
     [JsonPropertyName("assignedUserId")] public int? AssignedUserId { get; set; }
-    [JsonPropertyName("stepKey")] public string? StepKey { get; set; }
-    [JsonPropertyName("payloadJson")] public string? PayloadJson { get; set; }
+    [JsonPropertyName("claimedByServerId")] public string? ClaimedByServerId { get; set; }
+    [JsonPropertyName("claimedByMinecraftUsername")] public string? ClaimedByMinecraftUsername { get; set; }
+    [JsonPropertyName("inputJson")] public string? InputJson { get; set; }
+    [JsonPropertyName("outputJson")] public string? OutputJson { get; set; }
+    [JsonPropertyName("errorMessage")] public string? ErrorMessage { get; set; }
     [JsonPropertyName("createdAt")] public string CreatedAt { get; set; } = DateTime.UtcNow.ToString("O");
+    [JsonPropertyName("claimedAt")] public string? ClaimedAt { get; set; }
     [JsonPropertyName("updatedAt")] public string? UpdatedAt { get; set; }
     [JsonPropertyName("completedAt")] public string? CompletedAt { get; set; }
 }

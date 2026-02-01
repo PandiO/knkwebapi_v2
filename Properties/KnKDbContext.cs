@@ -18,6 +18,7 @@ public partial class KnKDbContext : DbContext
 
     public virtual DbSet<Domain> Domains { get; set; } = null!;
     public virtual DbSet<User> Users { get; set; } = null!;
+    public virtual DbSet<LinkCode> LinkCodes { get; set; } = null!;
     public virtual DbSet<Category> Categories { get; set; } = null!;
     public DbSet<FormConfiguration> FormConfigurations { get; set; }
     public DbSet<FormStep> FormSteps { get; set; }
@@ -66,6 +67,35 @@ public partial class KnKDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
             entity.ToTable("users");
+            
+            // Unique constraints on Username, Email, UUID (with null handling)
+            entity.HasIndex(e => e.Username).IsUnique();
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            
+            // Relationship to LinkCodes
+            entity.HasMany(e => e.LinkCodes)
+                .WithOne(lc => lc.User)
+                .HasForeignKey(lc => lc.UserId)
+                .OnDelete(DeleteBehavior.Restrict); // No cascade; soft-delete handles cleanup
+        });
+
+        modelBuilder.Entity<LinkCode>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+            entity.ToTable("linkcodes");
+            
+            // Unique constraint on Code - cannot be reused
+            entity.HasIndex(e => e.Code).IsUnique();
+            
+            // Index on ExpiresAt for efficient cleanup queries
+            entity.HasIndex(e => e.ExpiresAt);
+            
+            // FK to User (no cascade - handled at application level)
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.LinkCodes)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<Category>(entity =>
         {

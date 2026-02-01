@@ -20,6 +20,23 @@ namespace knkwebapi_v2.Repositories
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 
+        public async Task<WorldTask?> GetByLinkCodeAsync(string linkCode)
+        {
+            return await _context.WorldTasks
+                .Include(t => t.WorkflowSession)
+                .FirstOrDefaultAsync(t => t.LinkCode == linkCode);
+        }
+
+        public async Task<List<WorldTask>> ListByStatusAsync(string status, string? serverId = null)
+        {
+            var q = _context.WorldTasks.Where(t => t.Status == status);
+            if (!string.IsNullOrWhiteSpace(serverId))
+            {
+                q = q.Where(t => t.ClaimedByServerId == serverId || t.ClaimedByServerId == null);
+            }
+            return await q.OrderByDescending(t => t.CreatedAt).ToListAsync();
+        }
+
         public async Task AddAsync(WorldTask task)
         {
             await _context.WorldTasks.AddAsync(task);

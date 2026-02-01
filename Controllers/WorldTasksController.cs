@@ -19,8 +19,59 @@ namespace KnKWebAPI.Controllers
         public async Task<IActionResult> Create([FromBody] WorldTaskCreateDto dto)
         {
             if (dto == null) return BadRequest();
-            var created = await _service.CreateAsync(dto);
-            return CreatedAtRoute("GetWorldTaskById", new { id = created.Id }, created);
+            try
+            {
+                var created = await _service.CreateAsync(dto);
+                return CreatedAtRoute("GetWorldTaskById", new { id = created.Id }, created);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    error = "Invalid WorldTask creation request",
+                    details = ex.Message,
+                    hint = "Ensure StepNumber, StepKey, FieldName, and TaskType are all provided. These are critical for Minecraft plugin field routing."
+                });
+            }
+        }
+
+        // Create from FormField context (ensures required context is present)
+        public class CreateFromFieldRequest
+        {
+            public int WorkflowSessionId { get; set; }
+            public int StepNumber { get; set; }
+            public string StepKey { get; set; } = null!;
+            public string FieldName { get; set; } = null!;
+            public string TaskType { get; set; } = null!;
+            public string? InputJson { get; set; }
+            public int? AssignedUserId { get; set; }
+        }
+
+        [HttpPost("from-field")]
+        public async Task<IActionResult> CreateFromField([FromBody] CreateFromFieldRequest body)
+        {
+            try
+            {
+                var created = await _service.CreateFromFormFieldAsync(
+                    body.WorkflowSessionId,
+                    body.StepNumber,
+                    body.StepKey,
+                    body.FieldName,
+                    body.TaskType,
+                    body.InputJson,
+                    body.AssignedUserId);
+
+                return CreatedAtRoute("GetWorldTaskById", new { id = created.Id }, created);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    error = "Invalid WorldTask creation request",
+                    details = ex.Message,
+                    hint = "Ensure StepNumber, StepKey, FieldName, and TaskType are all provided. These are critical for Minecraft plugin field routing."
+                });
+            }
         }
 
         [HttpGet("{id:int}", Name = "GetWorldTaskById")]
@@ -29,6 +80,23 @@ namespace KnKWebAPI.Controllers
             var item = await _service.GetByIdAsync(id);
             if (item == null) return NotFound();
             return Ok(item);
+        }
+
+        // Get task by link code
+        [HttpGet("by-link-code/{linkCode}")]
+        public async Task<IActionResult> GetByLinkCode(string linkCode)
+        {
+            var item = await _service.GetByLinkCodeAsync(linkCode);
+            if (item == null) return NotFound();
+            return Ok(item);
+        }
+
+        // List tasks by status
+        [HttpGet("status/{status}")]
+        public async Task<IActionResult> ListByStatus(string status, [FromQuery] string? serverId = null)
+        {
+            var items = await _service.ListByStatusAsync(status, serverId);
+            return Ok(items);
         }
 
         // List by session
@@ -65,6 +133,57 @@ namespace KnKWebAPI.Controllers
             try
             {
                 var updated = await _service.UpdateStatusAsync(id, body.Status, body.PayloadJson);
+                return Ok(updated);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+
+        // Claim a task
+        [HttpPost("{id:int}/claim")]
+        public async Task<IActionResult> ClaimTask(int id, [FromBody] ClaimTaskDto dto)
+        {
+            try
+            {
+                var updated = await _service.ClaimAsync(id, dto);
+                return Ok(updated);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // Complete a task
+        [HttpPost("{id:int}/complete")]
+        public async Task<IActionResult> CompleteTask(int id, [FromBody] CompleteTaskDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.OutputJson)) return BadRequest();
+            try
+            {
+                var updated = await _service.CompleteAsync(id, dto);
+                return Ok(updated);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+
+        // Fail a task
+        [HttpPost("{id:int}/fail")]
+        public async Task<IActionResult> FailTask(int id, [FromBody] FailTaskDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.ErrorMessage)) return BadRequest();
+            try
+            {
+                var updated = await _service.FailAsync(id, dto);
                 return Ok(updated);
             }
             catch (KeyNotFoundException)

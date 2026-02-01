@@ -72,6 +72,39 @@ namespace KnKWebAPI.Controllers
             }
         }
 
+        // Update a specific step with data
+        public class UpdateStepRequest { public int StepNumber { get; set; } public object StepData { get; set; } = null!; }
+
+        [HttpPut("{id:int}/steps/{stepNumber:int}")]
+        public async Task<IActionResult> UpdateStep(int id, int stepNumber, [FromBody] UpdateStepRequest request)
+        {
+            if (request == null) return BadRequest();
+            try
+            {
+                var updated = await _service.UpdateStepAsync(id, stepNumber, request.StepData);
+                return Ok(updated);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+
+        // Finalize the workflow and create the entity
+        [HttpPost("{id:int}/finalize")]
+        public async Task<IActionResult> Finalize(int id)
+        {
+            try
+            {
+                var finalized = await _service.FinalizeAsync(id);
+                return Ok(finalized);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {

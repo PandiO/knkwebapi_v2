@@ -228,6 +228,7 @@ namespace knkwebapi_v2.Repositories
                             DefaultValue = field.DefaultValue,
                             Required = field.Required,
                             ReadOnly = field.ReadOnly,
+                            SettingsJson = field.SettingsJson,
                             IsReusable = field.IsReusable,
                             SourceFieldId = field.SourceFieldId,
                             DependsOnFieldId = field.DependsOnFieldId,
@@ -252,6 +253,7 @@ namespace knkwebapi_v2.Repositories
                         fieldMatch.DefaultValue = field.DefaultValue;
                         fieldMatch.Required = field.Required;
                         fieldMatch.ReadOnly = field.ReadOnly;
+                        fieldMatch.SettingsJson = field.SettingsJson;
                         fieldMatch.IsReusable = field.IsReusable;
                         fieldMatch.SourceFieldId = field.SourceFieldId;
                         fieldMatch.DependsOnFieldId = field.DependsOnFieldId;
@@ -341,6 +343,7 @@ namespace knkwebapi_v2.Repositories
                                 DefaultValue = field.DefaultValue,
                                 Required = field.Required,
                                 ReadOnly = field.ReadOnly,
+                                SettingsJson = field.SettingsJson,
                                 IsReusable = field.IsReusable,
                                 SourceFieldId = field.SourceFieldId,
                                 DependsOnFieldId = field.DependsOnFieldId,
@@ -365,6 +368,7 @@ namespace knkwebapi_v2.Repositories
                             fieldMatch.DefaultValue = field.DefaultValue;
                             fieldMatch.Required = field.Required;
                             fieldMatch.ReadOnly = field.ReadOnly;
+                            fieldMatch.SettingsJson = field.SettingsJson;
                             fieldMatch.IsReusable = field.IsReusable;
                             fieldMatch.SourceFieldId = field.SourceFieldId;
                             fieldMatch.DependsOnFieldId = field.DependsOnFieldId;

@@ -10,6 +10,8 @@ namespace knkwebapi_v2.Services.Interfaces
         Task<WorkflowSessionReadDto?> ResumeSessionAsync(int id);
         Task<List<StepProgressReadDto>> GetProgressAsync(int sessionId);
         Task<StepProgressReadDto> SetStepCompletedAsync(int sessionId, string stepKey, int? stepIndex = null);
+        Task<WorkflowSessionReadDto> UpdateStepAsync(int sessionId, int stepNumber, object stepData);
+        Task<WorkflowSessionReadDto> FinalizeAsync(int sessionId);
         Task DeleteSessionAsync(int id);
     }
 }

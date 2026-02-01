@@ -788,6 +788,46 @@ namespace knkwebapi_v2.Migrations
                     b.ToTable("ItemBlueprintDefaultEnchantment");
                 });
 
+            modelBuilder.Entity("knkwebapi_v2.Models.LinkCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasName("PRIMARY");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("linkcodes", (string)null);
+                });
+
             modelBuilder.Entity("knkwebapi_v2.Models.Location", b =>
                 {
                     b.Property<int>("Id")
@@ -1019,30 +1059,66 @@ namespace knkwebapi_v2.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AccountCreatedVia")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ArchiveUntil")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Coins")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DeletedReason")
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Email")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<bool>("EmailVerified")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("ExperiencePoints")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Gems")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("LastEmailChangeAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("LastPasswordChangeAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Username")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Uuid")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("cash")
-                        .HasColumnType("int");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id")
                         .HasName("PRIMARY");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.HasIndex("Uuid")
+                        .IsUnique();
 
                     b.ToTable("users", (string)null);
                 });
@@ -1073,6 +1149,11 @@ namespace knkwebapi_v2.Migrations
 
                     b.Property<int?>("FormConfigurationId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp(6)");
 
                     b.Property<Guid>("SessionGuid")
                         .HasColumnType("char(36)");
@@ -1110,11 +1191,35 @@ namespace knkwebapi_v2.Migrations
                     b.Property<int?>("AssignedUserId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("ClaimedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ClaimedByMinecraftUsername")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ClaimedByServerId")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("FieldName")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("InputJson")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("LinkCode")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("OutputJson")
+                        .HasColumnType("longtext");
 
                     b.Property<string>("PayloadJson")
                         .HasColumnType("longtext");
@@ -1126,6 +1231,9 @@ namespace knkwebapi_v2.Migrations
 
                     b.Property<string>("StepKey")
                         .HasColumnType("longtext");
+
+                    b.Property<int?>("StepNumber")
+                        .HasColumnType("int");
 
                     b.Property<string>("TaskType")
                         .IsRequired()
@@ -1402,6 +1510,16 @@ namespace knkwebapi_v2.Migrations
                     b.Navigation("ItemBlueprint");
                 });
 
+            modelBuilder.Entity("knkwebapi_v2.Models.LinkCode", b =>
+                {
+                    b.HasOne("knkwebapi_v2.Models.User", "User")
+                        .WithMany("LinkCodes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("knkwebapi_v2.Models.StepCondition", b =>
                 {
                     b.HasOne("knkwebapi_v2.Models.FormStep", "FormStep")
@@ -1566,6 +1684,11 @@ namespace knkwebapi_v2.Migrations
             modelBuilder.Entity("knkwebapi_v2.Models.Street", b =>
                 {
                     b.Navigation("Structures");
+                });
+
+            modelBuilder.Entity("knkwebapi_v2.Models.User", b =>
+                {
+                    b.Navigation("LinkCodes");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.WorkflowSession", b =>
