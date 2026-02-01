@@ -72,5 +72,28 @@ namespace knkwebapi_v2.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        /// <summary>
+        /// Get all completed form submissions that are older than the specified date.
+        /// Used for retention policy cleanup.
+        /// </summary>
+        public async Task<IEnumerable<FormSubmissionProgress>> GetCompletedOlderThanAsync(System.DateTime beforeDate)
+        {
+            return await _context.FormSubmissionProgresses
+                .Where(p => p.Status == "Completed" && p.CompletedAt.HasValue && p.CompletedAt < beforeDate)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Delete all completed form submissions older than the specified date.
+        /// Returns the count of deleted records.
+        /// </summary>
+        public async Task<int> DeleteCompletedOlderThanAsync(System.DateTime beforeDate)
+        {
+            var count = await _context.FormSubmissionProgresses
+                .Where(p => p.Status == "Completed" && p.CompletedAt.HasValue && p.CompletedAt < beforeDate)
+                .ExecuteDeleteAsync();
+            return count;
+        }
     }
 }

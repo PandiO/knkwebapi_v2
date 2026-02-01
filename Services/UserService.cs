@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using knkwebapi_v2.Dtos;
+using AutoMapper;
+using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
 
@@ -592,6 +594,78 @@ namespace knkwebapi_v2.Services
         }
 
         // ===== HELPER METHODS =====
+
+        /// <summary>
+        /// Link an authenticated web app user to a Minecraft account using a link code.
+        /// This handles the web-app-first scenario where user already has email/password set.
+        /// </summary>
+        public async Task<UserDto> LinkMinecraftAccountAsync(int userId, string linkCode)
+        {
+            if (userId <= 0)
+            {
+                throw new ArgumentException("Invalid user ID.", nameof(userId));
+            }
+
+            if (string.IsNullOrWhiteSpace(linkCode))
+            {
+                throw new ArgumentException("Link code is required.", nameof(linkCode));
+            }
+
+            // Step 1: Validate link code WITHOUT consuming it
+            var (isLinkCodeValid, minecraftUser) = await ValidateLinkCodeAsync(linkCode);
+            
+            if (!isLinkCodeValid || minecraftUser == null)
+            {
+                throw new InvalidOperationException("Invalid or expired link code");
+            }
+
+            // Step 2: Get the authenticated user
+            var webAppUser = await _repo.GetByIdAsync(userId);
+            if (webAppUser == null)
+            {
+                throw new KeyNotFoundException($"Web app user with ID {userId} not found");
+            }
+
+            // Step 3: Check if the Minecraft account already has a different UUID
+            // (i.e., if the link code points to a different user)
+            if (minecraftUser.Id != webAppUser.Id && minecraftUser.Uuid != null)
+            {
+                // Step 3a: We have a duplicate scenario
+                // The Minecraft account (minecraftUser) already exists with a UUID
+                // And our authenticated user (webAppUser) wants to link to it
+
+                // Check if they have the same UUID already
+                if (!string.IsNullOrWhiteSpace(webAppUser.Uuid) && webAppUser.Uuid == minecraftUser.Uuid)
+                {
+                    // Already linked, just consume the code
+                    await _linkCodeService.ConsumeLinkCodeAsync(linkCode);
+                    return _mapper.Map<UserDto>(webAppUser);
+                }
+
+                // If different users, merge them (keep web app user as primary)
+                await _repo.MergeUsersAsync(webAppUser.Id, minecraftUser.Id);
+            }
+
+            // Step 4: Consume the link code AFTER all validation
+            var (isConsumed, consumedUser) = await ConsumeLinkCodeAsync(linkCode);
+            if (!isConsumed || consumedUser == null)
+            {
+                throw new InvalidOperationException("Failed to consume link code");
+            }
+
+            // Step 5: Update the web app user with the Minecraft UUID from the consumed user
+            minecraftUser = consumedUser; // Use the consumed user to get the UUID
+            
+            if (string.IsNullOrWhiteSpace(webAppUser.Uuid) && !string.IsNullOrWhiteSpace(minecraftUser.Uuid))
+            {
+                webAppUser.Uuid = minecraftUser.Uuid;
+                await _repo.UpdateUserAsync(webAppUser);
+            }
+
+            // Step 6: Return updated user
+            var updatedUser = await _repo.GetByIdAsync(webAppUser.Id);
+            return _mapper.Map<UserDto>(updatedUser!);
+        }
 
         private static bool IsValidEmail(string email)
         {

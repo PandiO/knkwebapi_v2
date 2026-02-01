@@ -12,5 +12,7 @@ namespace knkwebapi_v2.Repositories
         Task AddAsync(FormSubmissionProgress progress);
         Task UpdateAsync(FormSubmissionProgress progress);
         Task DeleteAsync(int id);
+        Task<IEnumerable<FormSubmissionProgress>> GetCompletedOlderThanAsync(System.DateTime beforeDate);
+        Task<int> DeleteCompletedOlderThanAsync(System.DateTime beforeDate);
     }
 }

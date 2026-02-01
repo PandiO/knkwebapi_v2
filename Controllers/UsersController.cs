@@ -778,6 +778,66 @@ namespace knkwebapi_v2.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Link an authenticated web app account to a Minecraft account using a link code
+        /// </summary>
+        /// <remarks>
+        /// Used in the web-app-first flow where user already has email/password set.
+        /// Requires authentication (JWT token in Authorization header).
+        /// Requires a valid link code generated from Minecraft (/account link command).
+        /// 
+        /// If the link code points to an existing Minecraft account (with UUID), 
+        /// the system will automatically merge the accounts (keep web app account as primary).
+        /// </remarks>
+        /// <param name="request">Link request with link code only</param>
+        /// <returns>Updated user account with linked Minecraft UUID</returns>
+        /// <response code="200">Account linked successfully</response>
+        /// <response code="400">Invalid link code, or validation failed</response>
+        /// <response code="401">User not authenticated</response>
+        /// <response code="404">User not found</response>
+        [Authorize]
+        [HttpPost("link-minecraft-account")]
+        public async Task<IActionResult> LinkMinecraftAccount([FromBody] LinkMinecraftAccountDto request)
+        {
+            try
+            {
+                // Extract user ID from JWT claims
+                var userId = GetUserIdFromClaims(User);
+                if (!userId.HasValue)
+                {
+                    return Unauthorized(new { error = "InvalidToken", message = "User claim missing or not authenticated." });
+                }
+
+                // Verify user exists
+                var user = await _service.GetByIdAsync(userId.Value);
+                if (user == null)
+                {
+                    return NotFound(new { error = "UserNotFound", message = $"User with ID {userId.Value} not found" });
+                }
+
+                // Link the account
+                var linkedUser = await _service.LinkMinecraftAccountAsync(userId.Value, request.LinkCode);
+
+                return Ok(new
+                {
+                    user = linkedUser,
+                    message = "Minecraft account successfully linked to your web app account"
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = "InvalidArgument", message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = "OperationFailed", message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { error = "NotFound", message = ex.Message });
+            }
+        }
+
         private int? GetUserIdFromClaims(ClaimsPrincipal principal)
         {
             var userIdClaim = principal.FindFirst("uid")

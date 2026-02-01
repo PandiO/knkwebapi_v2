@@ -49,6 +49,7 @@ namespace knkwebapi_v2.Mapping
             // FormField
             CreateMap<FormFieldDto, FormField>()
                 .ForMember(d => d.Id, o => o.MapFrom(s => ToInt(s.Id)))
+                .ForMember(d => d.FieldGuid, o => o.MapFrom(s => string.IsNullOrEmpty(s.FieldGuid) ? Guid.NewGuid() : Guid.Parse(s.FieldGuid)))
                 .ForMember(d => d.FormStepId, o => o.MapFrom(s => ToInt(s.FormStepId)))
                 .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
                 .ForMember(d => d.Label, o => o.MapFrom(s => s.Label))
@@ -73,6 +74,7 @@ namespace knkwebapi_v2.Mapping
 
             CreateMap<FormField, FormFieldDto>()
                 .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.ToString()))
+                .ForMember(d => d.FieldGuid, o => o.MapFrom(s => s.FieldGuid.ToString()))
                 .ForMember(d => d.FormStepId, o => o.MapFrom(s => s.FormStepId.HasValue ? s.FormStepId.Value.ToString() : null))
                 .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
                 .ForMember(d => d.Label, o => o.MapFrom(s => s.Label))
@@ -99,6 +101,7 @@ namespace knkwebapi_v2.Mapping
             // FormStep
             CreateMap<FormStepDto, FormStep>()
                 .ForMember(d => d.Id, o => o.MapFrom(s => ToInt(s.Id)))
+                .ForMember(d => d.StepGuid, o => o.MapFrom(s => string.IsNullOrEmpty(s.StepGuid) ? Guid.NewGuid() : Guid.Parse(s.StepGuid)))
                 .ForMember(d => d.FormConfigurationId, o => o.MapFrom(s => ToInt(s.FormConfigurationId)))
                 .ForMember(d => d.StepName, o => o.MapFrom(s => s.StepName))
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.Description ?? s.Title))
@@ -127,6 +130,7 @@ namespace knkwebapi_v2.Mapping
 
             CreateMap<FormStep, FormStepDto>()
                 .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.ToString()))
+                .ForMember(d => d.StepGuid, o => o.MapFrom(s => s.StepGuid.ToString()))
                 .ForMember(d => d.FormConfigurationId, o => o.MapFrom(s => s.FormConfigurationId.HasValue ? s.FormConfigurationId.Value.ToString() : null))
                 .ForMember(d => d.StepName, o => o.MapFrom(s => s.StepName))
                 .ForMember(d => d.Title, o => o.MapFrom(s => s.StepName))

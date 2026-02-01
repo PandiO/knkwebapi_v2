@@ -8,6 +8,7 @@ using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Repositories.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace knkwebapi_v2.Services
 {
@@ -16,21 +17,27 @@ namespace knkwebapi_v2.Services
         private readonly IDistrictRepository _repo;
         private readonly ITownRepository _townRepo;
         private readonly ILocationRepository _locationRepo;
-            private readonly IStreetRepository _streetRepo;
+        private readonly IStreetRepository _streetRepo;
         private readonly IMapper _mapper;
+        private readonly IRegionService _regionService;
+        private readonly ILogger<DistrictService> _logger;
 
         public DistrictService(
             IDistrictRepository repo,
             ITownRepository townRepo,
             ILocationRepository locationRepo,
-                        IStreetRepository streetRepo,
-            IMapper mapper)
+            IStreetRepository streetRepo,
+            IMapper mapper,
+            IRegionService regionService,
+            ILogger<DistrictService> logger)
         {
             _repo = repo;
             _townRepo = townRepo;
             _locationRepo = locationRepo;
-                        _streetRepo = streetRepo;
+            _streetRepo = streetRepo;
             _mapper = mapper;
+            _regionService = regionService;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<DistrictDto>> GetAllAsync()
@@ -145,20 +152,27 @@ namespace knkwebapi_v2.Services
             var district = _mapper.Map<District>(districtDto);
             district.CreatedAt = DateTime.UtcNow;
 
-                        // Handle Street relationships
-                        if (districtDto.StreetIds != null && districtDto.StreetIds.Any())
-                        {
-                            district.Streets = new Collection<Street>();
-                            foreach (var streetId in districtDto.StreetIds)
-                            {
-                                var street = await _streetRepo.GetByIdAsync(streetId);
-                                if (street == null)
-                                    throw new ArgumentException($"Street with id {streetId} not found.", nameof(districtDto));
-                                district.Streets.Add(street);
-                            }
-                        }
+            // Handle Street relationships
+            if (districtDto.StreetIds != null && districtDto.StreetIds.Any())
+            {
+                district.Streets = new Collection<Street>();
+                foreach (var streetId in districtDto.StreetIds)
+                {
+                    var street = await _streetRepo.GetByIdAsync(streetId);
+                    if (street == null)
+                        throw new ArgumentException($"Street with id {streetId} not found.", nameof(districtDto));
+                    district.Streets.Add(street);
+                }
+            }
 
             await _repo.AddDistrictAsync(district);
+            
+            // After successful creation, finalize the region name if it has a temporary ID
+            if (!string.IsNullOrWhiteSpace(district.WgRegionId) && district.WgRegionId.StartsWith("tempregion_worldtask_"))
+            {
+                await FinalizeRegionNameAsync(district);
+            }
+            
             return _mapper.Map<DistrictDto>(district);
         }
 
@@ -244,6 +258,12 @@ namespace knkwebapi_v2.Services
             }
 
             await _repo.UpdateDistrictAsync(existing);
+            
+            // After successful update, finalize the region name if it has a temporary ID
+            if (!string.IsNullOrWhiteSpace(districtDto.WgRegionId) && districtDto.WgRegionId.StartsWith("tempregion_worldtask_"))
+            {
+                await FinalizeRegionNameAsync(existing);
+            }
         }
 
         public async Task DeleteAsync(int id)
@@ -264,6 +284,43 @@ namespace knkwebapi_v2.Services
             var resultDto = _mapper.Map<PagedResultDto<DistrictListDto>>(result);
 
             return resultDto;
+        }
+
+        /// <summary>
+        /// Finalize the region name from temporary format to the actual formatted name.
+        /// Format for domain instance entities: "domain_{entity-id}"
+        /// </summary>
+        private async Task FinalizeRegionNameAsync(District district)
+        {
+            try
+            {
+                string finalRegionName = $"domain_{district.Id}";
+                
+                // Only attempt rename if the current name is temporary
+                if (district.WgRegionId.StartsWith("tempregion_worldtask_"))
+                {
+                    _logger.LogInformation($"Finalizing region name for District {district.Id}: {district.WgRegionId} -> {finalRegionName}");
+                    
+                    bool renameSuccess = await _regionService.RenameRegionAsync(district.WgRegionId, finalRegionName);
+                    
+                    if (renameSuccess)
+                    {
+                        // Update the district with the new region name
+                        district.WgRegionId = finalRegionName;
+                        await _repo.UpdateDistrictAsync(district);
+                        _logger.LogInformation($"Successfully finalized region name for District {district.Id}: {finalRegionName}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Failed to finalize region name for District {district.Id}: rename operation failed");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error finalizing region name for District {district.Id}: {ex.Message}");
+                // Don't throw - allow the entity creation to succeed even if region renaming fails
+            }
         }
     }
 }

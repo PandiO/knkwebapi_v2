@@ -130,8 +130,10 @@ builder.Services.AddCors(options =>
         {
             policy
                 .WithOrigins(
-                    "http://localhost:3000",   // Frontend dev server (HTTP)
-                    "https://localhost:3000"   // Frontend dev server (HTTPS)
+                    "http://localhost:3000",    // Frontend dev server (HTTP)
+                    "https://localhost:3000",   // Frontend dev server (HTTPS)
+                    "http://localhost:5294",    // API HTTP (before HTTPS redirect)
+                    "https://localhost:7104"    // API HTTPS (after redirect)
                 )
                 .AllowAnyHeader()
                 .AllowAnyMethod()
