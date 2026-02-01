@@ -4,10 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 using knkwebapi_v2.DependencyInjection; // added for DI extensions
 using System;
 using System.Linq;
+using System.Text;
 using System.Text.Json.Serialization;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +52,33 @@ builder.Services.AddDbContext<KnKDbContext>(options =>
 
 // Register app services/repositories in one place
 builder.Services.AddApplicationServices(builder.Configuration);
+
+// JWT bearer authentication configuration
+var jwtSection = builder.Configuration.GetSection("Security:Jwt");
+var jwtIssuer = jwtSection["Issuer"] ?? "knk-api";
+var jwtAudience = jwtSection["Audience"] ?? "knk-app";
+var jwtSecret = jwtSection["Secret"] ?? throw new InvalidOperationException("Security:Jwt:Secret is required in configuration");
+var jwtKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = jwtKey,
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.FromSeconds(60)
+    };
+});
 
 // Health checks: add liveness/readiness
 builder.Services.AddHealthChecks()
@@ -99,10 +129,13 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy
+                .WithOrigins(
+                    "http://localhost:3000",   // Frontend dev server (HTTP)
+                    "https://localhost:3000"   // Frontend dev server (HTTPS)
+                )
                 .AllowAnyHeader()
-                .AllowAnyOrigin()
-                .SetIsOriginAllowed(origin => true)
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials(); // Enable credentials (cookies, authorization headers)
         });
 });
 
@@ -130,6 +163,9 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.MapRazorPages();
 app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Client activity tracking middleware
 app.UseMiddleware<knkwebapi_v2.Middleware.ClientActivityMiddleware>();
