@@ -52,66 +52,6 @@ namespace knkwebapi_v2.Controllers
             return Ok(item);
         }
 
-        [HttpGet("uuid/{uuid}", Name = nameof(GetUserSummaryByUuid))]
-        public async Task<IActionResult> GetUserSummaryByUuid(string uuid)
-        {
-            var item = await _service.GetByUuidAsync(uuid);
-            if (item == null) return NotFound();
-            var dto = new UserSummaryDto
-            {
-                Id = item.Id,
-                Username = item.Username,
-                Coins = item.Coins,
-                Uuid = item.Uuid
-            };
-            return Ok(dto);
-        }
-
-        [HttpGet("username/{username}", Name = nameof(GetUserSummaryByUsername))]
-        public async Task<IActionResult> GetUserSummaryByUsername(string username)
-        {
-            var item = await _service.GetByUsernameAsync(username);
-            if (item == null) return NotFound();
-            var dto = new UserSummaryDto
-            {
-                Id = item.Id,
-                Username = item.Username,
-                Coins = item.Coins,
-                Uuid = item.Uuid
-            };
-            return Ok(dto);
-        }
-
-        [HttpGet("uuid/{uuid}", Name = nameof(GetUserSummaryByUuid))]
-        public async Task<IActionResult> GetUserSummaryByUuid(string uuid)
-        {
-            var item = await _service.GetByUuidAsync(uuid);
-            if (item == null) return NotFound();
-            var dto = new UserSummaryDto
-            {
-                Id = item.Id,
-                Username = item.Username,
-                Coins = item.Coins,
-                Uuid = item.Uuid
-            };
-            return Ok(dto);
-        }
-
-        [HttpGet("username/{username}", Name = nameof(GetUserSummaryByUsername))]
-        public async Task<IActionResult> GetUserSummaryByUsername(string username)
-        {
-            var item = await _service.GetByUsernameAsync(username);
-            if (item == null) return NotFound();
-            var dto = new UserSummaryDto
-            {
-                Id = item.Id,
-                Username = item.Username,
-                Coins = item.Coins,
-                Uuid = item.Uuid
-            };
-            return Ok(dto);
-        }
-
         /// <summary>
         /// Get user summary by UUID (Minecraft plugin uses this)
         /// </summary>
@@ -178,7 +118,6 @@ namespace knkwebapi_v2.Controllers
         /// <response code="400">Validation failed</response>
         /// <response code="409">Duplicate username, email, or UUID</response>
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] UserCreateDto user)
         public async Task<IActionResult> Create([FromBody] UserCreateDto user)
         {
             if (user == null) return BadRequest(new { error = "InvalidRequest", message = "User data is required" });
@@ -351,7 +290,6 @@ namespace knkwebapi_v2.Controllers
         /// <response code="400">Validation failed</response>
         /// <response code="404">User not found</response>
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UserDto user)
         public async Task<IActionResult> Update(int id, [FromBody] UserDto user)
         {
             if (user == null) return BadRequest(new { error = "InvalidRequest", message = "User data is required" });
@@ -815,523 +753,6 @@ namespace knkwebapi_v2.Controllers
             }
         }
 
-        [HttpPut("{id:int}/coins")]
-        public async Task<IActionResult> UpdateCoins(int id, [FromBody] int coins)
-        {
-            try
-            {
-                await _service.UpdateCoinsAsync(id, coins);
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
-        [HttpPut("{uuid}/coins")]
-        public async Task<IActionResult> UpdateCoinsByUuid(string uuid, [FromBody] int coins)
-        {
-            try
-            {
-                await _service.UpdateCoinsByUuidAsync(uuid, coins);
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound(new { error = "UserNotFound", message = $"User with ID {id} not found" });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = "ValidationFailed", message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Update user coins balance
-        /// </summary>
-        /// <param name="id">User ID</param>
-        /// <param name="coins">New coins balance</param>
-        /// <returns>No content</returns>
-        /// <response code="204">Coins updated successfully</response>
-        /// <response code="400">Validation failed</response>
-        /// <response code="404">User not found</response>
-        [HttpPut("{id:int}/coins")]
-        public async Task<IActionResult> UpdateCoins(int id, [FromBody] int coins)
-        {
-            try
-            {
-                await _service.UpdateCoinsAsync(id, coins);
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound(new { error = "UserNotFound", message = $"User with ID {id} not found" });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = "ValidationFailed", message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Update user coins balance by UUID (Minecraft plugin uses this)
-        /// </summary>
-        /// <param name="uuid">Minecraft player UUID</param>
-        /// <param name="coins">New coins balance</param>
-        /// <returns>No content</returns>
-        /// <response code="204">Coins updated successfully</response>
-        /// <response code="400">Validation failed</response>
-        /// <response code="404">User not found</response>
-        [HttpPut("{uuid}/coins")]
-        public async Task<IActionResult> UpdateCoinsByUuid(string uuid, [FromBody] int coins)
-        {
-            try
-            {
-                await _service.UpdateCoinsByUuidAsync(uuid, coins);
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound(new { error = "UserNotFound", message = $"User with UUID {uuid} not found" });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = "ValidationFailed", message = ex.Message });
-            }
-        }
-
-        // ===== PHASE 4.3: AUTHENTICATION ENDPOINTS =====
-
-        /// <summary>
-        /// Generate a new link code for the authenticated user
-        /// </summary>
-        /// <remarks>
-        /// Link codes are valid for 20 minutes and used to link Minecraft accounts with web accounts.
-        /// Format: 8 alphanumeric characters (e.g., ABC12XYZ)
-        /// 
-        /// Two ways to use this endpoint:
-        /// 1. WEB APP (Authenticated): POST with Authorization header, no body required
-        /// 2. MINECRAFT PLUGIN (Server-side): POST with userId in body, no auth required
-        /// </remarks>
-        /// <param name="request">Optional request body with userId (for Minecraft plugin use)</param>
-        /// <returns>Link code with expiration time</returns>
-        /// <response code="200">Link code generated successfully</response>
-        /// <response code="401">User not authenticated (web app) or missing userId (plugin)</response>
-        /// <response code="404">User not found</response>
-        [HttpPost("generate-link-code")]
-        public async Task<IActionResult> GenerateLinkCode([FromBody] GenerateLinkCodeRequestDto? request = null)
-        {
-            try
-            {
-                int? userId = null;
-
-                // Check if request has userId (Minecraft plugin use case)
-                if (request?.UserId.HasValue == true)
-                {
-                    userId = request.UserId;
-                }
-                else
-                {
-                    // Extract from JWT claims (web app use case)
-                    userId = GetUserIdFromClaims(User);
-                    if (!userId.HasValue)
-                    {
-                        return Unauthorized(new { error = "InvalidToken", message = "User claim missing or not authenticated." });
-                    }
-                }
-
-                var user = await _service.GetByIdAsync(userId.Value);
-                if (user == null)
-                {
-                    return NotFound(new { error = "UserNotFound", message = $"User with ID {userId.Value} not found" });
-                }
-
-                var linkCode = await _service.GenerateLinkCodeAsync(userId.Value);
-                return Ok(linkCode);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = "InvalidArgument", message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Validate a link code and return associated user information
-        /// </summary>
-        /// <remarks>
-        /// Consumes the link code (marks it as used) and returns user details if valid.
-        /// Link codes expire after 20 minutes.
-        /// </remarks>
-        /// <param name="code">8-character link code</param>
-        /// <returns>Validation result with user information if valid</returns>
-        /// <response code="200">Validation result (check IsValid field)</response>
-        /// <response code="400">Invalid request</response>
-        [HttpPost("validate-link-code/{code}")]
-        public async Task<IActionResult> ValidateLinkCode(string code)
-        {
-            try
-            {
-                var (isValid, user) = await _service.ValidateLinkCodeAsync(code);
-                
-                if (!isValid || user == null)
-                {
-                    return Ok(new ValidateLinkCodeResponseDto
-                    {
-                        IsValid = false,
-                        Error = "Invalid or expired link code"
-                    });
-                }
-
-                return Ok(new ValidateLinkCodeResponseDto
-                {
-                    IsValid = true,
-                    UserId = user.Id,
-                    Username = user.Username,
-                    Email = user.Email
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = "InvalidArgument", message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Change user password
-        /// </summary>
-        /// <remarks>
-        /// Requires current password for verification.
-        /// New password must meet policy: 8-128 characters, not in weak password blacklist.
-        /// </remarks>
-        /// <param name="id">User ID</param>
-        /// <param name="request">Password change request</param>
-        /// <returns>No content</returns>
-        /// <response code="204">Password changed successfully</response>
-        /// <response code="400">Validation failed (weak password, mismatch, etc.)</response>
-        /// <response code="401">Current password incorrect</response>
-        /// <response code="404">User not found</response>
-        [HttpPut("{id:int}/change-password")]
-        public async Task<IActionResult> ChangePassword(int id, [FromBody] ChangePasswordDto request)
-        {
-            try
-            {
-                var user = await _service.GetByIdAsync(id);
-                if (user == null)
-                {
-                    return NotFound(new { error = "UserNotFound", message = $"User with ID {id} not found" });
-                }
-
-                await _service.ChangePasswordAsync(id, request.CurrentPassword, request.NewPassword, request.PasswordConfirmation);
-                return NoContent();
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new { error = "InvalidPassword", message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = "ValidationFailed", message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Update user email address
-        /// </summary>
-        /// <remarks>
-        /// Optionally requires current password for additional security.
-        /// Email must be unique across all accounts.
-        /// </remarks>
-        /// <param name="id">User ID</param>
-        /// <param name="request">Email update request</param>
-        /// <returns>No content</returns>
-        /// <response code="204">Email updated successfully</response>
-        /// <response code="400">Validation failed (invalid email format)</response>
-        /// <response code="401">Current password incorrect</response>
-        /// <response code="404">User not found</response>
-        /// <response code="409">Email already in use</response>
-        [HttpPut("{id:int}/update-email")]
-        public async Task<IActionResult> UpdateEmail(int id, [FromBody] UpdateEmailDto request)
-        {
-            try
-            {
-                var user = await _service.GetByIdAsync(id);
-                if (user == null)
-                {
-                    return NotFound(new { error = "UserNotFound", message = $"User with ID {id} not found" });
-                }
-
-                // Check if email is already taken
-                var (emailTaken, conflictingUserId) = await _service.CheckEmailTakenAsync(request.NewEmail, id);
-                if (emailTaken)
-                {
-                    return Conflict(new { error = "DuplicateEmail", message = "Email is already in use by another account" });
-                }
-
-                await _service.UpdateEmailAsync(id, request.NewEmail, request.CurrentPassword);
-                return NoContent();
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new { error = "InvalidPassword", message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = "ValidationFailed", message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Check for duplicate accounts based on UUID and username
-        /// </summary>
-        /// <remarks>
-        /// Used by Minecraft server to detect when a player has multiple accounts.
-        /// Returns both the primary (UUID-based) and conflicting (username-based) accounts.
-        /// </remarks>
-        /// <param name="request">Duplicate check request with UUID and username</param>
-        /// <returns>Duplicate check result</returns>
-        /// <response code="200">Check completed (check HasDuplicate field)</response>
-        /// <response code="400">Invalid request</response>
-        [HttpGet("check-duplicate")]
-        public async Task<IActionResult> CheckDuplicateAvailability([FromQuery] string? email, [FromQuery] string? username, [FromQuery] int? excludeUserId)
-        {
-            if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(username))
-            {
-                return BadRequest(new { error = "InvalidRequest", message = "Email or username is required" });
-            }
-
-            if (!string.IsNullOrWhiteSpace(email))
-            {
-                var (isTaken, conflictingUserId) = await _service.CheckEmailTakenAsync(email, excludeUserId);
-                return Ok(new { available = !isTaken, conflictingUserId });
-            }
-
-            var (usernameTaken, usernameConflictId) = await _service.CheckUsernameTakenAsync(username!, excludeUserId);
-            return Ok(new { available = !usernameTaken, conflictingUserId = usernameConflictId });
-        }
-
-        [HttpPost("check-duplicate")]
-        public async Task<IActionResult> CheckDuplicate([FromBody] DuplicateCheckDto request)
-        {
-            try
-            {
-                var (hasDuplicate, secondaryUserId) = await _service.CheckForDuplicateAsync(request.Uuid, request.Username);
-
-                if (!hasDuplicate)
-                {
-                    return Ok(new DuplicateCheckResponseDto
-                    {
-                        HasDuplicate = false,
-                        Message = "No duplicate accounts found"
-                    });
-                }
-
-                // Get both users
-                var primaryUser = await _service.GetByUuidAsync(request.Uuid);
-                var secondaryUser = secondaryUserId.HasValue ? await _service.GetByIdAsync(secondaryUserId.Value) : null;
-
-                return Ok(new DuplicateCheckResponseDto
-                {
-                    HasDuplicate = true,
-                    PrimaryUser = primaryUser != null ? new UserSummaryDto
-                    {
-                        Id = primaryUser.Id,
-                        Username = primaryUser.Username,
-                        Uuid = primaryUser.Uuid,
-                        Coins = primaryUser.Coins,
-                        Gems = primaryUser.Gems,
-                        ExperiencePoints = primaryUser.ExperiencePoints
-                    } : null,
-                    ConflictingUser = secondaryUser != null ? new UserSummaryDto
-                    {
-                        Id = secondaryUser.Id,
-                        Username = secondaryUser.Username,
-                        Uuid = secondaryUser.Uuid,
-                        Coins = secondaryUser.Coins,
-                        Gems = secondaryUser.Gems,
-                        ExperiencePoints = secondaryUser.ExperiencePoints
-                    } : null,
-                    Message = "Duplicate accounts detected. Please merge them."
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = "InvalidArgument", message = ex.Message });
-            }
-        }
-
-        // ===== PHASE 4.4: ACCOUNT MERGE ENDPOINTS =====
-
-        /// <summary>
-        /// Merge two user accounts into one
-        /// </summary>
-        /// <remarks>
-        /// Keeps the primary account and soft-deletes the secondary account.
-        /// Primary account retains all its data (winner takes all strategy).
-        /// Foreign key relationships are updated to point to primary account.
-        /// </remarks>
-        /// <param name="request">Merge request with primary and secondary user IDs</param>
-        /// <returns>Merged user account</returns>
-        /// <response code="200">Accounts merged successfully</response>
-        /// <response code="400">Invalid request or operation failed</response>
-        /// <response code="404">One or both users not found</response>
-        [HttpPost("merge")]
-        public async Task<IActionResult> MergeAccounts([FromBody] AccountMergeDto request)
-        {
-            try
-            {
-                // Verify both users exist
-                var primaryUser = await _service.GetByIdAsync(request.PrimaryUserId);
-                if (primaryUser == null)
-                {
-                    return NotFound(new { error = "PrimaryUserNotFound", message = $"Primary user with ID {request.PrimaryUserId} not found" });
-                }
-
-                var secondaryUser = await _service.GetByIdAsync(request.SecondaryUserId);
-                if (secondaryUser == null)
-                {
-                    return NotFound(new { error = "SecondaryUserNotFound", message = $"Secondary user with ID {request.SecondaryUserId} not found" });
-                }
-
-                // Perform merge
-                var mergedUser = await _service.MergeAccountsAsync(request.PrimaryUserId, request.SecondaryUserId);
-
-                return Ok(new AccountMergeResultDto
-                {
-                    User = mergedUser,
-                    MergedFromUserId = request.SecondaryUserId,
-                    Message = $"Successfully merged account {request.SecondaryUserId} into {request.PrimaryUserId}"
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = "InvalidArgument", message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = "OperationFailed", message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Link an existing Minecraft account with email and password from web app
-        /// </summary>
-        /// <remarks>
-        /// Used when a player creates account in Minecraft first, then wants to add web access.
-        /// Requires a valid link code generated from Minecraft.
-        /// Sets initial password (no current password needed for first-time setup).
-        /// </remarks>
-        /// <param name="request">Link account request with code, email, and password</param>
-        /// <returns>Linked user account</returns>
-        /// <response code="200">Account linked successfully</response>
-        /// <response code="400">Invalid link code, weak password, or validation failed</response>
-        /// <response code="409">Email already in use</response>
-        [HttpPost("link-account")]
-        public async Task<IActionResult> LinkAccount([FromBody] LinkAccountDto request)
-        {
-            try
-            {
-                // Step 1: Validate link code WITHOUT consuming it (validate first)
-                var (isLinkCodeValid, linkCodeUser) = await _service.ValidateLinkCodeAsync(request.LinkCode);
-                
-                if (!isLinkCodeValid || linkCodeUser == null)
-                {
-                    return BadRequest(new { error = "InvalidLinkCode", message = "Invalid or expired link code" });
-                }
-
-                // Step 2: Validate password
-                var (passwordValid, passwordError) = await _service.ValidatePasswordAsync(request.Password);
-                if (!passwordValid)
-                {
-                    return BadRequest(new { error = "InvalidPassword", message = passwordError });
-                }
-
-                // Step 3: Check password confirmation
-                if (request.Password != request.PasswordConfirmation)
-                {
-                    return BadRequest(new { error = "PasswordMismatch", message = "Password and confirmation do not match" });
-                }
-
-                // Step 4: Check if email is already taken
-                var (emailTaken, conflictingUserId) = await _service.CheckEmailTakenAsync(request.Email, linkCodeUser.Id);
-                if (emailTaken)
-                {
-                    return Conflict(new { error = "DuplicateEmail", message = "Email is already in use by another account" });
-                }
-
-                // Step 5: All validations passed - NOW consume the link code
-                var (isConsumed, consumedUser) = await _service.ConsumeLinkCodeAsync(request.LinkCode);
-                if (!isConsumed || consumedUser == null)
-                {
-                    return BadRequest(new { error = "InvalidLinkCode", message = "Link code could not be consumed" });
-                }
-
-                // Step 6: Update user with email
-                await _service.UpdateEmailAsync(linkCodeUser.Id, request.Email, null);
-                
-                // Step 7: Set initial password (no current password needed since we're setting it for the first time)
-                // Use empty string as currentPassword since ChangePasswordAsync allows null PasswordHash
-                await _service.ChangePasswordAsync(linkCodeUser.Id, "", request.Password, request.PasswordConfirmation);
-                
-                // Step 8: Get updated user
-                var updatedUser = await _service.GetByIdAsync(linkCodeUser.Id);
-                
-                return Ok(new 
-                {
-                    user = updatedUser,
-                    message = "Account successfully linked with email and password"
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = "InvalidArgument", message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = "OperationFailed", message = ex.Message });
-            }
-        }
-
-        [HttpPut("{id:int}/coins")]
-        public async Task<IActionResult> UpdateCoins(int id, [FromBody] int coins)
-        {
-            try
-            {
-                await _service.UpdateCoinsAsync(id, coins);
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
-        [HttpPut("{uuid}/coins")]
-        public async Task<IActionResult> UpdateCoinsByUuid(string uuid, [FromBody] int coins)
-        {
-            try
-            {
-                await _service.UpdateCoinsByUuidAsync(uuid, coins);
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -1357,6 +778,66 @@ namespace knkwebapi_v2.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Link an authenticated web app account to a Minecraft account using a link code
+        /// </summary>
+        /// <remarks>
+        /// Used in the web-app-first flow where user already has email/password set.
+        /// Requires authentication (JWT token in Authorization header).
+        /// Requires a valid link code generated from Minecraft (/account link command).
+        /// 
+        /// If the link code points to an existing Minecraft account (with UUID), 
+        /// the system will automatically merge the accounts (keep web app account as primary).
+        /// </remarks>
+        /// <param name="request">Link request with link code only</param>
+        /// <returns>Updated user account with linked Minecraft UUID</returns>
+        /// <response code="200">Account linked successfully</response>
+        /// <response code="400">Invalid link code, or validation failed</response>
+        /// <response code="401">User not authenticated</response>
+        /// <response code="404">User not found</response>
+        [Authorize]
+        [HttpPost("link-minecraft-account")]
+        public async Task<IActionResult> LinkMinecraftAccount([FromBody] LinkMinecraftAccountDto request)
+        {
+            try
+            {
+                // Extract user ID from JWT claims
+                var userId = GetUserIdFromClaims(User);
+                if (!userId.HasValue)
+                {
+                    return Unauthorized(new { error = "InvalidToken", message = "User claim missing or not authenticated." });
+                }
+
+                // Verify user exists
+                var user = await _service.GetByIdAsync(userId.Value);
+                if (user == null)
+                {
+                    return NotFound(new { error = "UserNotFound", message = $"User with ID {userId.Value} not found" });
+                }
+
+                // Link the account
+                var linkedUser = await _service.LinkMinecraftAccountAsync(userId.Value, request.LinkCode);
+
+                return Ok(new
+                {
+                    user = linkedUser,
+                    message = "Minecraft account successfully linked to your web app account"
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = "InvalidArgument", message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = "OperationFailed", message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { error = "NotFound", message = ex.Message });
+            }
+        }
+
         private int? GetUserIdFromClaims(ClaimsPrincipal principal)
         {
             var userIdClaim = principal.FindFirst("uid")
@@ -1370,25 +851,5 @@ namespace knkwebapi_v2.Controllers
 
             return int.TryParse(userIdClaim.Value, out var userId) ? userId : (int?)null;
         }
-
-        [HttpPost("search")]
-        public async Task<ActionResult<PagedResultDto<UserListDto>>> SearchUsers([FromBody] PagedQueryDto query)
-        {
-            var result = await _service.SearchAsync(query);
-            return Ok(result);
-        }
-
-        private int? GetUserIdFromClaims(ClaimsPrincipal principal)
-        {
-            var userIdClaim = principal.FindFirst("uid")
-                ?? principal.FindFirst(JwtRegisteredClaimNames.Sub)
-                ?? principal.FindFirst(ClaimTypes.NameIdentifier);
-
-            if (userIdClaim == null)
-            {
-                return null;
-            }
-
-            return int.TryParse(userIdClaim.Value, out var userId) ? userId : (int?)null;
     }
 }

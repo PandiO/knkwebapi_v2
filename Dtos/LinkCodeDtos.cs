@@ -122,5 +122,16 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("userId")]
         public int? UserId { get; set; }
     }
+
+    /// <summary>
+    /// DTO for linking an existing web app account to Minecraft using a link code.
+    /// Used in the web-app-first flow where user already has email/password set.
+    /// Requires the user to be authenticated (JWT token in Authorization header).
+    /// </summary>
+    public class LinkMinecraftAccountDto
+    {
+        [JsonPropertyName("linkCode")]
+        public string LinkCode { get; set; } = null!;
+    }
 }
 

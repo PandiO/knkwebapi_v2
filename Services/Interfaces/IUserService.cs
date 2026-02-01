@@ -119,5 +119,15 @@ namespace knkwebapi_v2.Services
         /// Keeps primary account intact, soft-deletes secondary account.
         /// </summary>
         Task<UserDto> MergeAccountsAsync(int primaryUserId, int secondaryUserId);
+
+        /// <summary>
+        /// Link an authenticated web app user to a Minecraft account using a link code.
+        /// Used in the web-app-first flow where user already has email/password.
+        /// Handles duplicate detection and optional merge if account already exists.
+        /// </summary>
+        /// <param name="userId">Authenticated user ID (from JWT)</param>
+        /// <param name="linkCode">Link code from Minecraft</param>
+        /// <returns>Updated user with linked UUID</returns>
+        Task<UserDto> LinkMinecraftAccountAsync(int userId, string linkCode);
     }
 }

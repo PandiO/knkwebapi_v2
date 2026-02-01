@@ -33,16 +33,6 @@ namespace knkwebapi_v2.Repositories
             return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
         }
 
-        public async Task<User?> GetByUuidAsync(string uuid)
-        {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Uuid == uuid);
-        }
-
-        public async Task<User?> GetByUsernameAsync(string username)
-        {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
-        }
-
         public async Task AddUserAsync(User user)
         {
             await _context.Users.AddAsync(user);
@@ -53,28 +43,6 @@ namespace knkwebapi_v2.Repositories
         {
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
-        }
-
-        public async Task UpdateUserCoinsAsync(int id, int coins)
-        {
-            var user = await _context.Users.FindAsync(id);
-            if (user != null)
-            {
-                user.Coins = coins;
-                _context.Users.Update(user);
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        public async Task UpdateUserCoinsByUuidAsync(string uuid, int coins)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Uuid == uuid);
-            if (user != null)
-            {
-                user.Coins = coins;
-                _context.Users.Update(user);
-                await _context.SaveChangesAsync();
-            }
         }
 
         public async Task UpdateUserCoinsAsync(int id, int coins)
