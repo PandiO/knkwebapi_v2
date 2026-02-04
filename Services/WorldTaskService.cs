@@ -372,12 +372,12 @@ namespace knkwebapi_v2.Services
         /// <param name="task">The WorldTask with InputJson containing validation context</param>
         /// <param name="outputJson">The captured output to validate</param>
         /// <returns>ValidationResult indicating success or failure</returns>
-        private async Task<ValidationResultDto> ValidateTaskOutputAsync(WorldTask task, string? outputJson)
+        private async Task<WorldTaskValidationResultDto> ValidateTaskOutputAsync(WorldTask task, string? outputJson)
         {
             // If no InputJson, no validation configured
             if (string.IsNullOrWhiteSpace(task.InputJson))
             {
-                return new ValidationResultDto { IsValid = true };
+                return new WorldTaskValidationResultDto { IsValid = true };
             }
 
             try
@@ -390,7 +390,7 @@ namespace knkwebapi_v2.Services
                 if (!root.TryGetProperty("validationContext", out var validationContextElement))
                 {
                     // No validation context - validation passes
-                    return new ValidationResultDto { IsValid = true };
+                    return new WorldTaskValidationResultDto { IsValid = true };
                 }
 
                 // Parse validation context
@@ -400,7 +400,7 @@ namespace knkwebapi_v2.Services
 
                 if (validationContext == null || validationContext.ValidationRules.Count == 0)
                 {
-                    return new ValidationResultDto { IsValid = true };
+                    return new WorldTaskValidationResultDto { IsValid = true };
                 }
 
                 // NOTE: Actual validation logic would go here
@@ -417,20 +417,20 @@ namespace knkwebapi_v2.Services
                 //     }
                 // }
 
-                return new ValidationResultDto { IsValid = true };
+                return new WorldTaskValidationResultDto { IsValid = true };
             }
             catch (JsonException ex)
             {
                 // Fail-open: If we can't parse validation context, allow completion
                 // Log the error for debugging
                 System.Diagnostics.Debug.WriteLine($"Failed to parse validation context for task {task.Id}: {ex.Message}");
-                return new ValidationResultDto { IsValid = true };
+                return new WorldTaskValidationResultDto { IsValid = true };
             }
             catch (Exception ex)
             {
                 // Fail-open for unexpected errors
                 System.Diagnostics.Debug.WriteLine($"Unexpected error validating task {task.Id}: {ex.Message}");
-                return new ValidationResultDto { IsValid = true };
+                return new WorldTaskValidationResultDto { IsValid = true };
             }
         }
     }
