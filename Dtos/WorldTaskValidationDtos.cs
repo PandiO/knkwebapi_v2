@@ -63,7 +63,7 @@ public class WorldTaskValidationContextDto
 /// Result of validation execution.
 /// Returned by validation service and embedded in API responses.
 /// </summary>
-public class ValidationResultDto
+public class WorldTaskValidationResultDto
 {
     /// <summary>
     /// Whether validation passed.
@@ -90,13 +90,13 @@ public class ValidationResultDto
     /// <summary>
     /// Additional metadata about the validation execution.
     /// </summary>
-    public ValidationMetadataDto? Metadata { get; set; }
+    public WorldTaskValidationMetadataDto? Metadata { get; set; }
 }
 
 /// <summary>
 /// Metadata about validation execution.
 /// </summary>
-public class ValidationMetadataDto
+public class WorldTaskValidationMetadataDto
 {
     /// <summary>
     /// Type of validation that was executed.
