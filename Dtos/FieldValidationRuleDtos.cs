@@ -170,4 +170,37 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("ruleId")]
         public int? RuleId { get; set; }
     }
+    
+    /// <summary>
+    /// Request DTO for resolving placeholders in validation messages.
+    /// </summary>
+    public class ResolvePlaceholdersRequestDto
+    {
+        [JsonPropertyName("currentEntityType")]
+        public string CurrentEntityType { get; set; } = null!;
+        
+        [JsonPropertyName("currentEntityId")]
+        public int? CurrentEntityId { get; set; }
+        
+        [JsonPropertyName("placeholderPaths")]
+        public List<string> PlaceholderPaths { get; set; } = new();
+        
+        [JsonPropertyName("currentEntityPlaceholders")]
+        public Dictionary<string, string>? CurrentEntityPlaceholders { get; set; }
+    }
+    
+    /// <summary>
+    /// Response DTO containing resolved placeholder values.
+    /// </summary>
+    public class ResolvePlaceholdersResponseDto
+    {
+        [JsonPropertyName("resolvedPlaceholders")]
+        public Dictionary<string, string> ResolvedPlaceholders { get; set; } = new();
+        
+        [JsonPropertyName("unresolvedPlaceholders")]
+        public List<string> UnresolvedPlaceholders { get; set; } = new();
+        
+        [JsonPropertyName("resolutionErrors")]
+        public List<string> ResolutionErrors { get; set; } = new();
+    }
 }
