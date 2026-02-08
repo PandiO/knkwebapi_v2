@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Services.Interfaces;
 using knkwebapi_v2.Dtos;
 
@@ -12,10 +14,20 @@ namespace KnKWebAPI.Controllers
     public class FieldValidationRulesController : ControllerBase
     {
         private readonly IValidationService _service;
+        private readonly IPlaceholderResolutionService _placeholderService;
+        private readonly IFieldValidationService _fieldValidationService;
+        private readonly IFieldValidationRuleRepository _ruleRepository;
 
-        public FieldValidationRulesController(IValidationService service)
+        public FieldValidationRulesController(
+            IValidationService service,
+            IPlaceholderResolutionService placeholderService,
+            IFieldValidationService fieldValidationService,
+            IFieldValidationRuleRepository ruleRepository)
         {
             _service = service;
+            _placeholderService = placeholderService;
+            _fieldValidationService = fieldValidationService;
+            _ruleRepository = ruleRepository;
         }
 
         [HttpGet("{id:int}")]
@@ -100,6 +112,129 @@ namespace KnKWebAPI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Validation execution failed", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Resolve placeholder values for a validation rule or explicit placeholder list.
+        /// </summary>
+        /// <remarks>
+        /// Placeholder syntax examples:
+        /// - {Name}
+        /// - {Town.Name}
+        /// - {District.Town.Name}
+        /// - {Town.Districts.Count}
+        /// </remarks>
+        /// <param name="request">Placeholder resolution request payload.</param>
+        /// <response code="200">Returns resolved placeholders and resolution errors (if any).</response>
+        /// <response code="400">Invalid request (missing rule ID and placeholder paths).</response>
+        /// <response code="404">Rule not found.</response>
+        [HttpPost("/api/field-validations/resolve-placeholders")]
+        public async Task<IActionResult> ResolvePlaceholders([FromBody] PlaceholderResolutionRequest request)
+        {
+            if (request == null) return BadRequest();
+
+            if (!request.FieldValidationRuleId.HasValue
+                && (request.PlaceholderPaths == null || !request.PlaceholderPaths.Any()))
+            {
+                return BadRequest(new { message = "FieldValidationRuleId or PlaceholderPaths must be provided." });
+            }
+
+            if (request.FieldValidationRuleId.HasValue)
+            {
+                var rule = await _service.GetByIdAsync(request.FieldValidationRuleId.Value);
+                if (rule == null) return NotFound();
+            }
+
+            try
+            {
+                var response = await _placeholderService.ResolveAllLayersAsync(request);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Placeholder resolution failed", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Validate a field value against a specific validation rule.
+        /// </summary>
+        /// <remarks>
+        /// This endpoint resolves placeholders and executes the rule-specific validation logic.
+        /// </remarks>
+        /// <param name="request">Validation request payload.</param>
+        /// <response code="200">Validation result with message template and placeholders.</response>
+        /// <response code="400">Invalid request.</response>
+        /// <response code="404">Rule not found.</response>
+        [HttpPost("/api/field-validations/validate-field")]
+        public async Task<IActionResult> ValidateFieldRule([FromBody] ValidateFieldRuleRequestDto request)
+        {
+            if (request == null) return BadRequest();
+            if (!request.FieldValidationRuleId.HasValue || request.FieldValidationRuleId.Value <= 0)
+            {
+                return BadRequest(new { message = "FieldValidationRuleId is required." });
+            }
+
+            var rule = await _ruleRepository.GetByIdAsync(request.FieldValidationRuleId.Value);
+            if (rule == null) return NotFound();
+
+            try
+            {
+                var result = await _fieldValidationService.ValidateFieldAsync(
+                    rule,
+                    request.FieldValue,
+                    request.DependencyFieldValue,
+                    request.CurrentEntityPlaceholders,
+                    request.EntityId);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Validation execution failed", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Get all placeholder paths used by a validation rule's error and success messages.
+        /// </summary>
+        /// <param name="ruleId">Validation rule ID.</param>
+        /// <response code="200">List of placeholder paths.</response>
+        /// <response code="404">Rule not found.</response>
+        [HttpGet("/api/field-validations/rules/{ruleId:int}/placeholders")]
+        public async Task<IActionResult> GetPlaceholdersByRule(int ruleId)
+        {
+            var rule = await _service.GetByIdAsync(ruleId);
+            if (rule == null) return NotFound();
+
+            try
+            {
+                var placeholders = new HashSet<string>();
+
+                if (!string.IsNullOrWhiteSpace(rule.ErrorMessage))
+                {
+                    var errorPlaceholders = await _placeholderService.ExtractPlaceholdersAsync(rule.ErrorMessage);
+                    foreach (var placeholder in errorPlaceholders)
+                    {
+                        placeholders.Add(placeholder);
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(rule.SuccessMessage))
+                {
+                    var successPlaceholders = await _placeholderService.ExtractPlaceholdersAsync(rule.SuccessMessage);
+                    foreach (var placeholder in successPlaceholders)
+                    {
+                        placeholders.Add(placeholder);
+                    }
+                }
+
+                return Ok(placeholders.ToList());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Placeholder extraction failed", error = ex.Message });
             }
         }
 

@@ -181,6 +181,27 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("formContextData")]
         public Dictionary<string, object>? FormContextData { get; set; }
     }
+
+    /// <summary>
+    /// Request DTO for validating a field value against a specific validation rule.
+    /// </summary>
+    public class ValidateFieldRuleRequestDto
+    {
+        [JsonPropertyName("fieldValidationRuleId")]
+        public int? FieldValidationRuleId { get; set; }
+
+        [JsonPropertyName("fieldValue")]
+        public object? FieldValue { get; set; }
+
+        [JsonPropertyName("dependencyFieldValue")]
+        public object? DependencyFieldValue { get; set; }
+
+        [JsonPropertyName("currentEntityPlaceholders")]
+        public Dictionary<string, string>? CurrentEntityPlaceholders { get; set; }
+
+        [JsonPropertyName("entityId")]
+        public int? EntityId { get; set; }
+    }
     
     /// <summary>
     /// Response DTO containing validation result.
