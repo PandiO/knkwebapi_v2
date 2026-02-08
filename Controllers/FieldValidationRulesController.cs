@@ -12,14 +12,10 @@ namespace KnKWebAPI.Controllers
     public class FieldValidationRulesController : ControllerBase
     {
         private readonly IValidationService _service;
-        private readonly IPlaceholderResolutionService _placeholderService;
 
-        public FieldValidationRulesController(
-            IValidationService service,
-            IPlaceholderResolutionService placeholderService)
+        public FieldValidationRulesController(IValidationService service)
         {
             _service = service;
-            _placeholderService = placeholderService;
         }
 
         [HttpGet("{id:int}")]
@@ -137,42 +133,6 @@ namespace KnKWebAPI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Draft validation failed", error = ex.Message });
-            }
-        }
-
-        [HttpPost("resolve-placeholders")]
-        public async Task<IActionResult> ResolvePlaceholders([FromBody] ResolvePlaceholdersRequestDto request)
-        {
-            if (request == null)
-            {
-                return BadRequest(new { message = "Request data is required" });
-            }
-
-            if (string.IsNullOrWhiteSpace(request.CurrentEntityType))
-            {
-                return BadRequest(new { message = "CurrentEntityType is required" });
-            }
-
-            if (request.PlaceholderPaths == null || request.PlaceholderPaths.Count == 0)
-            {
-                return Ok(new ResolvePlaceholdersResponseDto
-                {
-                    ResolvedPlaceholders = request.CurrentEntityPlaceholders ?? new Dictionary<string, string>()
-                });
-            }
-
-            try
-            {
-                var result = await _placeholderService.ResolvePlaceholdersAsync(request);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    message = "Placeholder resolution failed",
-                    error = ex.Message
-                });
             }
         }
     }
