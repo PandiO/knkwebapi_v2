@@ -5,6 +5,48 @@ namespace knkwebapi_v2.Dtos
 {
     /// <summary>
     /// DTO for reading FieldValidationRule data.
+    /// 
+    /// PLACEHOLDER SYNTAX:
+    /// Error and success messages support dynamic variable interpolation using the placeholder syntax {placeholder}.
+    /// Placeholders are resolved in multiple layers across frontend and backend:
+    /// 
+    /// LAYER 0 (Frontend): Direct form field values
+    /// - Syntax: {FieldName}
+    /// - Example: {Name} resolves from current form field value
+    /// - Resolved by: FormWizard component before sending to API
+    /// 
+    /// LAYER 1 (Backend): Single navigation with DB query
+    /// - Syntax: {NavigationProperty.PropertyName}
+    /// - Example: {Town.Name} fetches Town entity and extracts Name
+    /// - Resolved by: PlaceholderResolutionService.ResolveLayer1Async()
+    /// - Data source: Database via foreign key + Include
+    /// 
+    /// LAYER 2 (Backend): Multi-level navigation with Include chains
+    /// - Syntax: {Navigation1.Navigation2.PropertyName}
+    /// - Example: {District.Town.Name} navigates through multiple levels
+    /// - Resolved by: PlaceholderResolutionService.ResolveLayer2Async()
+    /// - Data source: Database with dynamic Include chains
+    /// 
+    /// LAYER 3 (Backend): Aggregate operations on collections
+    /// - Syntax: {Navigation.Collection.AggregateOp}
+    /// - Example: {Town.Districts.Count} loads collection and counts items
+    /// - Resolved by: PlaceholderResolutionService.ResolveLayer3Async()
+    /// - Operations: Count, First, Last, Any, Sum, Average, Max, Min
+    /// 
+    /// RESOLUTION FLOW:
+    /// 1. Frontend builds message template with all layers marked as {placeholder}
+    /// 2. For Layer 0: Frontend calls buildPlaceholderContext() to extract current form values
+    /// 3. Frontend sends PlaceholderResolutionRequest to backend with Layer 0 values
+    /// 4. Backend resolves Layers 1-3 using PlaceholderResolutionService
+    /// 5. Backend returns PlaceholderResolutionResponse with all resolved values
+    /// 6. Frontend interpolates message using interpolatePlaceholders() utility
+    /// 7. FieldRenderer displays final interpolated message to user
+    /// 
+    /// EXAMPLE MESSAGE:
+    /// - Template: "Location {coordinates} is outside {Town.Name}'s boundaries."
+    /// - Layer 0 extracted: { "coordinates": "(125.5, 64.0, -350.2)" }
+    /// - Backend resolves: { "Town.Name": "Springfield" }
+    /// - Final: "Location (125.5, 64.0, -350.2) is outside Springfield's boundaries."
     /// </summary>
     public class FieldValidationRuleDto
     {
@@ -23,9 +65,21 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("configJson")]
         public string ConfigJson { get; set; } = "{}";
         
+        /// <summary>
+        /// Error message displayed to user if validation fails.
+        /// Supports multi-layer placeholder interpolation - see class documentation for placeholder syntax.
+        /// 
+        /// The message template can contain any combination of Layer 0/1/2/3 placeholders.
+        /// Placeholders are resolved asynchronously in the validation flow.
+        /// </summary>
         [JsonPropertyName("errorMessage")]
         public string ErrorMessage { get; set; } = null!;
         
+        /// <summary>
+        /// Success message displayed to user if validation passes.
+        /// Optional; if empty, validation success just clears the error state.
+        /// Supports same placeholder syntax as ErrorMessage.
+        /// </summary>
         [JsonPropertyName("successMessage")]
         public string? SuccessMessage { get; set; }
         
@@ -41,6 +95,7 @@ namespace knkwebapi_v2.Dtos
     
     /// <summary>
     /// DTO for creating a new FieldValidationRule.
+    /// See FieldValidationRuleDto for detailed documentation on placeholder syntax.
     /// </summary>
     public class CreateFieldValidationRuleDto
     {
@@ -56,9 +111,15 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("configJson")]
         public string ConfigJson { get; set; } = "{}";
         
+        /// <summary>
+        /// Error message template with placeholders. See FieldValidationRuleDto for placeholder syntax.
+        /// </summary>
         [JsonPropertyName("errorMessage")]
         public string ErrorMessage { get; set; } = null!;
         
+        /// <summary>
+        /// Success message template with placeholders. See FieldValidationRuleDto for placeholder syntax.
+        /// </summary>
         [JsonPropertyName("successMessage")]
         public string? SuccessMessage { get; set; }
         
@@ -71,6 +132,7 @@ namespace knkwebapi_v2.Dtos
     
     /// <summary>
     /// DTO for updating an existing FieldValidationRule.
+    /// See FieldValidationRuleDto for detailed documentation on placeholder syntax.
     /// </summary>
     public class UpdateFieldValidationRuleDto
     {
@@ -83,9 +145,15 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("configJson")]
         public string ConfigJson { get; set; } = "{}";
         
+        /// <summary>
+        /// Error message template with placeholders. See FieldValidationRuleDto for placeholder syntax.
+        /// </summary>
         [JsonPropertyName("errorMessage")]
         public string ErrorMessage { get; set; } = null!;
         
+        /// <summary>
+        /// Success message template with placeholders. See FieldValidationRuleDto for placeholder syntax.
+        /// </summary>
         [JsonPropertyName("successMessage")]
         public string? SuccessMessage { get; set; }
         
