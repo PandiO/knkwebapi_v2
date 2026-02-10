@@ -66,8 +66,7 @@ public class FieldValidationServiceTests
             ResolvedPlaceholders = new Dictionary<string, string>
             {
                 ["Town.Name"] = "Springfield"
-            },
-            IsSuccessful = true
+            }
         };
 
         _mockPlaceholderService
@@ -112,7 +111,6 @@ public class FieldValidationServiceTests
 
         var placeholderResponse = new PlaceholderResolutionResponse
         {
-            IsSuccessful = false,
             ResolutionErrors = new List<PlaceholderResolutionError>
             {
                 new PlaceholderResolutionError
@@ -151,8 +149,7 @@ public class FieldValidationServiceTests
 
         var placeholderResponse = new PlaceholderResolutionResponse
         {
-            ResolvedPlaceholders = new Dictionary<string, string>(),
-            IsSuccessful = true
+            ResolvedPlaceholders = new Dictionary<string, string>()
         };
 
         _mockPlaceholderService
@@ -189,8 +186,7 @@ public class FieldValidationServiceTests
             ResolvedPlaceholders = new Dictionary<string, string>
             {
                 ["Town.Name"] = "Springfield"
-            },
-            IsSuccessful = true
+            }
         };
 
         _mockPlaceholderService
@@ -534,8 +530,7 @@ public class FieldValidationServiceTests
             ResolvedPlaceholders = new Dictionary<string, string>
             {
                 ["Town.Name"] = "Springfield"
-            },
-            IsSuccessful = true
+            }
         };
 
         _mockPlaceholderService
@@ -580,8 +575,7 @@ public class FieldValidationServiceTests
             .Setup(s => s.ResolveAllLayersAsync(It.IsAny<PlaceholderResolutionRequest>()))
             .ReturnsAsync(new PlaceholderResolutionResponse
             {
-                ResolvedPlaceholders = new Dictionary<string, string>(),
-                IsSuccessful = true
+                ResolvedPlaceholders = new Dictionary<string, string>()
             });
 
         // Act

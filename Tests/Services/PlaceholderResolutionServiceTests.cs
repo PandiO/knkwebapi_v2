@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using knkwebapi_v2.Properties;
 
 namespace knkwebapi_v2.Tests.Services;
 
@@ -284,12 +285,12 @@ public class PlaceholderResolutionServiceTests : IDisposable
     [Fact]
     public async Task ResolveLayer1Async_WithNullForeignKey_ReturnsError()
     {
-        // Arrange: Create district without town
+        // Arrange: Create district with invalid town ID
         var orphanDistrict = new District
         {
             Id = 99,
             Name = "Orphan",
-            TownId = null
+            TownId = 999  // Non-existent town ID
         };
         _dbContext.Districts.Add(orphanDistrict);
         await _dbContext.SaveChangesAsync();
@@ -371,12 +372,12 @@ public class PlaceholderResolutionServiceTests : IDisposable
     [Fact]
     public async Task ResolveLayer2Async_WithNullIntermediateValue_HandlesGracefully()
     {
-        // Arrange: Create structure without district
+        // Arrange: Create structure with invalid district ID
         var orphanStructure = new Structure
         {
             Id = 99,
             Name = "Orphan Structure",
-            DistrictId = null
+            DistrictId = 999  // Non-existent district ID
         };
         _dbContext.Structures.Add(orphanStructure);
         await _dbContext.SaveChangesAsync();

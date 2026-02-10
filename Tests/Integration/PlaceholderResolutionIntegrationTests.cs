@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using knkwebapi_v2.Properties;
 
 namespace knkwebapi_v2.Tests.Integration;
 
@@ -64,8 +65,7 @@ public class PlaceholderResolutionIntegrationTests : IDisposable
         {
             Id = 1,
             Name = "Springfield",
-            Description = "A historic town",
-            Prefix = "spring"
+            Description = "A historic town"
         };
         _dbContext.Towns.Add(town);
 
