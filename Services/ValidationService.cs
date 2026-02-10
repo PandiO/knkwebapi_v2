@@ -20,6 +20,7 @@ namespace knkwebapi_v2.Services
         private readonly IFormFieldRepository _fieldRepository;
         private readonly IFormConfigurationRepository _configRepository;
         private readonly IEnumerable<IValidationMethod> _validationMethods;
+        private readonly IDependencyResolutionService _dependencyResolver;
         private readonly IMapper _mapper;
 
         public ValidationService(
@@ -27,12 +28,14 @@ namespace knkwebapi_v2.Services
             IFormFieldRepository fieldRepository,
             IFormConfigurationRepository configRepository,
             IEnumerable<IValidationMethod> validationMethods,
+            IDependencyResolutionService dependencyResolver,
             IMapper mapper)
         {
             _ruleRepository = ruleRepository;
             _fieldRepository = fieldRepository;
             _configRepository = configRepository;
             _validationMethods = validationMethods;
+            _dependencyResolver = dependencyResolver;
             _mapper = mapper;
         }
 
@@ -53,6 +56,29 @@ namespace knkwebapi_v2.Services
         {
             var list = await _ruleRepository.GetByFormConfigurationIdAsync(formConfigurationId);
             return _mapper.Map<IEnumerable<FieldValidationRuleDto>>(list);
+        }
+
+        /// <summary>
+        /// Get validation rules for a form field with dependency path information.
+        /// Returns rules as configured; dependency resolution happens on the frontend.
+        /// 
+        /// DEPENDENCY RESOLUTION FLOW:
+        /// 1. Backend returns rules with dependencyPath property (e.g., "Town.WgRegionId")
+        /// 2. Frontend's WorldBoundFieldRenderer receives these rules
+        /// 3. Frontend uses resolveDependencyPath() utility to resolve based on form context
+        /// 4. Resolved values are included in validationContext sent to plugin
+        /// 
+        /// The dependencyPath property enables multi-layer resolution:
+        /// - Layer 0: Direct field value ("WgRegionId")
+        /// - Layer 1: Single navigation ("Town.WgRegionId")
+        /// - Layer 2+: Multi-level navigation ("District.Town.WgRegionId")
+        /// </summary>
+        public async Task<IEnumerable<FieldValidationRuleDto>> GetByFormFieldIdWithDependenciesAsync(
+            int fieldId,
+            Dictionary<string, object>? formContext = null)
+        {
+            var rules = await _ruleRepository.GetByFormFieldIdAsync(fieldId);
+            return _mapper.Map<IEnumerable<FieldValidationRuleDto>>(rules);
         }
 
         public async Task<FieldValidationRuleDto> CreateAsync(CreateFieldValidationRuleDto dto)

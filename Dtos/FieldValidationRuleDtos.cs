@@ -62,6 +62,21 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("dependsOnFieldId")]
         public int? DependsOnFieldId { get; set; }
         
+        /// <summary>
+        /// Path to navigate from the dependency field value to the actual property to validate against.
+        /// Supports multi-layer navigation through related entities.
+        /// 
+        /// EXAMPLES:
+        /// - "WgRegionId" (Layer 0): Direct property of dependency field value
+        /// - "Town.WgRegionId" (Layer 1): Navigate to Town entity, extract WgRegionId
+        /// - "District.Town.WgRegionId" (Layer 2): Navigate through multiple relations
+        /// - "Town.Districts.Count" (Layer 3): Aggregate operations on collections
+        /// 
+        /// If null/empty and DependsOnFieldId is set, defaults to the field name itself.
+        /// </summary>
+        [JsonPropertyName("dependencyPath")]
+        public string? DependencyPath { get; set; }
+        
         [JsonPropertyName("configJson")]
         public string ConfigJson { get; set; } = "{}";
         
@@ -107,8 +122,14 @@ namespace knkwebapi_v2.Dtos
         
         [JsonPropertyName("dependsOnFieldId")]
         public int? DependsOnFieldId { get; set; }
-        
-        [JsonPropertyName("configJson")]
+                /// <summary>
+        /// Path to navigate from the dependency field value to the actual property to validate against.
+        /// Supports multi-layer navigation through related entities.
+        /// See FieldValidationRuleDto for detailed examples.
+        /// </summary>
+        [JsonPropertyName("dependencyPath")]
+        public string? DependencyPath { get; set; }
+                [JsonPropertyName("configJson")]
         public string ConfigJson { get; set; } = "{}";
         
         /// <summary>
