@@ -5,7 +5,9 @@ using knkwebapi_v2.Services;
 using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Properties;
 using knkwebapi_v2.Configuration;
+using knkwebapi_v2.Mapping;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 
@@ -31,6 +33,7 @@ public class AccountManagementIntegrationTests
         // Set up in-memory database
         var options = new DbContextOptionsBuilder<KnKDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         _dbContext = new KnKDbContext(options);
@@ -43,7 +46,7 @@ public class AccountManagementIntegrationTests
         // Initialize services
         var mapperConfig = new MapperConfiguration(cfg =>
         {
-            // Use default automapper profiles
+            cfg.AddMaps(typeof(UserMappingProfile).Assembly);
         });
         _mapper = mapperConfig.CreateMapper();
 
@@ -68,8 +71,8 @@ public class AccountManagementIntegrationTests
         {
             Username = "webplayer",
             Email = "web@example.com",
-            Password = "SecurePass123!",
-            PasswordConfirmation = "SecurePass123!"
+            Password = "S3cure!Omega-4827",
+            PasswordConfirmation = "S3cure!Omega-4827"
         };
 
         // Act
@@ -86,7 +89,7 @@ public class AccountManagementIntegrationTests
         // Verify user was created with password hashed in the database
         var storedUser = await _userRepository.GetByIdAsync(createdUser.Id);
         Assert.NotNull(storedUser?.PasswordHash);
-        Assert.NotEqual("SecurePass123!", storedUser.PasswordHash);
+        Assert.NotEqual("S3cure!Omega-4827", storedUser.PasswordHash);
     }
 
     [Fact]
@@ -421,15 +424,15 @@ public class AccountManagementIntegrationTests
         await _userService.ChangePasswordAsync(
             user.Id,
             "OldPassword123!",
-            "NewPassword456!",
-            "NewPassword456!"
+            "N3w!Omega-4682",
+            "N3w!Omega-4682"
         );
 
         // Assert
         var updatedUser = await _userRepository.GetByIdAsync(user.Id);
         Assert.NotNull(updatedUser);
         var verifyOld = await _passwordService.VerifyPasswordAsync("OldPassword123!", updatedUser.PasswordHash);
-        var verifyNew = await _passwordService.VerifyPasswordAsync("NewPassword456!", updatedUser.PasswordHash);
+        var verifyNew = await _passwordService.VerifyPasswordAsync("N3w!Omega-4682", updatedUser.PasswordHash);
         
         Assert.False(verifyOld);
         Assert.True(verifyNew);
@@ -450,12 +453,12 @@ public class AccountManagementIntegrationTests
         await _dbContext.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => _userService.ChangePasswordAsync(
                 user.Id,
                 "WrongPassword123!",
-                "NewPassword456!",
-                "NewPassword456!"
+                "N3w!Omega-4682",
+                "N3w!Omega-4682"
             )
         );
     }
