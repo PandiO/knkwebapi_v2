@@ -1,240 +1,409 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using knkwebapi_v2.Properties;
+using knkwebapi_v2.Dtos;
+using knkwebapi_v2.Models;
+using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace knkwebapi_v2.Services;
 
 /// <summary>
 /// Service for resolving multi-layer dependencies when building validation contexts.
-/// Handles fetching related entities and extracting property values.
+/// Handles resolving dependency paths against a form context snapshot.
 /// </summary>
 public class DependencyResolutionService : IDependencyResolutionService
 {
-    private readonly KnKDbContext _context;
+    private readonly IPathResolutionService _pathResolutionService;
+    private readonly IFieldValidationRuleRepository _ruleRepository;
+    private readonly IFormFieldRepository _fieldRepository;
+    private readonly IFormConfigurationRepository _formConfigurationRepository;
+    private readonly ILogger<DependencyResolutionService> _logger;
 
-    public DependencyResolutionService(KnKDbContext context)
+    public DependencyResolutionService(
+        IPathResolutionService pathResolutionService,
+        IFieldValidationRuleRepository ruleRepository,
+        IFormFieldRepository fieldRepository,
+        IFormConfigurationRepository formConfigurationRepository,
+        ILogger<DependencyResolutionService> logger)
     {
-        _context = context;
+        _pathResolutionService = pathResolutionService ?? throw new ArgumentNullException(nameof(pathResolutionService));
+        _ruleRepository = ruleRepository ?? throw new ArgumentNullException(nameof(ruleRepository));
+        _fieldRepository = fieldRepository ?? throw new ArgumentNullException(nameof(fieldRepository));
+        _formConfigurationRepository = formConfigurationRepository ?? throw new ArgumentNullException(nameof(formConfigurationRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>
-    /// Resolve a dependency field value with multi-layer support.
-    /// 
-    /// Example: To validate that a Location is inside a Town's region:
-    /// - dependencyFieldId: 61 (the WgRegionId field)
-    /// - dependencyPath: "Town.WgRegionId" (navigate to Town, get WgRegionId)
-    /// - currentFieldValues: { "Town": townEntity }
-    /// 
-    /// Returns: "town_1" (the WgRegionId value)
-    /// </summary>
-    public object? ResolveDependency(
-        object? fieldValue,
-        string? dependencyPath)
+    public async Task<DependencyResolutionResponse> ResolveDependenciesAsync(DependencyResolutionRequest request)
     {
-        // If field value is null, nothing to resolve from
-        if (fieldValue == null)
+        var response = new DependencyResolutionResponse { ResolvedAt = DateTime.UtcNow };
+
+        if (request?.FieldIds == null || request.FieldIds.Length == 0)
+        {
+            _logger.LogDebug("Dependency resolution skipped: no field IDs provided.");
+            return response;
+        }
+
+        var rules = await _ruleRepository.GetByFieldIdsAsync(request.FieldIds);
+        var formContext = NormalizeFormContext(request.FormContextSnapshot);
+        var dependencyFieldNames = new Dictionary<int, string>();
+
+        _logger.LogDebug("Resolving dependencies for {RuleCount} rules", rules.Count());
+
+        foreach (var rule in rules.Where(r => r.DependsOnFieldId.HasValue))
+        {
+            var dependencyPath = GetDependencyPath(rule);
+            if (string.IsNullOrWhiteSpace(dependencyPath))
+            {
+                _logger.LogWarning("Dependency path missing for rule {RuleId}", rule.Id);
+                response.Resolved[rule.Id] = new ResolvedDependency
+                {
+                    RuleId = rule.Id,
+                    Status = "error",
+                    Message = "No dependency path configured",
+                    ErrorDetail = "DependencyPath is required for multi-layer resolution",
+                    ResolvedAt = DateTime.UtcNow
+                };
+                continue;
+            }
+
+            var dependencyFieldName = await GetDependencyFieldNameAsync(rule, dependencyFieldNames);
+            var resolved = await ResolveDependencyForRuleAsync(
+                rule,
+                dependencyPath,
+                dependencyFieldName,
+                formContext);
+
+            response.Resolved[rule.Id] = resolved;
+        }
+
+        return response;
+    }
+
+    public async Task<ValidationIssueDto[]> CheckConfigurationHealthAsync(int formConfigurationId)
+    {
+        var config = await _formConfigurationRepository.GetByIdAsync(formConfigurationId);
+        if (config == null)
+        {
+            return new[]
+            {
+                new ValidationIssueDto
+                {
+                    Severity = "Error",
+                    Message = $"Form configuration with ID {formConfigurationId} not found"
+                }
+            };
+        }
+
+        // TODO: Phase 3 will add detailed dependency health checks.
+        return Array.Empty<ValidationIssueDto>();
+    }
+
+    private static string? GetDependencyPath(FieldValidationRule rule)
+    {
+        if (!string.IsNullOrWhiteSpace(rule.DependencyPath))
+        {
+            return rule.DependencyPath;
+        }
+
+        return ExtractPathFromConfigJson(rule.ConfigJson);
+    }
+
+    private static string? ExtractPathFromConfigJson(string? configJson)
+    {
+        if (string.IsNullOrWhiteSpace(configJson))
         {
             return null;
         }
 
-        // If no path specified, return the field value itself (Layer 0)
-        if (string.IsNullOrWhiteSpace(dependencyPath))
+        try
         {
-            return fieldValue;
-        }
-
-        // Resolve the path through the object
-        return DependencyPathResolver.ResolvePath(fieldValue, dependencyPath);
-    }
-
-    /// <summary>
-    /// Resolve a dependency field value from a form context dictionary.
-    /// Useful when working with deserialized JSON where dependency data is in a dictionary.
-    /// </summary>
-    public object? ResolveDependencyFromContext(
-        Dictionary<string, object>? formContext,
-        string dependencyFieldName,
-        string? dependencyPath)
-    {
-        if (formContext == null || !formContext.TryGetValue(dependencyFieldName, out var fieldValue))
-        {
-            return null;
-        }
-
-        // If no path specified, return the dependency field value itself (Layer 0)
-        if (string.IsNullOrWhiteSpace(dependencyPath))
-        {
-            return fieldValue;
-        }
-
-        // Resolve the path through the object/dictionary
-        return DependencyPathResolver.ResolvePathFromContext(formContext, dependencyFieldName, dependencyPath);
-    }
-
-    /// <summary>
-    /// Resolve a dependency field value using Entity Framework with string-based entity type and ID.
-    /// Note: This simplified version focuses on in-memory resolution.
-    /// For database queries, use the generic ResolveDependencyForEntityAsync&lt;TEntity&gt;.
-    /// </summary>
-    public async Task<object?> ResolveDependencyForEntityAsync(
-        string dependencyEntityType,
-        object dependencyId,
-        string? dependencyPath)
-    {
-        // For now, this method is not implemented with full database support
-        // The primary use case (frontend-based dependency resolution) works via resolveDependencyPath() utility
-        // Full database support would require knowing entity types at compile time or using reflection extensively
-        // 
-        // If needed in future, this can be extended with specific entity type handling
-        // or using a factory pattern for dynamic entity type resolution
-        
-        return await Task.FromResult<object?>(null);
-    }
-
-    /// <summary>
-    /// Batch resolve multiple dependencies in a single operation.
-    /// More efficient than calling ResolveDependencyForEntityAsync multiple times.
-    /// </summary>
-    public async Task<Dictionary<string, object?>> ResolveDependenciesAsync(
-        List<(string entityType, object entityId, string? dependencyPath)> dependencies)
-    {
-        var results = new Dictionary<string, object?>();
-
-        foreach (var (entityType, entityId, dependencyPath) in dependencies)
-        {
-            var key = $"{entityType}:{entityId}:{dependencyPath}";
-            var resolved = await ResolveDependencyForEntityAsync(entityType, entityId, dependencyPath);
-            results[key] = resolved;
-        }
-
-        return results;
-    }
-
-    /// <summary>
-    /// Resolve a dependency field value for a specific entity instance with multi-layer support (generic version).
-    /// Used when you have an entity ID and need to fetch related data.
-    /// Type-safe version when you know the entity type at compile time.
-    ///
-    /// Example: For a Structure entity, resolve "District.Town.WgRegionId"
-    /// </summary>
-    public async Task<object?> ResolveDependencyForEntityAsync<TEntity>(
-        int entityId,
-        string dependencyPath)
-        where TEntity : class
-    {
-        if (string.IsNullOrWhiteSpace(dependencyPath))
-        {
-            return null;
-        }
-
-        var (segments, depth) = DependencyPathResolver.ParsePath(dependencyPath);
-
-        if (segments.Length == 0)
-        {
-            return null;
-        }
-
-        // For Layer 0 (direct property, no navigation)
-        if (depth == 0)
-        {
-            var entity = await _context.Set<TEntity>().FindAsync(entityId);
-            if (entity == null)
+            using var doc = JsonDocument.Parse(configJson);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
             {
                 return null;
             }
 
-            return DependencyPathResolver.ResolvePath(entity, dependencyPath);
-        }
-
-        // For Layer 1+ (requires Include chains)
-        // This is more complex and requires dynamic Include building
-        return await ResolveDependencyWithIncludesAsync<TEntity>(entityId, segments);
-    }
-
-    /// <summary>
-    /// Build an Include chain for a query to fetch related entities.
-    /// Handles arbitrary depth of navigation.
-    /// </summary>
-    private async Task<object?> ResolveDependencyWithIncludesAsync<TEntity>(
-        int entityId,
-        string[] segments)
-        where TEntity : class
-    {
-        if (segments.Length == 0)
-        {
-            return null;
-        }
-
-        // Start with the base query
-        var query = _context.Set<TEntity>().AsQueryable();
-
-        // Build Include chains for all segments except the last
-        // (the last segment is the property we're extracting, not a navigation)
-        for (int i = 0; i < segments.Length - 1; i++)
-        {
-            var navigationPath = string.Join(".", segments.Take(i + 1));
-            
-            // This is a simplified approach - for complex scenarios,
-            // you might need to use Include() in a loop or use reflection
-            query = IncludeNavigation(query, navigationPath);
-        }
-
-        // Fetch the entity with all includes
-        var entity = await query.FirstOrDefaultAsync(e =>
-            EF.Property<int>(e, "Id") == entityId);
-
-        if (entity == null)
-        {
-            return null;
-        }
-
-        // Now extract the final value using the full path
-        return DependencyPathResolver.ResolvePath(entity, string.Join(".", segments));
-    }
-
-    /// <summary>
-    /// Helper method to apply Include to a query.
-    /// In a real implementation, this would use reflection or dynamic LINQ.
-    /// For now, it demonstrates the concept.
-    /// </summary>
-    private IQueryable<TEntity> IncludeNavigation<TEntity>(
-        IQueryable<TEntity> query,
-        string navigationPath)
-        where TEntity : class
-    {
-        // EF Core's Include method expects a string path
-        // This is a simplified version - a production implementation would be more robust
-        return query.Include(navigationPath);
-    }
-
-    /// <summary>
-    /// Resolve multiple dependency paths at once for efficiency.
-    /// Useful when building validation context with multiple rules.
-    /// </summary>
-    public Dictionary<string, object?> ResolveDependencies(
-        Dictionary<string, object?> fieldValues,
-        List<(string fieldName, string? dependencyPath)> dependencies)
-    {
-        var results = new Dictionary<string, object?>();
-
-        foreach (var (fieldName, dependencyPath) in dependencies)
-        {
-            if (fieldValues.TryGetValue(fieldName, out var fieldValue))
+            if (doc.RootElement.TryGetProperty("dependencyPath", out var dependencyPath)
+                && dependencyPath.ValueKind == JsonValueKind.String)
             {
-                var resolved = DependencyPathResolver.ResolvePathFromContext(
-                    fieldValues.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                    fieldName,
-                    dependencyPath);
-                
-                results[fieldName] = resolved;
+                return dependencyPath.GetString();
             }
         }
+        catch (JsonException)
+        {
+            // Ignore invalid JSON and fall back to null.
+        }
 
-        return results;
+        return null;
+    }
+
+    private async Task<string?> GetDependencyFieldNameAsync(
+        FieldValidationRule rule,
+        Dictionary<int, string> cache)
+    {
+        if (!rule.DependsOnFieldId.HasValue)
+        {
+            return null;
+        }
+
+        var fieldId = rule.DependsOnFieldId.Value;
+
+        if (rule.DependsOnField?.FieldName != null)
+        {
+            cache[fieldId] = rule.DependsOnField.FieldName;
+            return rule.DependsOnField.FieldName;
+        }
+
+        if (cache.TryGetValue(fieldId, out var cached))
+        {
+            return cached;
+        }
+
+        var field = await _fieldRepository.GetByIdAsync(fieldId);
+        if (field?.FieldName == null)
+        {
+            return null;
+        }
+
+        cache[fieldId] = field.FieldName;
+        return field.FieldName;
+    }
+
+    private async Task<ResolvedDependency> ResolveDependencyForRuleAsync(
+        FieldValidationRule rule,
+        string dependencyPath,
+        string? dependencyFieldName,
+        Dictionary<string, object?> formContext)
+    {
+        var resolved = new ResolvedDependency
+        {
+            RuleId = rule.Id,
+            DependencyPath = dependencyPath,
+            ResolvedAt = DateTime.UtcNow
+        };
+
+        var (rootKey, relativePath) = ParseDependencyPath(dependencyPath, dependencyFieldName);
+        if (string.IsNullOrWhiteSpace(rootKey))
+        {
+            _logger.LogWarning("Dependency path missing root segment for rule {RuleId}", rule.Id);
+            resolved.Status = "error";
+            resolved.Message = "Dependency path could not be resolved.";
+            resolved.ErrorDetail = "Missing root entity or field name.";
+            return resolved;
+        }
+
+        var rootValue = TryGetContextValue(formContext, rootKey);
+        if (rootValue == null && !string.IsNullOrWhiteSpace(dependencyFieldName)
+            && !rootKey.Equals(dependencyFieldName, StringComparison.OrdinalIgnoreCase))
+        {
+            rootValue = TryGetContextValue(formContext, dependencyFieldName);
+        }
+
+        if (rootValue == null)
+        {
+            _logger.LogDebug("Dependency root value not found for rule {RuleId} and key {RootKey}",
+                rule.Id, rootKey);
+            resolved.Status = "pending";
+            resolved.Message = $"Dependency field '{rootKey}' not yet filled.";
+            return resolved;
+        }
+
+        if (string.IsNullOrWhiteSpace(relativePath))
+        {
+            resolved.Status = "success";
+            resolved.ResolvedValue = rootValue;
+            return resolved;
+        }
+
+        var validation = await _pathResolutionService.ValidatePathAsync(rootKey, relativePath);
+        if (!validation.IsValid)
+        {
+            _logger.LogWarning("Dependency path validation failed for rule {RuleId}: {Message}",
+                rule.Id, validation.ErrorMessage);
+            resolved.Status = "error";
+            resolved.Message = validation.ErrorMessage ?? "Dependency path is invalid.";
+            resolved.ErrorDetail = validation.Suggestion;
+            return resolved;
+        }
+
+        var resolvedValue = await _pathResolutionService.ResolvePathAsync(rootKey, relativePath, rootValue);
+        if (resolvedValue == null)
+        {
+            _logger.LogDebug("Dependency path resolved to null for rule {RuleId}", rule.Id);
+            resolved.Status = "pending";
+            resolved.Message = $"Dependency path '{dependencyPath}' resolved to null.";
+            return resolved;
+        }
+
+        resolved.Status = "success";
+        resolved.ResolvedValue = resolvedValue;
+        return resolved;
+    }
+
+    private static (string? rootKey, string? relativePath) ParseDependencyPath(
+        string dependencyPath,
+        string? dependencyFieldName)
+    {
+        var segments = dependencyPath
+            .Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (segments.Length == 0)
+        {
+            return (dependencyFieldName, string.Empty);
+        }
+
+        if (segments.Length == 1)
+        {
+            if (!string.IsNullOrWhiteSpace(dependencyFieldName))
+            {
+                return (dependencyFieldName, segments[0]);
+            }
+
+            return (segments[0], string.Empty);
+        }
+
+        return (segments[0], string.Join('.', segments.Skip(1)));
+    }
+
+    private static object? TryGetContextValue(
+        Dictionary<string, object?> formContext,
+        string key)
+    {
+        if (formContext.TryGetValue(key, out var value))
+        {
+            return value;
+        }
+
+        var match = formContext.Keys.FirstOrDefault(k =>
+            k.Equals(key, StringComparison.OrdinalIgnoreCase));
+
+        return match != null ? formContext[match] : null;
+    }
+
+    private static Dictionary<string, object?> NormalizeFormContext(
+        Dictionary<string, object?>? formContextSnapshot)
+    {
+        var normalized = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        if (formContextSnapshot == null)
+        {
+            return normalized;
+        }
+
+        foreach (var kvp in formContextSnapshot)
+        {
+            normalized[kvp.Key] = NormalizeValue(kvp.Value);
+        }
+
+        return normalized;
+    }
+
+    private static object? NormalizeValue(object? value)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+
+        if (value is JsonElement element)
+        {
+            return ConvertJsonElement(element);
+        }
+
+        if (value is Dictionary<string, object?> dict)
+        {
+            return NormalizeDictionary(dict);
+        }
+
+        if (value is IDictionary nonGeneric)
+        {
+            return NormalizeDictionary(nonGeneric);
+        }
+
+        if (value is IEnumerable enumerable && value is not string)
+        {
+            var list = new List<object?>();
+            foreach (var item in enumerable)
+            {
+                list.Add(NormalizeValue(item));
+            }
+
+            return list;
+        }
+
+        return value;
+    }
+
+    private static Dictionary<string, object?> NormalizeDictionary(Dictionary<string, object?> dict)
+    {
+        var normalized = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kvp in dict)
+        {
+            normalized[kvp.Key] = NormalizeValue(kvp.Value);
+        }
+
+        return normalized;
+    }
+
+    private static Dictionary<string, object?> NormalizeDictionary(IDictionary dict)
+    {
+        var normalized = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        foreach (DictionaryEntry entry in dict)
+        {
+            var key = entry.Key?.ToString();
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                continue;
+            }
+
+            normalized[key] = NormalizeValue(entry.Value);
+        }
+
+        return normalized;
+    }
+
+    private static object? ConvertJsonElement(JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                var obj = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                foreach (var prop in element.EnumerateObject())
+                {
+                    obj[prop.Name] = ConvertJsonElement(prop.Value);
+                }
+                return obj;
+            case JsonValueKind.Array:
+                var list = new List<object?>();
+                foreach (var item in element.EnumerateArray())
+                {
+                    list.Add(ConvertJsonElement(item));
+                }
+                return list;
+            case JsonValueKind.String:
+                return element.GetString();
+            case JsonValueKind.Number:
+                if (element.TryGetInt64(out var longValue))
+                {
+                    return longValue;
+                }
+                if (element.TryGetDouble(out var doubleValue))
+                {
+                    return doubleValue;
+                }
+                return null;
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+                return element.GetBoolean();
+            case JsonValueKind.Null:
+            case JsonValueKind.Undefined:
+                return null;
+            default:
+                return null;
+        }
     }
 }
