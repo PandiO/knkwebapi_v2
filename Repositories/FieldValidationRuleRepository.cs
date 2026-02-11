@@ -37,6 +37,21 @@ namespace knkwebapi_v2.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<FieldValidationRule>> GetByFieldIdsAsync(IEnumerable<int> formFieldIds)
+        {
+            var fieldIds = formFieldIds?.ToList() ?? new List<int>();
+            if (fieldIds.Count == 0)
+            {
+                return new List<FieldValidationRule>();
+            }
+
+            return await _context.FieldValidationRules
+                .Include(r => r.FormField)
+                .Include(r => r.DependsOnField)
+                .Where(r => fieldIds.Contains(r.FormFieldId))
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<FieldValidationRule>> GetByFormConfigurationIdAsync(int formConfigurationId)
         {
             // Get all fields in the configuration first

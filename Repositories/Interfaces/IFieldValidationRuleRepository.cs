@@ -24,6 +24,14 @@ namespace knkwebapi_v2.Repositories
         /// <param name="formFieldId">The form field ID</param>
         /// <returns>Collection of validation rules for the field</returns>
         Task<IEnumerable<FieldValidationRule>> GetByFormFieldIdAsync(int formFieldId);
+
+        /// <summary>
+        /// Get all validation rules for the specified form field IDs.
+        /// Includes navigation properties (FormField, DependsOnField).
+        /// </summary>
+        /// <param name="formFieldIds">Collection of form field IDs</param>
+        /// <returns>Collection of validation rules for the fields</returns>
+        Task<IEnumerable<FieldValidationRule>> GetByFieldIdsAsync(IEnumerable<int> formFieldIds);
         
         /// <summary>
         /// Get all validation rules for all fields within a form configuration.

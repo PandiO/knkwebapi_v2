@@ -17,17 +17,23 @@ namespace KnKWebAPI.Controllers
         private readonly IPlaceholderResolutionService _placeholderService;
         private readonly IFieldValidationService _fieldValidationService;
         private readonly IFieldValidationRuleRepository _ruleRepository;
+        private readonly IDependencyResolutionService _dependencyService;
+        private readonly IPathResolutionService _pathService;
 
         public FieldValidationRulesController(
             IValidationService service,
             IPlaceholderResolutionService placeholderService,
             IFieldValidationService fieldValidationService,
-            IFieldValidationRuleRepository ruleRepository)
+            IFieldValidationRuleRepository ruleRepository,
+            IDependencyResolutionService dependencyService,
+            IPathResolutionService pathService)
         {
             _service = service;
             _placeholderService = placeholderService;
             _fieldValidationService = fieldValidationService;
             _ruleRepository = ruleRepository;
+            _dependencyService = dependencyService;
+            _pathService = pathService;
         }
 
         [HttpGet("{id:int}")]
@@ -269,6 +275,55 @@ namespace KnKWebAPI.Controllers
             {
                 return StatusCode(500, new { message = "Draft validation failed", error = ex.Message });
             }
+        }
+
+        /// <summary>
+        /// Batch resolve all dependencies for validation rules on specified fields.
+        /// </summary>
+        [HttpPost("resolve-dependencies")]
+        public async Task<ActionResult<DependencyResolutionResponse>> ResolveDependencies(
+            [FromBody] DependencyResolutionRequest request)
+        {
+            if (request?.FieldIds == null || request.FieldIds.Length == 0)
+            {
+                return BadRequest("FieldIds cannot be empty");
+            }
+
+            var response = await _dependencyService.ResolveDependenciesAsync(request);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Validate a dependency path syntax and entity compatibility.
+        /// </summary>
+        [HttpPost("validate-path")]
+        public async Task<ActionResult<PathValidationResult>> ValidatePath(
+            [FromBody] ValidatePathRequest request)
+        {
+            if (request == null
+                || string.IsNullOrWhiteSpace(request.Path)
+                || string.IsNullOrWhiteSpace(request.EntityTypeName))
+            {
+                return BadRequest("Path and EntityTypeName are required");
+            }
+
+            var result = await _pathService.ValidatePathAsync(request.EntityTypeName, request.Path);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get all properties of an entity for UI suggestions.
+        /// </summary>
+        [HttpGet("entity/{entityName}/properties")]
+        public async Task<ActionResult<List<EntityPropertySuggestion>>> GetEntityProperties(string entityName)
+        {
+            if (string.IsNullOrWhiteSpace(entityName))
+            {
+                return BadRequest("Entity name is required");
+            }
+
+            var properties = await _pathService.GetEntityPropertiesAsync(entityName);
+            return Ok(properties);
         }
     }
 }

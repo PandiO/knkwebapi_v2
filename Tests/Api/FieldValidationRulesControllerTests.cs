@@ -22,6 +22,8 @@ public class FieldValidationRulesControllerTests
     private readonly Mock<IPlaceholderResolutionService> _mockPlaceholderService;
     private readonly Mock<IFieldValidationService> _mockFieldValidationService;
     private readonly Mock<IFieldValidationRuleRepository> _mockRuleRepository;
+    private readonly Mock<IDependencyResolutionService> _mockDependencyService;
+    private readonly Mock<IPathResolutionService> _mockPathService;
     private readonly FieldValidationRulesController _controller;
 
     public FieldValidationRulesControllerTests()
@@ -30,12 +32,16 @@ public class FieldValidationRulesControllerTests
         _mockPlaceholderService = new Mock<IPlaceholderResolutionService>();
         _mockFieldValidationService = new Mock<IFieldValidationService>();
         _mockRuleRepository = new Mock<IFieldValidationRuleRepository>();
+        _mockDependencyService = new Mock<IDependencyResolutionService>();
+        _mockPathService = new Mock<IPathResolutionService>();
 
         _controller = new FieldValidationRulesController(
             _mockValidationService.Object,
             _mockPlaceholderService.Object,
             _mockFieldValidationService.Object,
-            _mockRuleRepository.Object);
+            _mockRuleRepository.Object,
+            _mockDependencyService.Object,
+            _mockPathService.Object);
     }
 
     [Fact]
