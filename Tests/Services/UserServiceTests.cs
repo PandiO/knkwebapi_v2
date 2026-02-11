@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Xunit;
 using Moq;
 using knkwebapi_v2.Services;
@@ -421,7 +423,7 @@ public class UserServiceTests
             .ReturnsAsync(false);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => _userService.ChangePasswordAsync(userId, currentPassword, newPassword, passwordConfirmation)
         );
     }
@@ -587,7 +589,7 @@ public class UserServiceTests
             .ReturnsAsync((User?)null);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<KeyNotFoundException>(
             () => _userService.MergeAccountsAsync(primaryUserId, secondaryUserId)
         );
     }
@@ -610,7 +612,7 @@ public class UserServiceTests
             .ReturnsAsync((User?)null);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<KeyNotFoundException>(
             () => _userService.MergeAccountsAsync(primaryUserId, secondaryUserId)
         );
     }
@@ -634,6 +636,10 @@ public class UserServiceTests
             .Setup(s => s.GenerateLinkCodeAsync(userId))
             .ReturnsAsync(linkCodeResponseDto);
 
+        _mockUserRepository
+            .Setup(r => r.GetByIdAsync(userId))
+            .ReturnsAsync(new User { Id = userId });
+
         // Act
         var result = await _userService.GenerateLinkCodeAsync(userId);
 
@@ -650,10 +656,18 @@ public class UserServiceTests
         const string code = "ABC12XYZ";
         var userDto = new UserDto { Id = 1, Username = "player" };
 
-        var linkCode = new LinkCode { /* set properties as needed */ };
+        var linkCode = new LinkCode { UserId = 1 };
         _mockLinkCodeService
             .Setup(s => s.ConsumeLinkCodeAsync(code))
             .ReturnsAsync((true, linkCode, null));
+
+        _mockUserRepository
+            .Setup(r => r.GetByIdAsync(1))
+            .ReturnsAsync(new User { Id = 1, Username = "player" });
+
+        _mockMapper
+            .Setup(m => m.Map<UserDto>(It.IsAny<User>()))
+            .Returns(userDto);
 
         // Act
         var result = await _userService.ConsumeLinkCodeAsync(code);

@@ -399,7 +399,7 @@ public class UsersControllerTests
         };
 
         _mockUserService
-            .Setup(s => s.ConsumeLinkCodeAsync("ABC12XYZ"))
+            .Setup(s => s.ValidateLinkCodeAsync("ABC12XYZ"))
             .ReturnsAsync((true, linkedUser));
 
         _mockUserService
@@ -417,6 +417,10 @@ public class UsersControllerTests
         _mockUserService
             .Setup(s => s.ChangePasswordAsync(1, "", "SecurePass123!", "SecurePass123!"))
             .Returns(Task.CompletedTask);
+
+        _mockUserService
+            .Setup(s => s.ConsumeLinkCodeAsync("ABC12XYZ"))
+            .ReturnsAsync((true, linkedUser));
 
         _mockUserService
             .Setup(s => s.GetByIdAsync(1))
@@ -443,7 +447,7 @@ public class UsersControllerTests
         };
 
         _mockUserService
-            .Setup(s => s.ConsumeLinkCodeAsync("INVALID99"))
+            .Setup(s => s.ValidateLinkCodeAsync("INVALID99"))
             .ReturnsAsync((false, null));
 
         // Act
@@ -474,7 +478,7 @@ public class UsersControllerTests
         };
 
         _mockUserService
-            .Setup(s => s.ConsumeLinkCodeAsync("ABC12XYZ"))
+            .Setup(s => s.ValidateLinkCodeAsync("ABC12XYZ"))
             .ReturnsAsync((true, linkedUser));
 
         // Act

@@ -246,7 +246,7 @@ public class LinkCodeServiceTests
     public async Task ValidateLinkCodeAsync_WithExpiredCode_ReturnsFalse()
     {
         // Arrange
-        const string code = "EXPIRED12";
+        const string code = "EXPIR001";
         var linkCode = new LinkCode
         {
             Id = 1,
@@ -273,7 +273,7 @@ public class LinkCodeServiceTests
     public async Task ValidateLinkCodeAsync_WithAlreadyUsedCode_ReturnsFalse()
     {
         // Arrange
-        const string code = "USED12XYZ";
+        const string code = "USED12XY";
         var linkCode = new LinkCode
         {
             Id = 1,
@@ -294,14 +294,14 @@ public class LinkCodeServiceTests
         // Assert
         Assert.False(result.IsValid);
         Assert.NotNull(result.Error);
-        Assert.Contains("already used", result.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("already been used", result.Error, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
     public async Task ValidateLinkCodeAsync_WithNonExistentCode_ReturnsFalse()
     {
         // Arrange
-        const string code = "INVALID99";
+        const string code = "NOEXIST1";
 
         _mockLinkCodeRepository
             .Setup(r => r.GetLinkCodeByCodeAsync(code))
@@ -367,7 +367,7 @@ public class LinkCodeServiceTests
     public async Task ConsumeLinkCodeAsync_WithExpiredCode_FailsAndSetsStatusToExpired()
     {
         // Arrange
-        const string code = "EXPIRED12";
+        const string code = "EXPIR001";
         var linkCode = new LinkCode
         {
             Id = 1,
@@ -398,7 +398,7 @@ public class LinkCodeServiceTests
     public async Task ConsumeLinkCodeAsync_WithAlreadyUsedCode_FailsWithoutMarkingAgain()
     {
         // Arrange
-        const string code = "USED12XYZ";
+        const string code = "USED12XY";
         var linkCode = new LinkCode
         {
             Id = 1,
