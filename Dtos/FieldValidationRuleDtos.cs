@@ -106,6 +106,36 @@ namespace knkwebapi_v2.Dtos
         
         [JsonPropertyName("createdAt")]
         public string CreatedAt { get; set; } = null!;
+
+        /// <summary>
+        /// Navigation DTO for the form field being validated.
+        /// Provides display information about the field.
+        /// </summary>
+        [JsonPropertyName("formField")]
+        public FormFieldNavDto? FormField { get; set; }
+
+        /// <summary>
+        /// Navigation DTO for the field this rule depends on.
+        /// Provides display information about the dependency field.
+        /// </summary>
+        [JsonPropertyName("dependsOnField")]
+        public FormFieldNavDto? DependsOnField { get; set; }
+    }
+    
+    /// <summary>
+    /// Navigation DTO for FormField to avoid circular references.
+    /// Contains minimal information for display purposes.
+    /// </summary>
+    public class FormFieldNavDto
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
+        [JsonPropertyName("fieldName")]
+        public string? FieldName { get; set; }
+
+        [JsonPropertyName("label")]
+        public string? Label { get; set; }
     }
     
     /// <summary>
