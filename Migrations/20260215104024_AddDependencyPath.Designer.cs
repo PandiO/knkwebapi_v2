@@ -12,8 +12,8 @@ using knkwebapi_v2.Properties;
 namespace knkwebapi_v2.Migrations
 {
     [DbContext(typeof(KnKDbContext))]
-    [Migration("20260111113514_AddLinkCodeAndUserAuthFields")]
-    partial class AddLinkCodeAndUserAuthFields
+    [Migration("20260215104024_AddDependencyPath")]
+    partial class AddDependencyPath
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -444,6 +444,9 @@ namespace knkwebapi_v2.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DependencyPath")
+                        .HasColumnType("longtext");
 
                     b.Property<int?>("DependsOnFieldId")
                         .HasColumnType("int");

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace knkwebapi_v2.Migrations
 {
     /// <inheritdoc />
-    public partial class AddLinkCodeAndUserAuthFields : Migration
+    public partial class AddDependencyPath : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -95,7 +95,7 @@ namespace knkwebapi_v2.Migrations
                 table: "users",
                 type: "tinyint(1)",
                 nullable: false,
-                defaultValue: true);
+                defaultValue: false);
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "LastEmailChangeAt",
@@ -108,6 +108,14 @@ namespace knkwebapi_v2.Migrations
                 table: "users",
                 type: "datetime(6)",
                 nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "DependencyPath",
+                table: "FieldValidationRules",
+                type: "longtext",
+                nullable: true,
+                collation: "utf8mb4_general_ci")
+                .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
                 name: "linkcodes",
@@ -224,6 +232,10 @@ namespace knkwebapi_v2.Migrations
             migrationBuilder.DropColumn(
                 name: "LastPasswordChangeAt",
                 table: "users");
+
+            migrationBuilder.DropColumn(
+                name: "DependencyPath",
+                table: "FieldValidationRules");
 
             migrationBuilder.UpdateData(
                 table: "users",

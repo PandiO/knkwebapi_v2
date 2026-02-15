@@ -13,7 +13,15 @@ namespace knkwebapi_v2.Mapping
         {
             // Entity to DTO
             CreateMap<FieldValidationRule, FieldValidationRuleDto>()
-                .ForMember(d => d.CreatedAt, o => o.MapFrom(s => s.CreatedAt.ToString("o")));
+                .ForMember(d => d.CreatedAt, o => o.MapFrom(s => s.CreatedAt.ToString("o")))
+                .ForMember(d => d.FormField, o => o.MapFrom(s => s.FormField))
+                .ForMember(d => d.DependsOnField, o => o.MapFrom(s => s.DependsOnField));
+            
+            // FormField entity to FormFieldNavDto
+            CreateMap<FormField, FormFieldNavDto>()
+                .ForMember(d => d.Id, o => o.MapFrom(s => s.Id))
+                .ForMember(d => d.FieldName, o => o.MapFrom(s => s.FieldName))
+                .ForMember(d => d.Label, o => o.MapFrom(s => s.Label));
             
             // Create DTO to Entity
             CreateMap<CreateFieldValidationRuleDto, FieldValidationRule>()
