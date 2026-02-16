@@ -321,10 +321,11 @@ namespace knkwebapi_v2.Services
         /// - "Int32" matches both "Int32" and "Int32?"
         /// - This allows forms to work with both required and optional fields
         /// 
-        /// DECIMAL vs DOUBLE:
-        /// - Form FieldType.Decimal accepts both C# decimal and double types
-        /// - This allows flexibility in model design (e.g., GateStructure uses double for HealthMax)
-        /// - Both types represent numeric values suitable for form decimal inputs
+        /// DECIMAL vs DOUBLE vs FLOAT:
+        /// - Form FieldType.Decimal accepts "Decimal" (C# decimal), "Double" (C# double), and "Float" (C# float)
+        /// - This provides flexibility in model design
+        /// - All three types represent numeric values suitable for form decimal inputs
+        /// - Examples: Location.Yaw/Pitch (float), GateStructure.HealthMax (double), other fields (decimal)
         /// </summary>
         private void ValidateSimpleTypeCompatibility(
             FormField field,
@@ -332,14 +333,14 @@ namespace knkwebapi_v2.Services
             TemplateFieldValidationResult result)
         {
             // Map form field type to expected CLR type name(s)
-            // For Decimal, we accept both "Decimal" and "Double" as compatible numeric types
+            // For Decimal, we accept "Decimal", "Double", and "Float" as compatible numeric types
             var expectedTypes = field.FieldType switch
             {
                 FieldType.String => new[] { "String" },
                 FieldType.Integer => new[] { "Int32" },
                 FieldType.Boolean => new[] { "Boolean" },
                 FieldType.DateTime => new[] { "DateTime" },
-                FieldType.Decimal => new[] { "Decimal", "Double" }, // Accept both decimal and double
+                FieldType.Decimal => new[] { "Decimal", "Double", "Float" }, // Accept decimal, double, and float
                 _ => Array.Empty<string>()
             };
 
