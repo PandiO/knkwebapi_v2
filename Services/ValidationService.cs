@@ -135,6 +135,19 @@ namespace knkwebapi_v2.Services
             // Get all validation rules for this field
             var rules = await _ruleRepository.GetByFormFieldIdAsync(fieldId);
             
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND] Validating field {fieldId}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   fieldValue: {fieldValue ?? "null"}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   dependencyValue: {dependencyValue ?? "null"}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   rulesCount: {rules.Count()}");
+            if (formContextData != null)
+            {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   formContextData keys: {string.Join(", ", formContextData.Keys)}");
+                foreach (var kvp in formContextData)
+                {
+                    Console.WriteLine($"[VALIDATION_TRACE_BACKEND]     {kvp.Key}: {kvp.Value ?? "null"}");
+                }
+            }
+            
             if (!rules.Any())
             {
                 // No rules = validation passes
@@ -151,7 +164,9 @@ namespace knkwebapi_v2.Services
             
             foreach (var rule in rules)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   Executing rule {rule.Id} (type: {rule.ValidationType})");
                 var result = await ExecuteValidationRuleAsync(rule, fieldValue, dependencyValue, formContextData);
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   Rule {rule.Id} result: isValid={result.IsValid}, isBlocking={result.IsBlocking}");
                 results.Add(result);
             }
 
@@ -159,6 +174,7 @@ namespace knkwebapi_v2.Services
             var blockingFailure = results.FirstOrDefault(r => !r.IsValid && r.IsBlocking);
             if (blockingFailure != null)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND] Field {fieldId} blocking failure: {blockingFailure.Message}");
                 return blockingFailure;
             }
 
@@ -496,9 +512,26 @@ namespace knkwebapi_v2.Services
             object? dependencyValue,
             Dictionary<string, object>? formContextData)
         {
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]     Rule execution started:");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       DependsOnFieldId: {rule.DependsOnFieldId}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       DependsOnField.FieldName: {rule.DependsOnField?.FieldName}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       RequiresDependencyFilled: {rule.RequiresDependencyFilled}");
+            
+            // CRITICAL FIX: If dependencyValue is not provided but formContextData contains it, extract it
+            if (rule.DependsOnFieldId.HasValue && dependencyValue == null && formContextData != null && rule.DependsOnField != null)
+            {
+                var dependencyFieldName = rule.DependsOnField.FieldName;
+                if (!string.IsNullOrEmpty(dependencyFieldName) && formContextData.TryGetValue(dependencyFieldName, out var contextValue))
+                {
+                    dependencyValue = contextValue;
+                    Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Extracted dependencyValue from formContextData['{dependencyFieldName}']");
+                }
+            }
+            
             // Check if dependency is required but not filled
             if (rule.DependsOnFieldId.HasValue && dependencyValue == null && !rule.RequiresDependencyFilled)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Dependency not filled, RequiresDependencyFilled=false, returning valid");
                 return new ValidationResultDto
                 {
                     IsValid = true,
@@ -517,6 +550,7 @@ namespace knkwebapi_v2.Services
             var validationMethod = _validationMethods.FirstOrDefault(m => m.ValidationType == rule.ValidationType);
             if (validationMethod == null)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Validation method not found: {rule.ValidationType}");
                 return new ValidationResultDto
                 {
                     IsValid = false,
@@ -533,20 +567,21 @@ namespace knkwebapi_v2.Services
             // Execute the validation
             try
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Calling {rule.ValidationType}.ValidateAsync()");
                 var result = await validationMethod.ValidateAsync(
                     fieldValue,
                     dependencyValue,
                     rule.ConfigJson,
                     formContextData);
 
-                return new ValidationResultDto
+                var dto = new ValidationResultDto
                 {
                     IsValid = result.IsValid,
                     IsBlocking = rule.IsBlocking,
                     Message = result.IsValid 
                         ? (rule.SuccessMessage ?? result.Message) 
                         : (rule.ErrorMessage ?? result.Message),
-                    Placeholders = result.Placeholders,
+                    Placeholders = result.Placeholders ?? new Dictionary<string, string>(),
                     Metadata = new ValidationMetadataDto
                     {
                         ValidationType = rule.ValidationType,
@@ -555,9 +590,13 @@ namespace knkwebapi_v2.Services
                         DependencyValue = dependencyValue
                     }
                 };
+                
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Validation method returned: isValid={dto.IsValid}, placeholders={dto.Placeholders?.Count ?? 0}");
+                return dto;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Exception: {ex.Message}");
                 return new ValidationResultDto
                 {
                     IsValid = false,

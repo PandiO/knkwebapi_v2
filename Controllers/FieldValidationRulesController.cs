@@ -135,7 +135,7 @@ namespace KnKWebAPI.Controllers
         /// <response code="200">Returns resolved placeholders and resolution errors (if any).</response>
         /// <response code="400">Invalid request (missing rule ID and placeholder paths).</response>
         /// <response code="404">Rule not found.</response>
-        [HttpPost("/api/field-validations/resolve-placeholders")]
+        [HttpPost("resolve-placeholders")]
         public async Task<IActionResult> ResolvePlaceholders([FromBody] PlaceholderResolutionRequest request)
         {
             if (request == null) return BadRequest();
