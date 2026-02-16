@@ -211,6 +211,72 @@ namespace knkwebapi_v2.Services
         ///   - RelatedEntityType: Street
         ///   - HasDefaultValue: true (= new Collection() in model)
         /// </summary>
+        /// <summary>
+        /// Converts CLR type names to friendly type names expected by the frontend.
+        /// 
+        /// PURPOSE:
+        /// The frontend uses friendly type names (String, Integer, Boolean, Decimal, etc.)
+        /// but .NET reflection returns CLR type names (String, Int32, Boolean, Single, Double, etc.)
+        /// This mapping ensures consistency and allows the frontend to recognize all types.
+        /// 
+        /// EXAMPLES:
+        /// - Single → Float (System.Single is the CLR name for C# float)
+        /// - Int32 → Integer (System.Int32 is the CLR name for C# int)
+        /// - Int64 → Integer (System.Int64 maps to integer family)
+        /// - Double → Decimal (floating point types → Decimal for form purposes)
+        /// - String → String (passes through)
+        /// - Boolean → Boolean (passes through)
+        /// - Any other type → the original type name (will fallback to Object in frontend)
+        /// 
+        /// RATIONALE:
+        /// Numeric floating point types (Single, Double) should be treated as Decimal
+        /// in forms to maintain precision consistency. This prevents unexpected rounding
+        /// errors when users enter decimal values.
+        /// </summary>
+        private string GetFriendlyTypeName(Type type)
+        {
+            var typeName = type.Name;
+            
+            // Map CLR type names to friendly names
+            var typeMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Floating point types
+                { "Single", "Float" },      // C# float → System.Single
+                { "Double", "Decimal" },   // C# double → System.Double
+                
+                // Integer types
+                { "Int32", "Integer" },    // C# int → System.Int32
+                { "Int64", "Integer" },    // C# long → System.Int64
+                { "Int16", "Integer" },    // C# short → System.Int16
+                
+                // Keep these as-is (already friendly)
+                { "String", "String" },
+                { "Boolean", "Boolean" },
+                { "DateTime", "DateTime" },
+                { "Decimal", "Decimal" },
+                
+                // Collections
+                { "List`1", "List" },
+                { "Collection`1", "List" },
+                { "ICollection`1", "List" }
+            };
+            
+            // Try to find a mapping
+            if (typeMapping.TryGetValue(typeName, out var friendlyName))
+            {
+                return friendlyName;
+            }
+            
+            // If type ends with `1 or `2, it's a generic collection - map to List
+            if (typeName.Contains("`"))
+            {
+                return "List";
+            }
+            
+            // Return the original name as fallback
+            return typeName;
+        }
+
         private List<FieldMetadataDto> GetFieldMetadata(Type entityType)
         {
             var fields = new List<FieldMetadataDto>();
@@ -232,7 +298,7 @@ namespace knkwebapi_v2.Services
                 var fieldMetadata = new FieldMetadataDto
                 {
                     FieldName = property.Name,
-                    FieldType = (underlyingType ?? fieldType).Name,
+                    FieldType = GetFriendlyTypeName(underlyingType ?? fieldType),
                     IsNullable = isNullable,
                     IsRelatedEntity = relatedEntityAttr != null,
                     RelatedEntityType = relatedEntityAttr?.RelatedEntityType.Name,
