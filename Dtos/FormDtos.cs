@@ -106,8 +106,6 @@ namespace knkwebapi_v2.Dtos
         public string? FormConfigurationId { get; set; }
         [JsonPropertyName("stepName")]
         public string StepName { get; set; } = null!;
-        [JsonPropertyName("title")]
-        public string Title { get; set; } = null!;
         [JsonPropertyName("description")]
         public string? Description { get; set; }
         [JsonPropertyName("order")]
