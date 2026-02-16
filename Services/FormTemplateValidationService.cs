@@ -337,10 +337,10 @@ namespace knkwebapi_v2.Services
             var expectedTypes = field.FieldType switch
             {
                 FieldType.String => new[] { "String" },
-                FieldType.Integer => new[] { "Int32" },
+                FieldType.Integer => new[] { "Integer" },
                 FieldType.Boolean => new[] { "Boolean" },
                 FieldType.DateTime => new[] { "DateTime" },
-                FieldType.Decimal => new[] { "Decimal", "Double", "Float" }, // Accept decimal, double, and float
+                FieldType.Decimal => new[] { "Decimal", "Float" }, // Accept decimal, float (float/double both map to friendly names)
                 _ => Array.Empty<string>()
             };
 

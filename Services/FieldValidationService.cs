@@ -19,13 +19,19 @@ public class FieldValidationService : IFieldValidationService
 {
     private readonly IPlaceholderResolutionService _placeholderService;
     private readonly ILogger<FieldValidationService> _logger;
+    private readonly Dictionary<string, IValidationMethod> _validationMethods;
 
     public FieldValidationService(
         IPlaceholderResolutionService placeholderService,
+        IEnumerable<IValidationMethod> validationMethods,
         ILogger<FieldValidationService> logger)
     {
         _placeholderService = placeholderService ?? throw new ArgumentNullException(nameof(placeholderService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        
+        // Build lookup dictionary by validation type
+        _validationMethods = validationMethods?.ToDictionary(v => v.ValidationType, v => v)
+            ?? throw new ArgumentNullException(nameof(validationMethods));
     }
 
     /// <inheritdoc/>
@@ -173,51 +179,29 @@ public class FieldValidationService : IFieldValidationService
     {
         _logger.LogDebug("Executing LocationInsideRegion validation for rule {RuleId}", rule.Id);
 
-        // PLACEHOLDER IMPLEMENTATION FOR PHASE 2
-        // Full implementation will be added in later phase when IRegionService is available
-        // For now, we demonstrate the placeholder resolution infrastructure
-
-        // Step 1: Add computed placeholders
-        var combinedPlaceholders = new Dictionary<string, string>(placeholders);
-
-        // Add coordinates placeholder if Location object is provided
-        if (fieldValue is Location location)
+        // Delegate to registered validator if available
+        if (_validationMethods.TryGetValue("LocationInsideRegion", out var validator))
         {
-            combinedPlaceholders["coordinates"] = $"({location.X:F2}, {location.Y:F2}, {location.Z:F2})";
-        }
-        else if (fieldValue != null)
-        {
-            _logger.LogWarning("Expected Location object but got {Type}", fieldValue.GetType().Name);
-        }
-
-        // Parse ConfigJson for additional context
-        string? regionPropertyPath = null;
-        if (!string.IsNullOrWhiteSpace(rule.ConfigJson))
-        {
-            try
+            // Build form context data from placeholders
+            var formContextData = placeholders?.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value);
+            
+            var result = await validator.ValidateAsync(fieldValue, dependencyFieldValue, rule.ConfigJson, formContextData);
+            return new ValidationResultDto
             {
-                var config = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(rule.ConfigJson);
-                if (config != null && config.TryGetValue("regionPropertyPath", out var pathValue))
-                {
-                    regionPropertyPath = pathValue.GetString();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to parse ConfigJson for rule {RuleId}", rule.Id);
-            }
+                IsValid = result.IsValid,
+                IsBlocking = rule.IsBlocking,
+                Message = result.IsValid ? (rule.SuccessMessage ?? result.Message) : rule.ErrorMessage,
+                Placeholders = result.Placeholders ?? placeholders
+            };
         }
 
-        // Step 2: Placeholder validation logic (actual region check would happen here)
-        // For now, we'll return a success result to demonstrate the flow
-        bool isValid = true; // TODO: Replace with actual IRegionService.CheckLocationInsideRegion() call
-
+        _logger.LogWarning("LocationInsideRegion validator not found in dependency injection");
         return new ValidationResultDto
         {
-            IsValid = isValid,
+            IsValid = true,
             IsBlocking = rule.IsBlocking,
-            Message = isValid ? (rule.SuccessMessage ?? "Location is valid") : rule.ErrorMessage,
-            Placeholders = combinedPlaceholders
+            Message = rule.SuccessMessage ?? "Location is valid",
+            Placeholders = placeholders
         };
     }
 
@@ -230,32 +214,29 @@ public class FieldValidationService : IFieldValidationService
     {
         _logger.LogDebug("Executing RegionContainment validation for rule {RuleId}", rule.Id);
 
-        // PLACEHOLDER IMPLEMENTATION FOR PHASE 2
-        // Full implementation will be added in later phase when IRegionService is available
-
-        var combinedPlaceholders = new Dictionary<string, string>(placeholders);
-
-        // Add regionName placeholder if fieldValue is a string (region ID)
-        if (fieldValue is string regionId)
+        // Delegate to registered validator if available
+        if (_validationMethods.TryGetValue("RegionContainment", out var validator))
         {
-            combinedPlaceholders["regionName"] = regionId;
+            // Build form context data from placeholders
+            var formContextData = placeholders?.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value);
+            
+            var result = await validator.ValidateAsync(fieldValue, dependencyFieldValue, rule.ConfigJson, formContextData);
+            return new ValidationResultDto
+            {
+                IsValid = result.IsValid,
+                IsBlocking = rule.IsBlocking,
+                Message = result.IsValid ? (rule.SuccessMessage ?? result.Message) : rule.ErrorMessage,
+                Placeholders = result.Placeholders ?? placeholders
+            };
         }
 
-        // Placeholder validation logic
-        bool isValid = true; // TODO: Replace with actual IRegionService.CheckRegionContainment() call
-        int violationCount = 0; // TODO: Get actual violation count from region check
-
-        if (!isValid)
-        {
-            combinedPlaceholders["violationCount"] = violationCount.ToString();
-        }
-
+        _logger.LogWarning("RegionContainment validator not found in dependency injection");
         return new ValidationResultDto
         {
-            IsValid = isValid,
+            IsValid = true,
             IsBlocking = rule.IsBlocking,
-            Message = isValid ? (rule.SuccessMessage ?? "Region is valid") : rule.ErrorMessage,
-            Placeholders = combinedPlaceholders
+            Message = rule.SuccessMessage ?? "Region is valid",
+            Placeholders = placeholders
         };
     }
 
@@ -268,70 +249,29 @@ public class FieldValidationService : IFieldValidationService
     {
         _logger.LogDebug("Executing ConditionalRequired validation for rule {RuleId}", rule.Id);
 
-        var combinedPlaceholders = new Dictionary<string, string>(placeholders);
-
-        // Parse ConfigJson for condition
-        string? operatorValue = null;
-        string? conditionValue = null;
-
-        if (!string.IsNullOrWhiteSpace(rule.ConfigJson))
+        // Delegate to registered validator if available
+        if (_validationMethods.TryGetValue("ConditionalRequired", out var validator))
         {
-            try
+            // Build form context data from placeholders
+            var formContextData = placeholders?.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value);
+            
+            var result = await validator.ValidateAsync(fieldValue, dependencyFieldValue, rule.ConfigJson, formContextData);
+            return new ValidationResultDto
             {
-                var config = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(rule.ConfigJson);
-                if (config != null)
-                {
-                    if (config.TryGetValue("operator", out var opValue))
-                    {
-                        operatorValue = opValue.GetString();
-                    }
-                    if (config.TryGetValue("value", out var condValue))
-                    {
-                        conditionValue = condValue.GetString();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to parse ConfigJson for rule {RuleId}", rule.Id);
-            }
-        }
-
-        // Step 1: Evaluate condition
-        bool conditionMet = false;
-        string? depValueStr = dependencyFieldValue?.ToString();
-
-        if (!string.IsNullOrWhiteSpace(operatorValue) && conditionValue != null)
-        {
-            conditionMet = operatorValue.ToLower() switch
-            {
-                "equals" => string.Equals(depValueStr, conditionValue, StringComparison.OrdinalIgnoreCase),
-                "notequals" => !string.Equals(depValueStr, conditionValue, StringComparison.OrdinalIgnoreCase),
-                "contains" => depValueStr?.Contains(conditionValue, StringComparison.OrdinalIgnoreCase) ?? false,
-                "startswith" => depValueStr?.StartsWith(conditionValue, StringComparison.OrdinalIgnoreCase) ?? false,
-                "endswith" => depValueStr?.EndsWith(conditionValue, StringComparison.OrdinalIgnoreCase) ?? false,
-                _ => false
+                IsValid = result.IsValid,
+                IsBlocking = rule.IsBlocking,
+                Message = result.IsValid ? (rule.SuccessMessage ?? result.Message) : rule.ErrorMessage,
+                Placeholders = result.Placeholders ?? placeholders
             };
         }
 
-        // Step 2: Check if field is empty (if condition is met)
-        bool fieldIsEmpty = fieldValue == null ||
-                           (fieldValue is string strValue && string.IsNullOrWhiteSpace(strValue));
-
-        bool isValid = !conditionMet || !fieldIsEmpty;
-
-        // Add dependency value to placeholders for error message
-        if (!isValid && depValueStr != null)
-        {
-            combinedPlaceholders["dependencyValue"] = depValueStr;
-        }
-
+        _logger.LogWarning("ConditionalRequired validator not found in dependency injection");
         return new ValidationResultDto
         {
-            IsValid = isValid,
+            IsValid = true,
             IsBlocking = rule.IsBlocking,
-            Message = isValid ? (rule.SuccessMessage ?? "Field is valid") : rule.ErrorMessage,
-            Placeholders = combinedPlaceholders
+            Message = rule.SuccessMessage ?? "Field is valid",
+            Placeholders = placeholders
         };
     }
 }

@@ -31,6 +31,7 @@ public class FieldValidationServiceTests
 
         _service = new FieldValidationService(
             _mockPlaceholderService.Object,
+            new List<IValidationMethod>(),
             _mockLogger.Object
         );
     }

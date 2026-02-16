@@ -53,6 +53,7 @@ public class PlaceholderResolutionIntegrationTests : IDisposable
 
         _validationService = new FieldValidationService(
             _placeholderService,
+            new List<IValidationMethod>(),
             _mockValidationLogger.Object
         );
 
