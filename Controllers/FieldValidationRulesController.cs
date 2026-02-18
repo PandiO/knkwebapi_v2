@@ -13,24 +13,24 @@ namespace KnKWebAPI.Controllers
     [Route("api/field-validation-rules")]
     public class FieldValidationRulesController : ControllerBase
     {
-        private readonly IValidationService _service;
+        private readonly IValidationService _validationService;
+        private readonly IFieldValidationRuleService _ruleService;
         private readonly IPlaceholderResolutionService _placeholderService;
-        private readonly IFieldValidationService _fieldValidationService;
         private readonly IFieldValidationRuleRepository _ruleRepository;
         private readonly IDependencyResolutionService _dependencyService;
         private readonly IPathResolutionService _pathService;
 
         public FieldValidationRulesController(
-            IValidationService service,
+            IValidationService validationService,
+            IFieldValidationRuleService ruleService,
             IPlaceholderResolutionService placeholderService,
-            IFieldValidationService fieldValidationService,
             IFieldValidationRuleRepository ruleRepository,
             IDependencyResolutionService dependencyService,
             IPathResolutionService pathService)
         {
-            _service = service;
+            _validationService = validationService;
+            _ruleService = ruleService;
             _placeholderService = placeholderService;
-            _fieldValidationService = fieldValidationService;
             _ruleRepository = ruleRepository;
             _dependencyService = dependencyService;
             _pathService = pathService;
@@ -39,7 +39,7 @@ namespace KnKWebAPI.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var rule = await _service.GetByIdAsync(id);
+            var rule = await _ruleService.GetByIdAsync(id);
             if (rule == null) return NotFound();
             return Ok(rule);
         }
@@ -47,14 +47,14 @@ namespace KnKWebAPI.Controllers
         [HttpGet("by-field/{fieldId:int}")]
         public async Task<IActionResult> GetByFormField(int fieldId)
         {
-            var rules = await _service.GetByFormFieldIdAsync(fieldId);
+            var rules = await _ruleService.GetByFormFieldIdAsync(fieldId);
             return Ok(rules);
         }
 
         [HttpGet("by-configuration/{configId:int}")]
         public async Task<IActionResult> GetByConfiguration(int configId)
         {
-            var rules = await _service.GetByFormConfigurationIdAsync(configId);
+            var rules = await _ruleService.GetByFormConfigurationIdAsync(configId);
             return Ok(rules);
         }
 
@@ -64,7 +64,7 @@ namespace KnKWebAPI.Controllers
             if (dto == null) return BadRequest();
             try
             {
-                var created = await _service.CreateAsync(dto);
+                var created = await _ruleService.CreateAsync(dto);
                 return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
             }
             catch (ArgumentException ex)
@@ -79,7 +79,7 @@ namespace KnKWebAPI.Controllers
             if (dto == null) return BadRequest();
             try
             {
-                await _service.UpdateAsync(id, dto);
+                await _ruleService.UpdateAsync(id, dto);
                 return NoContent();
             }
             catch (KeyNotFoundException)
@@ -97,7 +97,7 @@ namespace KnKWebAPI.Controllers
         {
             try
             {
-                await _service.DeleteAsync(id);
+                await _ruleService.DeleteAsync(id);
                 return NoContent();
             }
             catch (KeyNotFoundException)
@@ -112,7 +112,7 @@ namespace KnKWebAPI.Controllers
             if (request == null) return BadRequest();
             try
             {
-                var result = await _service.ValidateFieldAsync(request);
+                var result = await _validationService.ValidateFieldAsync(request);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -148,7 +148,7 @@ namespace KnKWebAPI.Controllers
 
             if (request.FieldValidationRuleId.HasValue)
             {
-                var rule = await _service.GetByIdAsync(request.FieldValidationRuleId.Value);
+                var rule = await _ruleService.GetByIdAsync(request.FieldValidationRuleId.Value);
                 if (rule == null) return NotFound();
             }
 
@@ -187,14 +187,9 @@ namespace KnKWebAPI.Controllers
 
             try
             {
-                var result = await _fieldValidationService.ValidateFieldAsync(
-                    rule,
-                    request.FieldValue,
-                    request.DependencyFieldValue,
-                    request.CurrentEntityPlaceholders,
-                    request.EntityId);
-
-                return Ok(result);
+                // Note: FieldValidationService is deprecated and replaced by ValidationService
+                // TODO: Update this endpoint to use unified validation approach
+                return StatusCode(501, new { message = "This endpoint is being refactored. Use /api/field-validation-rules/validate instead." });
             }
             catch (Exception ex)
             {
@@ -211,7 +206,7 @@ namespace KnKWebAPI.Controllers
         [HttpGet("/api/field-validations/rules/{ruleId:int}/placeholders")]
         public async Task<IActionResult> GetPlaceholdersByRule(int ruleId)
         {
-            var rule = await _service.GetByIdAsync(ruleId);
+            var rule = await _ruleService.GetByIdAsync(ruleId);
             if (rule == null) return NotFound();
 
             try
@@ -249,7 +244,7 @@ namespace KnKWebAPI.Controllers
         {
             try
             {
-                var issues = await _service.ValidateConfigurationHealthAsync(configId);
+                var issues = await _ruleService.ValidateConfigurationHealthAsync(configId);
                 return Ok(issues);
             }
             catch (KeyNotFoundException)
@@ -268,7 +263,7 @@ namespace KnKWebAPI.Controllers
                     return BadRequest(new { message = "Configuration data is required" });
                 }
 
-                var issues = await _service.ValidateDraftConfigurationAsync(configDto);
+                var issues = await _ruleService.ValidateDraftConfigurationAsync(configDto);
                 return Ok(issues);
             }
             catch (Exception ex)
