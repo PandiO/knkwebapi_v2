@@ -19,9 +19,8 @@ namespace knkwebapi_v2.Tests.Api;
 public class FieldValidationRulesControllerTests
 {
     private readonly Mock<IValidationService> _mockValidationService;
-    private readonly Mock<IPlaceholderResolutionService> _mockPlaceholderService;
     private readonly Mock<IFieldValidationRuleService> _mockRuleService;
-    private readonly Mock<IFieldValidationRuleRepository> _mockRuleRepository;
+    private readonly Mock<IPlaceholderResolutionService> _mockPlaceholderService;
     private readonly Mock<IDependencyResolutionService> _mockDependencyService;
     private readonly Mock<IPathResolutionService> _mockPathService;
     private readonly FieldValidationRulesController _controller;
@@ -29,9 +28,8 @@ public class FieldValidationRulesControllerTests
     public FieldValidationRulesControllerTests()
     {
         _mockValidationService = new Mock<IValidationService>();
-        _mockPlaceholderService = new Mock<IPlaceholderResolutionService>();
         _mockRuleService = new Mock<IFieldValidationRuleService>();
-        _mockRuleRepository = new Mock<IFieldValidationRuleRepository>();
+        _mockPlaceholderService = new Mock<IPlaceholderResolutionService>();
         _mockDependencyService = new Mock<IDependencyResolutionService>();
         _mockPathService = new Mock<IPathResolutionService>();
 
@@ -39,7 +37,6 @@ public class FieldValidationRulesControllerTests
             _mockValidationService.Object,
             _mockRuleService.Object,
             _mockPlaceholderService.Object,
-            _mockRuleRepository.Object,
             _mockDependencyService.Object,
             _mockPathService.Object);
     }
@@ -121,9 +118,9 @@ public class FieldValidationRulesControllerTests
     {
         var request = new ValidateFieldRuleRequestDto { FieldValidationRuleId = 12 };
 
-        _mockRuleRepository
+        _mockRuleService
             .Setup(r => r.GetByIdAsync(12))
-            .ReturnsAsync((FieldValidationRule?)null);
+            .ReturnsAsync((FieldValidationRuleDto?)null);
 
         var result = await _controller.ValidateFieldRule(request);
 
@@ -139,20 +136,27 @@ public class FieldValidationRulesControllerTests
             FieldValue = new { x = 10, y = 64, z = -5 }
         };
 
-        var rule = new FieldValidationRule
+        var ruleDto = new FieldValidationRuleDto
         {
             Id = 12,
+            FormFieldId = 1,
             ValidationType = "LocationInsideRegion",
             ErrorMessage = "Invalid location",
             IsBlocking = true
         };
 
-        _mockRuleRepository
+        _mockRuleService
             .Setup(r => r.GetByIdAsync(12))
-            .ReturnsAsync(rule);
+            .ReturnsAsync(ruleDto);
 
-        // Note: ValidateFieldRule endpoint is deprecated and returns 501.
-        // This test setup is retained for reference but will fail until endpoint is updated.
+        _mockValidationService
+            .Setup(s => s.ValidateFieldAsync(1, request.FieldValue, null, null))
+            .ReturnsAsync(new ValidationResultDto
+            {
+                IsValid = true,
+                IsBlocking = false,
+                Message = "Location is valid"
+            });
 
         var result = await _controller.ValidateFieldRule(request);
 

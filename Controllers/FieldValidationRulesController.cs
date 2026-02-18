@@ -16,7 +16,6 @@ namespace KnKWebAPI.Controllers
         private readonly IValidationService _validationService;
         private readonly IFieldValidationRuleService _ruleService;
         private readonly IPlaceholderResolutionService _placeholderService;
-        private readonly IFieldValidationRuleRepository _ruleRepository;
         private readonly IDependencyResolutionService _dependencyService;
         private readonly IPathResolutionService _pathService;
 
@@ -24,14 +23,12 @@ namespace KnKWebAPI.Controllers
             IValidationService validationService,
             IFieldValidationRuleService ruleService,
             IPlaceholderResolutionService placeholderService,
-            IFieldValidationRuleRepository ruleRepository,
             IDependencyResolutionService dependencyService,
             IPathResolutionService pathService)
         {
             _validationService = validationService;
             _ruleService = ruleService;
             _placeholderService = placeholderService;
-            _ruleRepository = ruleRepository;
             _dependencyService = dependencyService;
             _pathService = pathService;
         }
@@ -182,14 +179,20 @@ namespace KnKWebAPI.Controllers
                 return BadRequest(new { message = "FieldValidationRuleId is required." });
             }
 
-            var rule = await _ruleRepository.GetByIdAsync(request.FieldValidationRuleId.Value);
+            var rule = await _ruleService.GetByIdAsync(request.FieldValidationRuleId.Value);
             if (rule == null) return NotFound();
 
             try
             {
-                // Note: FieldValidationService is deprecated and replaced by ValidationService
-                // TODO: Update this endpoint to use unified validation approach
-                return StatusCode(501, new { message = "This endpoint is being refactored. Use /api/field-validation-rules/validate instead." });
+                // Use the main validation service with field ID to validate
+                // This ensures proper multi-rule aggregation and placeholder resolution
+                var result = await _validationService.ValidateFieldAsync(
+                    rule.FormFieldId,
+                    request.FieldValue,
+                    request.DependencyFieldValue,
+                    null);  // Note: CurrentEntityPlaceholders not converted to formContextData
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
