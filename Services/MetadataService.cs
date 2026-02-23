@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using knkwebapi_v2.Attributes;
 using knkwebapi_v2.Dtos;
 
@@ -40,6 +41,7 @@ namespace knkwebapi_v2.Services
     public class MetadataService : IMetadataService
     {
         private readonly List<EntityMetadataDto> _cachedMetadata;
+        private readonly NullabilityInfoContext _nullabilityInfoContext = new();
 
         /// <summary>
         /// Initializes the service by scanning all form-configurable entities and caching their metadata.
@@ -289,7 +291,7 @@ namespace knkwebapi_v2.Services
                 var relatedEntityAttr = property.GetCustomAttribute<RelatedEntityFieldAttribute>();
                 var fieldType = property.PropertyType;
                 var underlyingType = Nullable.GetUnderlyingType(fieldType);
-                var isNullable = underlyingType != null || !fieldType.IsValueType;
+                var isNullable = IsPropertyNullable(property, fieldType, underlyingType);
 
                 // Check for default value via property initializer
                 // This allows fields with defaults to be optional in forms
@@ -310,6 +312,33 @@ namespace knkwebapi_v2.Services
             }
 
             return fields;
+        }
+
+        private bool IsPropertyNullable(PropertyInfo property, Type fieldType, Type? underlyingType)
+        {
+            if (fieldType.IsValueType)
+            {
+                return underlyingType != null;
+            }
+
+            if (property.GetCustomAttribute<RequiredMemberAttribute>() != null)
+            {
+                return false;
+            }
+
+            var nullability = _nullabilityInfoContext.Create(property);
+
+            if (nullability.ReadState == NullabilityState.NotNull)
+            {
+                return false;
+            }
+
+            if (nullability.ReadState == NullabilityState.Nullable)
+            {
+                return true;
+            }
+
+            return true;
         }
 
         /// <summary>

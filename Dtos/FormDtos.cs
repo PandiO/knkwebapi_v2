@@ -128,6 +128,8 @@ namespace knkwebapi_v2.Dtos
         public string? RelatedEntityPropertyName { get; set; }
         [JsonPropertyName("joinEntityType")]
         public string? JoinEntityType { get; set; }
+        [JsonPropertyName("subConfigurationId")]
+        public string? SubConfigurationId { get; set; }
         [JsonPropertyName("parentStepId")]
         public string? ParentStepId { get; set; }
         [JsonPropertyName("childFormSteps")]
