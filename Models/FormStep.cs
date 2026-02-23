@@ -124,6 +124,13 @@ namespace knkwebapi_v2.Models
         /// System will retrieve metadata for this entity to allow editing its fields.
         /// </summary>
         public string? JoinEntityType { get; set; }
+
+        /// <summary>
+        /// Optional linked form configuration used to create/edit join entity entries in modal mode.
+        /// When set for many-to-many steps, this configuration is used as the primary source for join fields.
+        /// </summary>
+        public int? SubConfigurationId { get; set; }
+        public FormConfiguration? SubConfiguration { get; set; }
         
         /// <summary>
         /// Foreign key to parent step if this is a child step defining join entity fields.

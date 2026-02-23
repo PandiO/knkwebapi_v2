@@ -141,6 +141,12 @@ public partial class KnKDbContext : DbContext
             .WithOne(cs => cs.ParentStep)
             .HasForeignKey(cs => cs.ParentStepId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<FormStep>()
+            .HasOne(s => s.SubConfiguration)
+            .WithMany()
+            .HasForeignKey(s => s.SubConfigurationId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         // FormField relationships
         modelBuilder.Entity<FormField>()

@@ -644,6 +644,9 @@ namespace knkwebapi_v2.Migrations
                     b.Property<int?>("ParentStepId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("SubConfigurationId")
+                        .HasColumnType("int");
+
                     b.Property<string>("RelatedEntityPropertyName")
                         .HasColumnType("longtext");
 
@@ -664,6 +667,8 @@ namespace knkwebapi_v2.Migrations
                     b.HasIndex("IsReusable");
 
                     b.HasIndex("ParentStepId");
+
+                    b.HasIndex("SubConfigurationId");
 
                     b.ToTable("FormSteps");
                 });
@@ -1454,9 +1459,16 @@ namespace knkwebapi_v2.Migrations
                         .HasForeignKey("ParentStepId")
                         .OnDelete(DeleteBehavior.Cascade);
 
+                    b.HasOne("knkwebapi_v2.Models.FormConfiguration", "SubConfiguration")
+                        .WithMany()
+                        .HasForeignKey("SubConfigurationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("FormConfiguration");
 
                     b.Navigation("ParentStep");
+
+                    b.Navigation("SubConfiguration");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.FormSubmissionProgress", b =>

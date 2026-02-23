@@ -46,6 +46,10 @@ namespace knkwebapi_v2.Services
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Name)) throw new ArgumentException("Name is required.", nameof(dto));
 
+            dto.Description ??= string.Empty;
+            dto.DefaultDisplayName ??= string.Empty;
+            dto.DefaultDisplayDescription ??= string.Empty;
+
             // Ensure icon material ref exists
             var iconMaterialRefId = await EnsureIconMaterialRefAsync(dto.IconMaterialRefId, dto.IconNamespaceKey);
 
@@ -80,6 +84,10 @@ namespace knkwebapi_v2.Services
             if (dto == null) throw new ArgumentNullException(nameof(dto));
             if (id <= 0) throw new ArgumentException("Invalid id.", nameof(id));
             if (string.IsNullOrWhiteSpace(dto.Name)) throw new ArgumentException("Name is required.", nameof(dto));
+
+            dto.Description ??= string.Empty;
+            dto.DefaultDisplayName ??= string.Empty;
+            dto.DefaultDisplayDescription ??= string.Empty;
 
             var existing = await _repo.GetByIdAsync(id);
             if (existing == null) throw new KeyNotFoundException($"ItemBlueprint with id {id} not found.");

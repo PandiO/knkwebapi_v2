@@ -157,6 +157,7 @@ namespace knkwebapi_v2.Repositories
                         IsManyToManyRelationship = step.IsManyToManyRelationship,
                         RelatedEntityPropertyName = step.RelatedEntityPropertyName,
                         JoinEntityType = step.JoinEntityType,
+                        SubConfigurationId = step.SubConfigurationId,
                         ParentStepId = step.ParentStepId,
                         FormConfigurationId = existing.Id,
                         // StepGuid stays auto-generated
@@ -176,6 +177,7 @@ namespace knkwebapi_v2.Repositories
                     match.IsManyToManyRelationship = step.IsManyToManyRelationship;
                     match.RelatedEntityPropertyName = step.RelatedEntityPropertyName;
                     match.JoinEntityType = step.JoinEntityType;
+                    match.SubConfigurationId = step.SubConfigurationId;
                     match.ParentStepId = step.ParentStepId;
                 }
 
@@ -305,6 +307,7 @@ namespace knkwebapi_v2.Repositories
                             IsReusable = childStep.IsReusable,
                             SourceStepId = childStep.SourceStepId,
                             FieldOrderJson = childStep.FieldOrderJson,
+                            SubConfigurationId = childStep.SubConfigurationId,
                             ParentStepId = match.Id,
                             CreatedAt = DateTime.UtcNow
                         };
@@ -318,6 +321,7 @@ namespace knkwebapi_v2.Repositories
                         childMatch.IsReusable = childStep.IsReusable;
                         childMatch.SourceStepId = childStep.SourceStepId;
                         childMatch.FieldOrderJson = childStep.FieldOrderJson;
+                        childMatch.SubConfigurationId = childStep.SubConfigurationId;
                     }
 
                     // Merge child step fields
