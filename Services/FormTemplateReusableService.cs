@@ -227,6 +227,7 @@ namespace knkwebapi_v2.Services
                 DefaultValue = sourceField.DefaultValue,
                 Required = sourceField.Required,
                 ReadOnly = sourceField.ReadOnly,
+                SettingsJson = sourceField.SettingsJson,
                 IsReusable = false, // No longer reusable
                 SourceFieldId = sourceField.Id, // Track source for traceability
                 IsLinkedToSource = false, // Copy mode
@@ -272,6 +273,7 @@ namespace knkwebapi_v2.Services
                 DefaultValue = sourceField.DefaultValue,
                 Required = sourceField.Required,
                 ReadOnly = sourceField.ReadOnly,
+                SettingsJson = sourceField.SettingsJson,
                 IsReusable = false,
                 SourceFieldId = sourceField.Id,
                 IsLinkedToSource = true, // Link mode flag
