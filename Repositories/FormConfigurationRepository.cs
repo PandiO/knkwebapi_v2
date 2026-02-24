@@ -149,10 +149,12 @@ namespace knkwebapi_v2.Repositories
                     // New step
                     var newStep = new FormStep
                     {
+                        StepGuid = step.StepGuid != Guid.Empty ? step.StepGuid : Guid.NewGuid(),
                         StepName = step.StepName,
                         Description = step.Description,
                         IsReusable = step.IsReusable,
                         SourceStepId = step.SourceStepId,
+                        IsLinkedToSource = step.IsLinkedToSource,
                         FieldOrderJson = step.FieldOrderJson,
                         IsManyToManyRelationship = step.IsManyToManyRelationship,
                         RelatedEntityPropertyName = step.RelatedEntityPropertyName,
@@ -173,6 +175,9 @@ namespace knkwebapi_v2.Repositories
                     match.Description = step.Description;
                     match.IsReusable = step.IsReusable;
                     match.SourceStepId = step.SourceStepId;
+                    match.IsLinkedToSource = step.IsLinkedToSource;
+                    if (step.StepGuid != Guid.Empty)
+                        match.StepGuid = step.StepGuid;
                     match.FieldOrderJson = step.FieldOrderJson;
                     match.IsManyToManyRelationship = step.IsManyToManyRelationship;
                     match.RelatedEntityPropertyName = step.RelatedEntityPropertyName;
@@ -219,6 +224,7 @@ namespace knkwebapi_v2.Repositories
                     {
                         var newField = new FormField
                         {
+                            FieldGuid = field.FieldGuid != Guid.Empty ? field.FieldGuid : Guid.NewGuid(),
                             FieldName = field.FieldName,
                             Label = field.Label,
                             Placeholder = field.Placeholder,
@@ -233,6 +239,7 @@ namespace knkwebapi_v2.Repositories
                             SettingsJson = field.SettingsJson,
                             IsReusable = field.IsReusable,
                             SourceFieldId = field.SourceFieldId,
+                            IsLinkedToSource = field.IsLinkedToSource,
                             DependsOnFieldId = field.DependsOnFieldId,
                             DependencyConditionJson = field.DependencyConditionJson,
                             SubConfigurationId = field.SubConfigurationId,
@@ -258,6 +265,9 @@ namespace knkwebapi_v2.Repositories
                         fieldMatch.SettingsJson = field.SettingsJson;
                         fieldMatch.IsReusable = field.IsReusable;
                         fieldMatch.SourceFieldId = field.SourceFieldId;
+                        fieldMatch.IsLinkedToSource = field.IsLinkedToSource;
+                        if (field.FieldGuid != Guid.Empty)
+                            fieldMatch.FieldGuid = field.FieldGuid;
                         fieldMatch.DependsOnFieldId = field.DependsOnFieldId;
                         fieldMatch.DependencyConditionJson = field.DependencyConditionJson;
                         fieldMatch.SubConfigurationId = field.SubConfigurationId;
@@ -302,10 +312,12 @@ namespace knkwebapi_v2.Repositories
                     {
                         var newChild = new FormStep
                         {
+                            StepGuid = childStep.StepGuid != Guid.Empty ? childStep.StepGuid : Guid.NewGuid(),
                             StepName = childStep.StepName,
                             Description = childStep.Description,
                             IsReusable = childStep.IsReusable,
                             SourceStepId = childStep.SourceStepId,
+                            IsLinkedToSource = childStep.IsLinkedToSource,
                             FieldOrderJson = childStep.FieldOrderJson,
                             SubConfigurationId = childStep.SubConfigurationId,
                             ParentStepId = match.Id,
@@ -320,6 +332,9 @@ namespace knkwebapi_v2.Repositories
                         childMatch.Description = childStep.Description;
                         childMatch.IsReusable = childStep.IsReusable;
                         childMatch.SourceStepId = childStep.SourceStepId;
+                        childMatch.IsLinkedToSource = childStep.IsLinkedToSource;
+                        if (childStep.StepGuid != Guid.Empty)
+                            childMatch.StepGuid = childStep.StepGuid;
                         childMatch.FieldOrderJson = childStep.FieldOrderJson;
                         childMatch.SubConfigurationId = childStep.SubConfigurationId;
                     }
@@ -336,6 +351,7 @@ namespace knkwebapi_v2.Repositories
                         {
                             var newField = new FormField
                             {
+                                FieldGuid = field.FieldGuid != Guid.Empty ? field.FieldGuid : Guid.NewGuid(),
                                 FieldName = field.FieldName,
                                 Label = field.Label,
                                 Placeholder = field.Placeholder,
@@ -350,6 +366,7 @@ namespace knkwebapi_v2.Repositories
                                 SettingsJson = field.SettingsJson,
                                 IsReusable = field.IsReusable,
                                 SourceFieldId = field.SourceFieldId,
+                                IsLinkedToSource = field.IsLinkedToSource,
                                 DependsOnFieldId = field.DependsOnFieldId,
                                 DependencyConditionJson = field.DependencyConditionJson,
                                 SubConfigurationId = field.SubConfigurationId,
@@ -375,6 +392,9 @@ namespace knkwebapi_v2.Repositories
                             fieldMatch.SettingsJson = field.SettingsJson;
                             fieldMatch.IsReusable = field.IsReusable;
                             fieldMatch.SourceFieldId = field.SourceFieldId;
+                            fieldMatch.IsLinkedToSource = field.IsLinkedToSource;
+                            if (field.FieldGuid != Guid.Empty)
+                                fieldMatch.FieldGuid = field.FieldGuid;
                             fieldMatch.DependsOnFieldId = field.DependsOnFieldId;
                             fieldMatch.DependencyConditionJson = field.DependencyConditionJson;
                             fieldMatch.SubConfigurationId = field.SubConfigurationId;
