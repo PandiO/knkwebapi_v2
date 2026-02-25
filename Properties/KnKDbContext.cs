@@ -46,6 +46,7 @@ public partial class KnKDbContext : DbContext
     public virtual DbSet<MinecraftBlockRef> MinecraftBlockRefs { get; set; } = null!;
     public virtual DbSet<MinecraftEnchantmentRef> MinecraftEnchantmentRefs { get; set; } = null!;
     public virtual DbSet<EnchantmentDefinition> EnchantmentDefinitions { get; set; } = null!;
+    public virtual DbSet<AbilityDefinition> AbilityDefinitions { get; set; } = null!;
     // Workflow + Tasks
     public virtual DbSet<WorkflowSession> WorkflowSessions { get; set; } = null!;
     public virtual DbSet<StepProgress> StepProgresses { get; set; } = null!;
@@ -345,6 +346,19 @@ public partial class KnKDbContext : DbContext
             entity.Property(e => e.NamespaceKey).IsRequired().HasMaxLength(191);
         });
 
+        modelBuilder.Entity<AbilityDefinition>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+            entity.ToTable("AbilityDefinitions");
+
+            entity.Property(e => e.AbilityKey)
+                .IsRequired()
+                .HasMaxLength(191);
+
+            entity.HasIndex(e => e.EnchantmentDefinitionId)
+                .IsUnique();
+        });
+
         // EntityTypeConfiguration model configuration
         modelBuilder.Entity<EntityTypeConfiguration>(entity =>
         {
@@ -406,6 +420,12 @@ public partial class KnKDbContext : DbContext
             .HasOne(e => e.EnchantmentDefinition)
             .WithMany(ed => ed.DefaultForBlueprints)
             .HasForeignKey(e => e.EnchantmentDefinitionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<EnchantmentDefinition>()
+            .HasOne(e => e.AbilityDefinition)
+            .WithOne(a => a.EnchantmentDefinition)
+            .HasForeignKey<AbilityDefinition>(a => a.EnchantmentDefinitionId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // WorkflowSession configuration

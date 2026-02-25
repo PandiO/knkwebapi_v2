@@ -44,11 +44,18 @@ namespace knkwebapi_v2.Services
             if (string.IsNullOrWhiteSpace(dto.Key)) throw new ArgumentException("Key is required.", nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.DisplayName)) throw new ArgumentException("DisplayName is required.", nameof(dto));
 
+            ValidateAbilityInvariant(dto.IsCustom, dto.AbilityDefinition);
+
             // Ensure base enchantment ref exists
             var baseEnchantmentRefId = await EnsureEnchantmentRefAsync(dto.MinecraftEnchantmentRefId, dto.EnchantmentNamespaceKey);
 
             var entity = _mapper.Map<EnchantmentDefinition>(dto);
             entity.MinecraftEnchantmentRefId = baseEnchantmentRefId;
+
+            if (dto.AbilityDefinition != null)
+            {
+                entity.AbilityDefinition = _mapper.Map<AbilityDefinition>(dto.AbilityDefinition);
+            }
 
             await _repo.AddAsync(entity);
             return _mapper.Map<EnchantmentDefinitionReadDto>(entity);
@@ -64,6 +71,8 @@ namespace knkwebapi_v2.Services
             var existing = await _repo.GetByIdAsync(id);
             if (existing == null) throw new KeyNotFoundException($"EnchantmentDefinition with id {id} not found.");
 
+            ValidateAbilityInvariant(dto.IsCustom, dto.AbilityDefinition);
+
             // Ensure base enchantment ref exists
             var baseEnchantmentRefId = await EnsureEnchantmentRefAsync(dto.MinecraftEnchantmentRefId, dto.EnchantmentNamespaceKey, existing.MinecraftEnchantmentRefId);
 
@@ -74,6 +83,33 @@ namespace knkwebapi_v2.Services
             existing.IsCustom = dto.IsCustom;
             existing.MaxLevel = dto.MaxLevel;
             existing.MinecraftEnchantmentRefId = baseEnchantmentRefId;
+
+            if (!dto.IsCustom)
+            {
+                existing.AbilityDefinition = null;
+            }
+            else if (dto.AbilityDefinition != null)
+            {
+                if (existing.AbilityDefinition == null)
+                {
+                    existing.AbilityDefinition = new AbilityDefinition
+                    {
+                        AbilityKey = dto.AbilityDefinition.AbilityKey,
+                        RuntimeConfigJson = dto.AbilityDefinition.RuntimeConfigJson,
+                        FutureUserAssignmentContract = dto.AbilityDefinition.FutureUserAssignmentContract
+                    };
+                }
+                else
+                {
+                    existing.AbilityDefinition.AbilityKey = dto.AbilityDefinition.AbilityKey;
+                    existing.AbilityDefinition.RuntimeConfigJson = dto.AbilityDefinition.RuntimeConfigJson;
+                    existing.AbilityDefinition.FutureUserAssignmentContract = dto.AbilityDefinition.FutureUserAssignmentContract;
+                }
+            }
+            else
+            {
+                existing.AbilityDefinition = null;
+            }
 
             await _repo.UpdateAsync(existing);
         }
@@ -134,6 +170,19 @@ namespace knkwebapi_v2.Services
 
             await _enchantmentRefRepo.AddAsync(newEnchRef);
             return newEnchRef.Id;
+        }
+
+        private static void ValidateAbilityInvariant(bool isCustom, AbilityDefinitionUpsertDto? abilityDefinition)
+        {
+            if (!isCustom && abilityDefinition != null)
+            {
+                throw new ArgumentException("AbilityDefinition is only allowed when IsCustom is true.");
+            }
+
+            if (abilityDefinition != null && string.IsNullOrWhiteSpace(abilityDefinition.AbilityKey))
+            {
+                throw new ArgumentException("AbilityDefinition.AbilityKey is required when ability metadata is provided.");
+            }
         }
     }
 }
