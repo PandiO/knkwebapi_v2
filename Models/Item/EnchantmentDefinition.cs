@@ -25,6 +25,11 @@ public class EnchantmentDefinition
     [RelatedEntityField(typeof(MinecraftEnchantmentRef))]
     public MinecraftEnchantmentRef? BaseEnchantmentRef { get; set; }
 
+    // Optional 1:1 extension for custom-only ability metadata
+    [NavigationPair(nameof(AbilityDefinition))]
+    [RelatedEntityField(typeof(AbilityDefinition))]
+    public AbilityDefinition? AbilityDefinition { get; set; }
+
     // Many-to-Many: EnchantmentDefinition ↔ ItemBlueprint (via ItemBlueprintDefaultEnchantment)
     [NavigationPair(nameof(ItemBlueprintDefaultEnchantment))]
     [RelatedEntityField(typeof(ItemBlueprintDefaultEnchantment))]

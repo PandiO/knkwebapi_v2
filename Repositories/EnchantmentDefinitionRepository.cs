@@ -18,6 +18,7 @@ namespace knkwebapi_v2.Repositories
         {
             return await _context.EnchantmentDefinitions
                 .Include(ed => ed.BaseEnchantmentRef)
+                .Include(ed => ed.AbilityDefinition)
                 .Include(ed => ed.DefaultForBlueprints)
                     .ThenInclude(df => df.ItemBlueprint)
                 .ToListAsync();
@@ -27,6 +28,7 @@ namespace knkwebapi_v2.Repositories
         {
             return await _context.EnchantmentDefinitions
                 .Include(ed => ed.BaseEnchantmentRef)
+                .Include(ed => ed.AbilityDefinition)
                 .Include(ed => ed.DefaultForBlueprints)
                     .ThenInclude(df => df.ItemBlueprint)
                 .FirstOrDefaultAsync(ed => ed.Id == id);
@@ -85,6 +87,7 @@ namespace knkwebapi_v2.Repositories
                 .Skip((query.PageNumber - 1) * query.PageSize)
                 .Take(query.PageSize)
                 .Include(ed => ed.BaseEnchantmentRef)
+                .Include(ed => ed.AbilityDefinition)
                 .Include(ed => ed.DefaultForBlueprints)
                 .ToListAsync();
 

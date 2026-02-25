@@ -17,16 +17,19 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.IsCustom, opt => opt.MapFrom(src => src.IsCustom))
                 .ForMember(dest => dest.MinecraftEnchantmentRefId, opt => opt.MapFrom(src => src.MinecraftEnchantmentRefId))
                 .ForMember(dest => dest.BaseEnchantmentRef, opt => opt.MapFrom(src => src.BaseEnchantmentRef))
-                .ForMember(dest => dest.DefaultForBlueprints, opt => opt.MapFrom(src => src.DefaultForBlueprints));
+                .ForMember(dest => dest.DefaultForBlueprints, opt => opt.MapFrom(src => src.DefaultForBlueprints))
+                .ForMember(dest => dest.AbilityDefinition, opt => opt.MapFrom(src => src.AbilityDefinition));
 
             // Create/Update DTO → EnchantmentDefinition
             CreateMap<EnchantmentDefinitionCreateDto, EnchantmentDefinition>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.BaseEnchantmentRef, opt => opt.Ignore())
+                .ForMember(dest => dest.AbilityDefinition, opt => opt.Ignore())
                 .ForMember(dest => dest.DefaultForBlueprints, opt => opt.Ignore());
 
             CreateMap<EnchantmentDefinitionUpdateDto, EnchantmentDefinition>()
                 .ForMember(dest => dest.BaseEnchantmentRef, opt => opt.Ignore())
+                .ForMember(dest => dest.AbilityDefinition, opt => opt.Ignore())
                 .ForMember(dest => dest.DefaultForBlueprints, opt => opt.Ignore());
 
             // EnchantmentDefinition → List DTO
@@ -54,6 +57,14 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.DisplayName, opt => opt.MapFrom(src => src.DisplayName))
                 .ForMember(dest => dest.MaxLevel, opt => opt.MapFrom(src => src.MaxLevel))
                 .ForMember(dest => dest.IconUrl, opt => opt.MapFrom(src => src.IconUrl));
+
+            // AbilityDefinition extension mappings
+            CreateMap<AbilityDefinition, AbilityDefinitionReadDto>();
+
+            CreateMap<AbilityDefinitionUpsertDto, AbilityDefinition>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.EnchantmentDefinitionId, opt => opt.Ignore())
+                .ForMember(dest => dest.EnchantmentDefinition, opt => opt.Ignore());
 
             // Join entity mapping for reading
             CreateMap<ItemBlueprintDefaultEnchantment, ItemBlueprintDefaultEnchantmentDto>()
