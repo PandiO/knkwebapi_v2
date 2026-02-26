@@ -17,7 +17,10 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.IsCustom, opt => opt.MapFrom(src => src.IsCustom))
                 .ForMember(dest => dest.MinecraftEnchantmentRefId, opt => opt.MapFrom(src => src.MinecraftEnchantmentRefId))
                 .ForMember(dest => dest.BaseEnchantmentRef, opt => opt.MapFrom(src => src.BaseEnchantmentRef))
-                .ForMember(dest => dest.DefaultForBlueprints, opt => opt.MapFrom(src => src.DefaultForBlueprints))
+                .ForMember(dest => dest.DefaultForBlueprints, opt => opt.MapFrom(src =>
+                    src.DefaultForBlueprints
+                        .Where(df => df.ItemBlueprint != null)
+                        .Select(df => df.ItemBlueprint)))
                 .ForMember(dest => dest.AbilityDefinition, opt => opt.MapFrom(src => src.AbilityDefinition));
 
             // Create/Update DTO → EnchantmentDefinition
