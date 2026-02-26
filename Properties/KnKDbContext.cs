@@ -367,6 +367,9 @@ public partial class KnKDbContext : DbContext
             
             entity.Property(e => e.DisplayColor)
                 .HasMaxLength(7);
+
+            entity.Property(e => e.DefaultTableColumnsJson)
+                .HasColumnType("longtext");
             
             // CreatedAt and UpdatedAt are set in C# (DateTime.UtcNow), not via SQL defaults
             // This avoids MySQL timezone issues

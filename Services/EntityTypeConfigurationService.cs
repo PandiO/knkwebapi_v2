@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using knkwebapi_v2.Dtos;
@@ -105,6 +106,7 @@ namespace knkwebapi_v2.Services
             existing.DisplayColor = dto.DisplayColor;
             existing.SortOrder = dto.SortOrder;
             existing.IsVisible = dto.IsVisible;
+            existing.DefaultTableColumnsJson = SerializeColumns(dto.DefaultTableColumns);
 
             var updated = await _repository.UpdateAsync(existing);
             return _mapper.Map<EntityTypeConfigurationReadDto>(updated);
@@ -172,10 +174,49 @@ namespace knkwebapi_v2.Services
                 CustomIconUrl = config?.CustomIconUrl,
                 DisplayColor = config?.DisplayColor,
                 SortOrder = config?.SortOrder ?? 0,
-                IsVisible = config?.IsVisible ?? true
+                IsVisible = config?.IsVisible ?? true,
+                DefaultTableColumns = ParseColumns(config?.DefaultTableColumnsJson)
             };
 
             return merged;
+        }
+
+        private static List<string>? ParseColumns(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return null;
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<string>>(json);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static string? SerializeColumns(List<string>? columns)
+        {
+            if (columns == null)
+            {
+                return null;
+            }
+
+            var cleaned = columns
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (cleaned.Count == 0)
+            {
+                return null;
+            }
+
+            return JsonSerializer.Serialize(cleaned);
         }
     }
 }

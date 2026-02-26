@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace knkwebapi_v2.Dtos
@@ -30,6 +31,9 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("isVisible")]
         public bool IsVisible { get; set; }
 
+        [JsonPropertyName("defaultTableColumns")]
+        public List<string>? DefaultTableColumns { get; set; }
+
         [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
 
@@ -60,6 +64,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("isVisible")]
         public bool IsVisible { get; set; } = true;
+
+        [JsonPropertyName("defaultTableColumns")]
+        public List<string>? DefaultTableColumns { get; set; }
     }
 
     /// <summary>
@@ -88,6 +95,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("isVisible")]
         public bool IsVisible { get; set; }
+
+        [JsonPropertyName("defaultTableColumns")]
+        public List<string>? DefaultTableColumns { get; set; }
     }
 
     /// <summary>

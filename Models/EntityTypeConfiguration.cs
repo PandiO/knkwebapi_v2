@@ -78,6 +78,12 @@ namespace knkwebapi_v2.Models
         public bool IsVisible { get; set; } = true;
 
         /// <summary>
+        /// JSON-serialized ordered list of default table column keys for this entity type.
+        /// Example: ["id","displayName","namespaceKey"]
+        /// </summary>
+        public string? DefaultTableColumnsJson { get; set; }
+
+        /// <summary>
         /// Timestamp when this configuration was created.
         /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

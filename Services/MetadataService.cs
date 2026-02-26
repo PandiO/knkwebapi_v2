@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using knkwebapi_v2.Attributes;
 using knkwebapi_v2.Dtos;
+using knkwebapi_v2.Properties;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace knkwebapi_v2.Services
 {
@@ -42,13 +45,15 @@ namespace knkwebapi_v2.Services
     {
         private readonly List<EntityMetadataDto> _cachedMetadata;
         private readonly NullabilityInfoContext _nullabilityInfoContext = new();
+        private readonly IServiceScopeFactory _scopeFactory;
 
         /// <summary>
         /// Initializes the service by scanning all form-configurable entities and caching their metadata.
         /// This happens once at application startup.
         /// </summary>
-        public MetadataService()
+        public MetadataService(IServiceScopeFactory scopeFactory)
         {
+            _scopeFactory = scopeFactory;
             _cachedMetadata = ScanEntities();
         }
 
@@ -62,7 +67,7 @@ namespace knkwebapi_v2.Services
         /// </summary>
         public List<EntityMetadataDto> GetAllEntityMetadata()
         {
-            return _cachedMetadata;
+            return ApplyDefaultTableColumns(_cachedMetadata);
         }
 
         /// <summary>
@@ -99,8 +104,59 @@ namespace knkwebapi_v2.Services
         /// </summary>
         public EntityMetadataDto? GetEntityMetadata(string entityName)
         {
-            return _cachedMetadata.FirstOrDefault(e => 
-                e.EntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase));
+            return ApplyDefaultTableColumns(_cachedMetadata)
+                .FirstOrDefault(e => e.EntityName.Equals(entityName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private List<EntityMetadataDto> ApplyDefaultTableColumns(List<EntityMetadataDto> source)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<KnKDbContext>();
+
+            var configMap = dbContext.EntityTypeConfigurations
+                .Where(c => !string.IsNullOrWhiteSpace(c.DefaultTableColumnsJson))
+                .ToList()
+                .ToDictionary(
+                    c => c.EntityTypeName,
+                    c => ParseColumns(c.DefaultTableColumnsJson),
+                    StringComparer.OrdinalIgnoreCase
+                );
+
+            return source.Select(meta =>
+            {
+                var clone = new EntityMetadataDto
+                {
+                    EntityName = meta.EntityName,
+                    DisplayName = meta.DisplayName,
+                    Fields = meta.Fields,
+                    DefaultTableColumns = configMap.TryGetValue(meta.EntityName, out var columns)
+                        ? columns
+                        : meta.DefaultTableColumns
+                };
+
+                return clone;
+            }).ToList();
+        }
+
+        private static List<string>? ParseColumns(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return null;
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<string>>(json)
+                    ?.Where(c => !string.IsNullOrWhiteSpace(c))
+                    .Select(c => c.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         /// <summary>
