@@ -106,8 +106,6 @@ namespace knkwebapi_v2.Dtos
         public string? FormConfigurationId { get; set; }
         [JsonPropertyName("stepName")]
         public string StepName { get; set; } = null!;
-        [JsonPropertyName("title")]
-        public string Title { get; set; } = null!;
         [JsonPropertyName("description")]
         public string? Description { get; set; }
         [JsonPropertyName("order")]
@@ -130,6 +128,8 @@ namespace knkwebapi_v2.Dtos
         public string? RelatedEntityPropertyName { get; set; }
         [JsonPropertyName("joinEntityType")]
         public string? JoinEntityType { get; set; }
+        [JsonPropertyName("subConfigurationId")]
+        public string? SubConfigurationId { get; set; }
         [JsonPropertyName("parentStepId")]
         public string? ParentStepId { get; set; }
         [JsonPropertyName("childFormSteps")]

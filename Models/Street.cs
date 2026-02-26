@@ -8,7 +8,7 @@ namespace knkwebapi_v2.Models;
 public class Street
 {
     public int Id { get; set; }
-    public string Name { get; set; } = null!;
+    public required string Name { get; set; }
 
     [RelatedEntityField(typeof(District))]
     public ICollection<District> Districts { get; set; } = new Collection<District>();

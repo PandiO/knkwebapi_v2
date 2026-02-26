@@ -32,6 +32,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("defaultForBlueprints")]
         public List<ItemBlueprintNavDto> DefaultForBlueprints { get; set; } = new();
+
+        [JsonPropertyName("abilityDefinition")]
+        public AbilityDefinitionReadDto? AbilityDefinition { get; set; }
     }
 
     // Create DTO
@@ -60,6 +63,9 @@ namespace knkwebapi_v2.Dtos
         // Optional: for hybrid picker - namespace key if enchantment not persisted yet
         [JsonPropertyName("enchantmentNamespaceKey")]
         public string? EnchantmentNamespaceKey { get; set; }
+
+        [JsonPropertyName("abilityDefinition")]
+        public AbilityDefinitionUpsertDto? AbilityDefinition { get; set; }
     }
 
     // Update DTO
@@ -91,6 +97,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("enchantmentNamespaceKey")]
         public string? EnchantmentNamespaceKey { get; set; }
+
+        [JsonPropertyName("abilityDefinition")]
+        public AbilityDefinitionUpsertDto? AbilityDefinition { get; set; }
     }
 
     // List DTO - For search/list views
@@ -141,5 +150,36 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("iconUrl")]
         public string? IconUrl { get; set; }
+    }
+
+    public class AbilityDefinitionReadDto
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
+        [JsonPropertyName("enchantmentDefinitionId")]
+        public int EnchantmentDefinitionId { get; set; }
+
+        [JsonPropertyName("abilityKey")]
+        public string AbilityKey { get; set; } = string.Empty;
+
+        [JsonPropertyName("runtimeConfigJson")]
+        public string? RuntimeConfigJson { get; set; }
+
+        [JsonPropertyName("futureUserAssignmentContract")]
+        public string? FutureUserAssignmentContract { get; set; }
+    }
+
+    public class AbilityDefinitionUpsertDto
+    {
+        [Required]
+        [JsonPropertyName("abilityKey")]
+        public string AbilityKey { get; set; } = string.Empty;
+
+        [JsonPropertyName("runtimeConfigJson")]
+        public string? RuntimeConfigJson { get; set; }
+
+        [JsonPropertyName("futureUserAssignmentContract")]
+        public string? FutureUserAssignmentContract { get; set; }
     }
 }

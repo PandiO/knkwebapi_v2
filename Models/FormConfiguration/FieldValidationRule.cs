@@ -60,6 +60,28 @@ public class FieldValidationRule
     public FormField? DependsOnField { get; set; }
 
     /// <summary>
+    /// The path to navigate from dependency entity to extract value.
+    /// Format: Entity.Property (v1 single-hop only)
+    /// Example: "Town.wgRegionId"
+    /// 
+    /// v1 SCOPE (Current Release):
+    /// - Single-hop only: "Entity.Property"
+    /// - Exactly ONE dot allowed
+    /// - No collections, no multi-level navigation
+    /// 
+    /// v2 SCOPE (Future Enhancement):
+    /// - Multi-hop: "Entity.Relation.Property"
+    /// - Collection operators: "Entity.Collection[first].Property"
+    /// 
+    /// This property allows validation rules to navigate through entity relationships
+    /// to extract the specific value needed for validation, separate from the dependency
+    /// field itself (which only identifies which entity to start from).
+    /// 
+    /// NULL or empty means use the dependency field value directly (Layer 0).
+    /// </summary>
+    public string? DependencyPath { get; set; }
+
+    /// <summary>
     /// Generic JSON configuration for this validation rule.
     /// Structure varies by ValidationType.
     /// 

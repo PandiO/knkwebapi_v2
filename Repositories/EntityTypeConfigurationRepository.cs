@@ -27,7 +27,7 @@ namespace knkwebapi_v2.Repositories
         public async Task<EntityTypeConfiguration?> GetByEntityTypeNameAsync(string entityTypeName)
         {
             return await _context.EntityTypeConfigurations
-                .FirstOrDefaultAsync(c => c.EntityTypeName.Equals(entityTypeName, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefaultAsync(c => c.EntityTypeName == entityTypeName);
         }
 
         public async Task<List<EntityTypeConfiguration>> GetAllAsync()
@@ -75,7 +75,7 @@ namespace knkwebapi_v2.Repositories
         public async Task<bool> ExistsByEntityTypeNameAsync(string entityTypeName)
         {
             return await _context.EntityTypeConfigurations
-                .AnyAsync(c => c.EntityTypeName.Equals(entityTypeName, StringComparison.OrdinalIgnoreCase));
+                .AnyAsync(c => c.EntityTypeName == entityTypeName);
         }
     }
 }

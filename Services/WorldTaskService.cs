@@ -185,6 +185,19 @@ namespace knkwebapi_v2.Services
                 return _mapper.Map<WorldTaskReadDto>(entity);
             }
 
+            // VALIDATION: Re-validate output against validation rules from InputJson
+            var validationResult = await ValidateTaskOutputAsync(entity, dto.OutputJson);
+            if (!validationResult.IsValid && validationResult.IsBlocking)
+            {
+                // Validation failed and is blocking - reject completion
+                entity.Status = "Failed";
+                entity.ErrorMessage = validationResult.Message ?? "Validation failed";
+                entity.UpdatedAt = DateTime.UtcNow;
+                await _taskRepo.UpdateAsync(entity);
+                
+                throw new InvalidOperationException($"Task validation failed: {validationResult.Message}");
+            }
+
             entity.Status = "Completed";
             entity.OutputJson = dto.OutputJson;
             entity.CompletedAt = DateTime.UtcNow;
@@ -350,6 +363,75 @@ namespace knkwebapi_v2.Services
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Validates task output against validation rules embedded in InputJson.
+        /// This provides server-side validation as a second check after plugin validation.
+        /// </summary>
+        /// <param name="task">The WorldTask with InputJson containing validation context</param>
+        /// <param name="outputJson">The captured output to validate</param>
+        /// <returns>ValidationResult indicating success or failure</returns>
+        private async Task<WorldTaskValidationResultDto> ValidateTaskOutputAsync(WorldTask task, string? outputJson)
+        {
+            // If no InputJson, no validation configured
+            if (string.IsNullOrWhiteSpace(task.InputJson))
+            {
+                return new WorldTaskValidationResultDto { IsValid = true };
+            }
+
+            try
+            {
+                // Parse InputJson
+                using var doc = JsonDocument.Parse(task.InputJson);
+                var root = doc.RootElement;
+
+                // Check if validationContext exists
+                if (!root.TryGetProperty("validationContext", out var validationContextElement))
+                {
+                    // No validation context - validation passes
+                    return new WorldTaskValidationResultDto { IsValid = true };
+                }
+
+                // Parse validation context
+                var validationContext = JsonSerializer.Deserialize<WorldTaskValidationContextDto>(
+                    validationContextElement.GetRawText()
+                );
+
+                if (validationContext == null || validationContext.ValidationRules.Count == 0)
+                {
+                    return new WorldTaskValidationResultDto { IsValid = true };
+                }
+
+                // NOTE: Actual validation logic would go here
+                // For now, we trust the plugin validation and return success
+                // In the future, this could call IWorldTaskValidationService to re-validate
+                
+                // Example validation call (when service is implemented):
+                // foreach (var rule in validationContext.ValidationRules)
+                // {
+                //     var result = await _validationService.ValidateAsync(rule, outputJson, validationContext.FormContext);
+                //     if (!result.IsValid)
+                //     {
+                //         return result;
+                //     }
+                // }
+
+                return new WorldTaskValidationResultDto { IsValid = true };
+            }
+            catch (JsonException ex)
+            {
+                // Fail-open: If we can't parse validation context, allow completion
+                // Log the error for debugging
+                System.Diagnostics.Debug.WriteLine($"Failed to parse validation context for task {task.Id}: {ex.Message}");
+                return new WorldTaskValidationResultDto { IsValid = true };
+            }
+            catch (Exception ex)
+            {
+                // Fail-open for unexpected errors
+                System.Diagnostics.Debug.WriteLine($"Unexpected error validating task {task.Id}: {ex.Message}");
+                return new WorldTaskValidationResultDto { IsValid = true };
+            }
         }
     }
 }

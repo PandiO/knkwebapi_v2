@@ -17,87 +17,17 @@ namespace knkwebapi_v2.Services
     public class ValidationService : IValidationService
     {
         private readonly IFieldValidationRuleRepository _ruleRepository;
-        private readonly IFormFieldRepository _fieldRepository;
-        private readonly IFormConfigurationRepository _configRepository;
         private readonly IEnumerable<IValidationMethod> _validationMethods;
-        private readonly IMapper _mapper;
+        private readonly IPlaceholderResolutionService _placeholderService;
 
         public ValidationService(
             IFieldValidationRuleRepository ruleRepository,
-            IFormFieldRepository fieldRepository,
-            IFormConfigurationRepository configRepository,
             IEnumerable<IValidationMethod> validationMethods,
-            IMapper mapper)
+            IPlaceholderResolutionService placeholderService)
         {
             _ruleRepository = ruleRepository;
-            _fieldRepository = fieldRepository;
-            _configRepository = configRepository;
             _validationMethods = validationMethods;
-            _mapper = mapper;
-        }
-
-        public async Task<FieldValidationRuleDto?> GetByIdAsync(int id)
-        {
-            if (id <= 0) return null;
-            var entity = await _ruleRepository.GetByIdAsync(id);
-            return entity == null ? null : _mapper.Map<FieldValidationRuleDto>(entity);
-        }
-
-        public async Task<IEnumerable<FieldValidationRuleDto>> GetByFormFieldIdAsync(int fieldId)
-        {
-            var list = await _ruleRepository.GetByFormFieldIdAsync(fieldId);
-            return _mapper.Map<IEnumerable<FieldValidationRuleDto>>(list);
-        }
-
-        public async Task<IEnumerable<FieldValidationRuleDto>> GetByFormConfigurationIdAsync(int formConfigurationId)
-        {
-            var list = await _ruleRepository.GetByFormConfigurationIdAsync(formConfigurationId);
-            return _mapper.Map<IEnumerable<FieldValidationRuleDto>>(list);
-        }
-
-        public async Task<FieldValidationRuleDto> CreateAsync(CreateFieldValidationRuleDto dto)
-        {
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
-
-            var field = await _fieldRepository.GetByIdAsync(dto.FormFieldId);
-            if (field == null) throw new ArgumentException($"FormField {dto.FormFieldId} not found", nameof(dto.FormFieldId));
-
-            if (dto.DependsOnFieldId.HasValue)
-            {
-                var dependsOn = await _fieldRepository.GetByIdAsync(dto.DependsOnFieldId.Value);
-                if (dependsOn == null) throw new ArgumentException($"DependsOnField {dto.DependsOnFieldId.Value} not found", nameof(dto.DependsOnFieldId));
-
-                var hasCircular = await _ruleRepository.HasCircularDependencyAsync(dto.FormFieldId, dto.DependsOnFieldId.Value);
-                if (hasCircular) throw new ArgumentException("Circular dependency detected between fields.");
-            }
-
-            var entity = _mapper.Map<FieldValidationRule>(dto);
-            var created = await _ruleRepository.CreateAsync(entity);
-            return _mapper.Map<FieldValidationRuleDto>(created);
-        }
-
-        public async Task UpdateAsync(int id, UpdateFieldValidationRuleDto dto)
-        {
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
-            var existing = await _ruleRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException();
-
-            if (dto.DependsOnFieldId.HasValue)
-            {
-                var dependsOn = await _fieldRepository.GetByIdAsync(dto.DependsOnFieldId.Value);
-                if (dependsOn == null) throw new ArgumentException($"DependsOnField {dto.DependsOnFieldId.Value} not found", nameof(dto.DependsOnFieldId));
-
-                var hasCircular = await _ruleRepository.HasCircularDependencyAsync(existing.FormFieldId, dto.DependsOnFieldId.Value);
-                if (hasCircular) throw new ArgumentException("Circular dependency detected between fields.");
-            }
-
-            _mapper.Map(dto, existing);
-            await _ruleRepository.UpdateAsync(existing);
-        }
-
-        public async Task DeleteAsync(int id)
-        {
-            var existing = await _ruleRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException();
-            await _ruleRepository.DeleteAsync(existing.Id);
+            _placeholderService = placeholderService;
         }
 
         public async Task<ValidationResultDto> ValidateFieldAsync(
@@ -108,6 +38,19 @@ namespace knkwebapi_v2.Services
         {
             // Get all validation rules for this field
             var rules = await _ruleRepository.GetByFormFieldIdAsync(fieldId);
+            
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND] Validating field {fieldId}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   fieldValue: {fieldValue ?? "null"}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   dependencyValue: {dependencyValue ?? "null"}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   rulesCount: {rules.Count()}");
+            if (formContextData != null)
+            {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   formContextData keys: {string.Join(", ", formContextData.Keys)}");
+                foreach (var kvp in formContextData)
+                {
+                    Console.WriteLine($"[VALIDATION_TRACE_BACKEND]     {kvp.Key}: {kvp.Value ?? "null"}");
+                }
+            }
             
             if (!rules.Any())
             {
@@ -120,26 +63,49 @@ namespace knkwebapi_v2.Services
                 };
             }
 
+            // Collect all placeholders from all rules
+            var aggregatedPlaceholders = new Dictionary<string, object>();
+
             // Execute each rule and collect results
             var results = new List<ValidationResultDto>();
             
             foreach (var rule in rules)
             {
-                var result = await ExecuteValidationRuleAsync(rule, fieldValue, dependencyValue, formContextData);
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   Executing rule {rule.Id} (type: {rule.ValidationType})");
+                
+                // Resolve placeholders for this rule if needed
+                var resolvedPlaceholders = await ResolvePlaceholdersForRuleAsync(rule, formContextData);
+                
+                var result = await ExecuteValidationRuleAsync(rule, fieldValue, dependencyValue, formContextData, resolvedPlaceholders);
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]   Rule {rule.Id} result: isValid={result.IsValid}, isBlocking={result.IsBlocking}");
+                
+                // Aggregate placeholders from this rule
+                if (result.Placeholders != null)
+                {
+                    foreach (var placeholder in result.Placeholders)
+                    {
+                        aggregatedPlaceholders[placeholder.Key] = placeholder.Value;
+                    }
+                }
+                
                 results.Add(result);
             }
 
-            // If any blocking rule failed, return the first failure
+            // If any blocking rule failed, return the first failure (with aggregated placeholders up to that point)
             var blockingFailure = results.FirstOrDefault(r => !r.IsValid && r.IsBlocking);
             if (blockingFailure != null)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND] Field {fieldId} blocking failure: {blockingFailure.Message}");
+                // Include placeholders from all rules executed so far
+                blockingFailure.Placeholders = aggregatedPlaceholders.ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToString() ?? "");
                 return blockingFailure;
             }
 
-            // If any non-blocking rule failed, return the first warning
+            // If any non-blocking rule failed, return the first warning (with aggregated placeholders)
             var nonBlockingFailure = results.FirstOrDefault(r => !r.IsValid && !r.IsBlocking);
             if (nonBlockingFailure != null)
             {
+                nonBlockingFailure.Placeholders = aggregatedPlaceholders.ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToString() ?? "");
                 return nonBlockingFailure;
             }
 
@@ -149,7 +115,8 @@ namespace knkwebapi_v2.Services
             {
                 IsValid = true,
                 IsBlocking = false,
-                Message = successMessages.Any() ? string.Join("; ", successMessages) : "Validation passed"
+                Message = successMessages.Any() ? string.Join("; ", successMessages) : "Validation passed",
+                Placeholders = aggregatedPlaceholders.ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToString() ?? "")
             };
         }
 
@@ -183,296 +150,141 @@ namespace knkwebapi_v2.Services
             return results;
         }
 
-        public async Task<IEnumerable<ValidationIssueDto>> PerformConfigurationHealthCheckAsync(int formConfigurationId)
+        public async Task<ValidationResultDto> ValidateFieldWithPlaceholdersAsync(
+            int fieldId,
+            object? fieldValue,
+            object? dependencyValue,
+            Dictionary<string, object>? formContextData)
         {
-            var issues = new List<ValidationIssueDto>();
-
-            // Get all validation rules in this configuration
-            var rules = await _ruleRepository.GetByFormConfigurationIdAsync(formConfigurationId);
-            
-            // Get the form configuration with all steps and fields
-            var config = await _configRepository.GetByIdAsync(formConfigurationId);
-            if (config == null)
-            {
-                issues.Add(new ValidationIssueDto
-                {
-                    Severity = "Error",
-                    Message = $"Form configuration with ID {formConfigurationId} not found"
-                });
-                return issues;
-            }
-
-            // Build a field order map (stepIndex, fieldIndex in step)
-            // CRITICAL: Use FieldOrderJson to get the correct visual order, not database order
-            var fieldOrderMap = new Dictionary<int, (int stepIndex, int fieldIndex)>();
-            for (int stepIdx = 0; stepIdx < config.Steps.Count; stepIdx++)
-            {
-                var step = config.Steps[stepIdx];
-                
-                // Get the ordered fields based on FieldOrderJson
-                var orderedFields = GetOrderedFields(step);
-                
-                for (int fieldIdx = 0; fieldIdx < orderedFields.Count; fieldIdx++)
-                {
-                    var field = orderedFields[fieldIdx];
-                    fieldOrderMap[field.Id] = (stepIdx, fieldIdx);
-                }
-            }
-
-            foreach (var rule in rules)
-            {
-                // Check 1: Dependency field exists
-                if (rule.DependsOnFieldId.HasValue)
-                {
-                    if (!fieldOrderMap.ContainsKey(rule.DependsOnFieldId.Value))
-                    {
-                        issues.Add(new ValidationIssueDto
-                        {
-                            Severity = "Error",
-                            Message = $"Validation rule {rule.Id} references non-existent dependency field ID {rule.DependsOnFieldId.Value}",
-                            FieldId = rule.FormFieldId,
-                            RuleId = rule.Id
-                        });
-                        continue;
-                    }
-
-                    // Check 2: Dependency field comes before dependent field
-                    var dependentFieldOrder = fieldOrderMap[rule.FormFieldId];
-                    var dependencyFieldOrder = fieldOrderMap[rule.DependsOnFieldId.Value];
-
-                    if (dependencyFieldOrder.stepIndex > dependentFieldOrder.stepIndex)
-                    {
-                        issues.Add(new ValidationIssueDto
-                        {
-                            Severity = "Warning",
-                            Message = $"Dependency field (ID {rule.DependsOnFieldId.Value}) appears AFTER dependent field (ID {rule.FormFieldId}). Consider reordering fields.",
-                            FieldId = rule.FormFieldId,
-                            RuleId = rule.Id
-                        });
-                    }
-                    else if (dependencyFieldOrder.stepIndex == dependentFieldOrder.stepIndex 
-                             && dependencyFieldOrder.fieldIndex > dependentFieldOrder.fieldIndex)
-                    {
-                        issues.Add(new ValidationIssueDto
-                        {
-                            Severity = "Warning",
-                            Message = $"Dependency field appears after dependent field in the same step. Users may need to fill fields in reverse order.",
-                            FieldId = rule.FormFieldId,
-                            RuleId = rule.Id
-                        });
-                    }
-
-                    // Check 3: Circular dependency
-                    var hasCircular = await _ruleRepository.HasCircularDependencyAsync(
-                        rule.FormFieldId, 
-                        rule.DependsOnFieldId.Value);
-                    
-                    if (hasCircular)
-                    {
-                        issues.Add(new ValidationIssueDto
-                        {
-                            Severity = "Error",
-                            Message = $"Circular dependency detected: Field {rule.FormFieldId} → {rule.DependsOnFieldId.Value}",
-                            FieldId = rule.FormFieldId,
-                            RuleId = rule.Id
-                        });
-                    }
-                }
-
-                // Check 4: Validation method exists
-                var validationMethod = _validationMethods.FirstOrDefault(m => m.ValidationType == rule.ValidationType);
-                if (validationMethod == null)
-                {
-                    issues.Add(new ValidationIssueDto
-                    {
-                        Severity = "Error",
-                        Message = $"Unknown validation type: {rule.ValidationType}",
-                        FieldId = rule.FormFieldId,
-                        RuleId = rule.Id
-                    });
-                }
-            }
-
-            return issues;
-        }
-
-        public async Task<IEnumerable<ValidationIssueDto>> ValidateConfigurationHealthAsync(int formConfigurationId)
-        {
-            return await PerformConfigurationHealthCheckAsync(formConfigurationId);
-        }
-
-        public async Task<IEnumerable<int>> GetDependentFieldIdsAsync(int fieldId)
-        {
-            var rules = await _ruleRepository.GetRulesDependingOnFieldAsync(fieldId);
-            return rules.Select(r => r.FormFieldId).Distinct();
-        }
-
-        public async Task<IEnumerable<ValidationIssueDto>> ValidateDraftConfigurationAsync(FormConfigurationDto configDto)
-        {
-            var issues = new List<ValidationIssueDto>();
-
-            if (configDto.Steps == null || !configDto.Steps.Any())
-            {
-                return issues;
-            }
-
-            // For draft validation, we focus on field ordering issues based on stored validation rules
-            // We can't validate dependency rules from FieldValidationDto since they don't include dependency info
-            // Instead, we check if any saved rules exist for fields and whether ordering is correct
-
-            // If config has ID, load its validation rules from database
-            if (!string.IsNullOrEmpty(configDto.Id) && int.TryParse(configDto.Id, out var configId))
-            {
-                // Load validation rules for this configuration
-                var rules = await _ruleRepository.GetByFormConfigurationIdAsync(configId);
-                
-                // Build field position map from draft config
-                var fieldPositionMap = new Dictionary<int, (int stepIndex, int fieldIndex)>();
-                
-                for (int stepIdx = 0; stepIdx < configDto.Steps.Count; stepIdx++)
-                {
-                    var step = configDto.Steps[stepIdx];
-                    var orderedFieldDtos = GetOrderedFieldDtos(step);
-                    
-                    for (int fieldIdx = 0; fieldIdx < orderedFieldDtos.Count; fieldIdx++)
-                    {
-                        var fieldDto = orderedFieldDtos[fieldIdx];
-                        if (!string.IsNullOrEmpty(fieldDto.Id) && int.TryParse(fieldDto.Id, out var fieldId))
-                        {
-                            fieldPositionMap[fieldId] = (stepIdx, fieldIdx);
-                        }
-                    }
-                }
-
-                // Check each rule's dependency ordering
-                foreach (var rule in rules)
-                {
-                    if (!rule.DependsOnFieldId.HasValue)
-                        continue;
-
-                    if (!fieldPositionMap.ContainsKey(rule.FormFieldId))
-                    {
-                        issues.Add(new ValidationIssueDto
-                        {
-                            Severity = "Error",
-                            Message = $"Validation rule {rule.Id} references field ID {rule.FormFieldId} which is not in the current configuration",
-                                FieldId = rule.FormFieldId,
-                            RuleId = rule.Id
-                        });
-                        continue;
-                    }
-
-                    if (!fieldPositionMap.ContainsKey(rule.DependsOnFieldId.Value))
-                    {
-                        issues.Add(new ValidationIssueDto
-                        {
-                            Severity = "Error",
-                            Message = $"Validation rule {rule.Id} references non-existent dependency field ID {rule.DependsOnFieldId.Value}",
-                                FieldId = rule.FormFieldId,
-                            RuleId = rule.Id
-                        });
-                        continue;
-                    }
-
-                    // Check dependency field ordering
-                    var dependentFieldOrder = fieldPositionMap[rule.FormFieldId];
-                    var dependencyFieldOrder = fieldPositionMap[rule.DependsOnFieldId.Value];
-
-                    if (dependencyFieldOrder.stepIndex > dependentFieldOrder.stepIndex)
-                    {
-                        issues.Add(new ValidationIssueDto
-                        {
-                            Severity = "Warning",
-                            Message = $"Dependency field (ID {rule.DependsOnFieldId.Value}) appears AFTER dependent field (ID {rule.FormFieldId}). Consider reordering fields.",
-                                FieldId = rule.FormFieldId,
-                            RuleId = rule.Id
-                        });
-                    }
-                    else if (dependencyFieldOrder.stepIndex == dependentFieldOrder.stepIndex && 
-                             dependencyFieldOrder.fieldIndex >= dependentFieldOrder.fieldIndex)
-                    {
-                        issues.Add(new ValidationIssueDto
-                        {
-                            Severity = "Warning",
-                            Message = $"Dependency field (ID {rule.DependsOnFieldId.Value}) appears AFTER or at same position as dependent field (ID {rule.FormFieldId}) in step {dependentFieldOrder.stepIndex + 1}. Reorder fields.",
-                            FieldId = rule.FormFieldId,
-                            RuleId = rule.Id
-                        });
-                    }
-                }
-            }
-
-            return issues;
+            // This method is identical to ValidateFieldAsync since we enhanced it to aggregate placeholders
+            // We keep this explicit method for clarity and to match the interface contract
+            return await ValidateFieldAsync(fieldId, fieldValue, dependencyValue, formContextData);
         }
 
         /// <summary>
-        /// Get fields in the correct visual order based on FieldOrderJson for DTOs.
+        /// Resolve placeholders for a specific validation rule.
+        /// Only resolves if the rule requires dependency filling and has placeholder-capable messages.
         /// </summary>
-        private List<FormFieldDto> GetOrderedFieldDtos(FormStepDto step)
+        private async Task<Dictionary<string, object>?> ResolvePlaceholdersForRuleAsync(
+            FieldValidationRule rule,
+            Dictionary<string, object>? contextData)
         {
-            if (string.IsNullOrWhiteSpace(step.FieldOrderJson) || step.Fields == null)
+            // If no context data or rule doesn't require dependencies, no placeholders to resolve
+            if (contextData == null || !rule.RequiresDependencyFilled)
             {
-                return step.Fields?.ToList() ?? new List<FormFieldDto>();
+                return null;
+            }
+
+            // Check if rule messages contain placeholders
+            var hasPlaceholders = 
+                (!string.IsNullOrEmpty(rule.ErrorMessage) && rule.ErrorMessage.Contains("{")) ||
+                (!string.IsNullOrEmpty(rule.SuccessMessage) && rule.SuccessMessage.Contains("{"));
+
+            if (!hasPlaceholders)
+            {
+                return null;
             }
 
             try
             {
-                var guidOrder = System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(step.FieldOrderJson);
-                if (guidOrder == null || guidOrder.Count == 0)
+                // Use placeholder resolution service to resolve all placeholders in the messages
+                var placeholders = new Dictionary<string, object>();
+                
+                // Extract placeholders from error message
+                if (!string.IsNullOrEmpty(rule.ErrorMessage))
                 {
-                    return step.Fields.ToList();
-                }
-
-                // Create a map of fieldGuid -> field
-                    // Parse string GUIDs to Guid for comparison
-                    var fieldMap = new Dictionary<Guid, FormFieldDto>();
-                    foreach (var field in step.Fields)
+                    var errorPlaceholders = await _placeholderService.ExtractPlaceholdersAsync(rule.ErrorMessage);
+                    foreach (var placeholder in errorPlaceholders)
                     {
-                        if (!string.IsNullOrEmpty(field.FieldGuid) && Guid.TryParse(field.FieldGuid, out var parsedGuid))
+                        if (contextData.TryGetValue(placeholder, out var value))
                         {
-                            fieldMap[parsedGuid] = field;
+                            placeholders[placeholder] = value;
                         }
                     }
+                }
 
-                // Reorder fields based on the GUID order
-                var reordered = new List<FormFieldDto>();
-                foreach (var guid in guidOrder)
+                // Extract placeholders from success message
+                if (!string.IsNullOrEmpty(rule.SuccessMessage))
                 {
-                    if (fieldMap.TryGetValue(guid, out var field))
+                    var successPlaceholders = await _placeholderService.ExtractPlaceholdersAsync(rule.SuccessMessage);
+                    foreach (var placeholder in successPlaceholders)
                     {
-                        reordered.Add(field);
+                        if (contextData.TryGetValue(placeholder, out var value) && !placeholders.ContainsKey(placeholder))
+                        {
+                            placeholders[placeholder] = value;
+                        }
                     }
                 }
 
-                // Add any fields that weren't in the order array
-                foreach (var field in step.Fields)
-                {
-                    if (!reordered.Contains(field))
-                    {
-                        reordered.Add(field);
-                    }
-                }
-
-                return reordered;
+                return placeholders.Any() ? placeholders : null;
             }
-            catch
+            catch (Exception ex)
             {
-                return step.Fields.ToList();
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND] Error resolving placeholders for rule {rule.Id}: {ex.Message}");
+                return null; // Fail-open: don't block validation if placeholder resolution fails
             }
         }
 
         /// <summary>
-        /// Execute a single validation rule.
+        /// Merge placeholder dictionaries, with validation method placeholders taking precedence.
+        /// </summary>
+        private Dictionary<string, string> MergePlaceholders(
+            Dictionary<string, string>? validationMethodPlaceholders,
+            Dictionary<string, object>? resolvedPlaceholders)
+        {
+            var merged = new Dictionary<string, string>();
+
+            // Add resolved placeholders first (lower precedence)
+            if (resolvedPlaceholders != null)
+            {
+                foreach (var kvp in resolvedPlaceholders)
+                {
+                    merged[kvp.Key] = kvp.Value?.ToString() ?? "";
+                }
+            }
+
+            // Add validation method placeholders (higher precedence - overwrites if key exists)
+            if (validationMethodPlaceholders != null)
+            {
+                foreach (var kvp in validationMethodPlaceholders)
+                {
+                    merged[kvp.Key] = kvp.Value;
+                }
+            }
+
+            return merged;
+        }
+
+        /// <summary>
+        /// Execute a single validation rule with optional placeholder resolution.
         /// </summary>
         private async Task<ValidationResultDto> ExecuteValidationRuleAsync(
             FieldValidationRule rule,
             object? fieldValue,
             object? dependencyValue,
-            Dictionary<string, object>? formContextData)
+            Dictionary<string, object>? formContextData,
+            Dictionary<string, object>? resolvedPlaceholders = null)
         {
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]     Rule execution started:");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       DependsOnFieldId: {rule.DependsOnFieldId}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       DependsOnField.FieldName: {rule.DependsOnField?.FieldName}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       RequiresDependencyFilled: {rule.RequiresDependencyFilled}");
+            
+            // CRITICAL FIX: If dependencyValue is not provided but formContextData contains it, extract it
+            if (rule.DependsOnFieldId.HasValue && dependencyValue == null && formContextData != null && rule.DependsOnField != null)
+            {
+                var dependencyFieldName = rule.DependsOnField.FieldName;
+                if (!string.IsNullOrEmpty(dependencyFieldName) && formContextData.TryGetValue(dependencyFieldName, out var contextValue))
+                {
+                    dependencyValue = contextValue;
+                    Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Extracted dependencyValue from formContextData['{dependencyFieldName}']");
+                }
+            }
+            
             // Check if dependency is required but not filled
             if (rule.DependsOnFieldId.HasValue && dependencyValue == null && !rule.RequiresDependencyFilled)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Dependency not filled, RequiresDependencyFilled=false, returning valid");
                 return new ValidationResultDto
                 {
                     IsValid = true,
@@ -491,6 +303,7 @@ namespace knkwebapi_v2.Services
             var validationMethod = _validationMethods.FirstOrDefault(m => m.ValidationType == rule.ValidationType);
             if (validationMethod == null)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Validation method not found: {rule.ValidationType}");
                 return new ValidationResultDto
                 {
                     IsValid = false,
@@ -507,20 +320,21 @@ namespace knkwebapi_v2.Services
             // Execute the validation
             try
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Calling {rule.ValidationType}.ValidateAsync()");
                 var result = await validationMethod.ValidateAsync(
                     fieldValue,
                     dependencyValue,
                     rule.ConfigJson,
                     formContextData);
 
-                return new ValidationResultDto
+                var dto = new ValidationResultDto
                 {
                     IsValid = result.IsValid,
                     IsBlocking = rule.IsBlocking,
                     Message = result.IsValid 
                         ? (rule.SuccessMessage ?? result.Message) 
                         : (rule.ErrorMessage ?? result.Message),
-                    Placeholders = result.Placeholders,
+                    Placeholders = MergePlaceholders(result.Placeholders, resolvedPlaceholders),
                     Metadata = new ValidationMetadataDto
                     {
                         ValidationType = rule.ValidationType,
@@ -529,9 +343,13 @@ namespace knkwebapi_v2.Services
                         DependencyValue = dependencyValue
                     }
                 };
+                
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Validation method returned: isValid={dto.IsValid}, placeholders={dto.Placeholders?.Count ?? 0}");
+                return dto;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Exception: {ex.Message}");
                 return new ValidationResultDto
                 {
                     IsValid = false,
@@ -543,56 +361,6 @@ namespace knkwebapi_v2.Services
                         ExecutedAt = DateTime.UtcNow.ToString("o")
                     }
                 };
-            }
-        }
-
-        /// <summary>
-        /// Get fields in the correct visual order based on FieldOrderJson.
-        /// Falls back to database order if FieldOrderJson is not available.
-        /// </summary>
-        private List<FormField> GetOrderedFields(FormStep step)
-        {
-            if (string.IsNullOrWhiteSpace(step.FieldOrderJson))
-            {
-                return step.Fields.ToList();
-            }
-
-            try
-            {
-                var guidOrder = System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(step.FieldOrderJson);
-                if (guidOrder == null || guidOrder.Count == 0)
-                {
-                    return step.Fields.ToList();
-                }
-
-                // Create a map of fieldGuid -> field
-                var fieldMap = step.Fields.ToDictionary(f => f.FieldGuid, f => f);
-
-                // Reorder fields based on the GUID order in FieldOrderJson
-                var reordered = new List<FormField>();
-                foreach (var guid in guidOrder)
-                {
-                    if (fieldMap.TryGetValue(guid, out var field))
-                    {
-                        reordered.Add(field);
-                    }
-                }
-
-                // Add any fields that weren't in the order array (shouldn't happen, but be safe)
-                foreach (var field in step.Fields)
-                {
-                    if (!reordered.Contains(field))
-                    {
-                        reordered.Add(field);
-                    }
-                }
-
-                return reordered;
-            }
-            catch
-            {
-                // If parsing fails, return fields as-is
-                return step.Fields.ToList();
             }
         }
     }

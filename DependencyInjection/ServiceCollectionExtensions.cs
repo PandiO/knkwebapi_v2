@@ -3,6 +3,7 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Caching.Memory;
 using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Services;
 using knkwebapi_v2.Services.Interfaces;
@@ -22,6 +23,8 @@ namespace knkwebapi_v2.DependencyInjection
         /// </summary>
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration? configuration = null)
         {
+            services.AddMemoryCache();
+
             // explicit registrations (recommended for clarity)
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ICategoryService, CategoryService>();
@@ -52,6 +55,14 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<IFormFieldService, FormFieldService>();
             services.AddScoped<IFieldValidationRuleRepository, FieldValidationRuleRepository>();
             services.AddScoped<IValidationService, ValidationService>();
+            services.AddScoped<IFieldValidationRuleService, FieldValidationRuleService>();
+            services.AddScoped<IPlaceholderResolutionService, PlaceholderResolutionService>();
+            services.AddScoped<DependencyResolutionService>();
+            services.AddScoped<IDependencyResolutionService>(sp =>
+                new CachedDependencyResolutionService(
+                    sp.GetRequiredService<IMemoryCache>(),
+                    sp.GetRequiredService<DependencyResolutionService>()));
+            services.AddScoped<IPathResolutionService, PathResolutionService>();
             services.AddScoped<IFormSubmissionProgressRepository, FormSubmissionProgressRepository>();
             services.AddScoped<IFormSubmissionProgressService, FormSubmissionProgressService>();
             services.AddScoped<IGateStructureRepository, GateStructureRepository>();

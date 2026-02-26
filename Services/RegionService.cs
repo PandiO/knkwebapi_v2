@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Net.Http;
 using System.Threading.Tasks;
 using knkwebapi_v2.Models;
@@ -44,34 +45,48 @@ namespace knkwebapi_v2.Services
 
         public async Task<bool> IsLocationInsideRegionAsync(string regionId, double x, double z, bool allowBoundary = false)
         {
+            Console.WriteLine("[VALIDATION_TRACE_BACKEND]     RegionService.IsLocationInsideRegionAsync started");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       regionId: {regionId}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       x: {x}, z: {z}, allowBoundary: {allowBoundary}");
+
             if (string.IsNullOrWhiteSpace(regionId))
             {
+                Console.WriteLine("[VALIDATION_TRACE_BACKEND]       Validation failed: regionId is null/empty");
                 throw new ArgumentException("regionId is required.");
             }
 
             try
             {
                 using var client = _httpClientFactory.CreateClient();
-                var url = $"{_minecraftPluginBaseUrl.TrimEnd('/')}/api/regions/{Uri.EscapeDataString(regionId)}/contains?x={x}&z={z}&allowBoundary={allowBoundary.ToString().ToLowerInvariant()}";
+                var xInvariant = x.ToString(CultureInfo.InvariantCulture);
+                var zInvariant = z.ToString(CultureInfo.InvariantCulture);
+                var url = $"{_minecraftPluginBaseUrl.TrimEnd('/')}/api/regions/{Uri.EscapeDataString(regionId)}/contains-location?x={xInvariant}&z={zInvariant}&allowBoundary={allowBoundary.ToString().ToLowerInvariant()}";
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       GET {url}");
                 var response = await client.GetAsync(url);
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Response status: {(int)response.StatusCode} ({response.StatusCode})");
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    Console.WriteLine("[VALIDATION_TRACE_BACKEND]       Region containment HTTP call failed, returning false");
                     _logger.LogWarning("Region containment check failed for {RegionId} (HTTP {StatusCode})", regionId, response.StatusCode);
                     return false;
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Response content: {content}");
                 if (bool.TryParse(content, out var result))
                 {
+                    Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Parsed result: {result}");
                     return result;
                 }
 
+                Console.WriteLine("[VALIDATION_TRACE_BACKEND]       Unexpected response format, returning false");
                 _logger.LogWarning("Unexpected response when checking region containment for {RegionId}: {Content}", regionId, content);
                 return false;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Exception: {ex.Message}");
                 _logger.LogError(ex, "Error checking if location is inside region {RegionId}", regionId);
                 throw;
             }
@@ -79,8 +94,14 @@ namespace knkwebapi_v2.Services
 
         public async Task<bool> IsRegionContainedAsync(string parentRegionId, string childRegionId, bool requireFullContainment = true)
         {
+            Console.WriteLine("[VALIDATION_TRACE_BACKEND]     RegionService.IsRegionContainedAsync started");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       parentRegionId: {parentRegionId}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       childRegionId: {childRegionId}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       requireFullContainment: {requireFullContainment}");
+
             if (string.IsNullOrWhiteSpace(parentRegionId) || string.IsNullOrWhiteSpace(childRegionId))
             {
+                Console.WriteLine("[VALIDATION_TRACE_BACKEND]       Validation failed: parentRegionId or childRegionId is null/empty");
                 throw new ArgumentException("Both parentRegionId and childRegionId are required.");
             }
 
@@ -88,25 +109,32 @@ namespace knkwebapi_v2.Services
             {
                 using var client = _httpClientFactory.CreateClient();
                 var url = $"{_minecraftPluginBaseUrl.TrimEnd('/')}/api/regions/{Uri.EscapeDataString(parentRegionId)}/contains-region/{Uri.EscapeDataString(childRegionId)}?requireFullContainment={requireFullContainment.ToString().ToLowerInvariant()}";
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       GET {url}");
                 var response = await client.GetAsync(url);
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Response status: {(int)response.StatusCode} ({response.StatusCode})");
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    Console.WriteLine("[VALIDATION_TRACE_BACKEND]       Region-to-region containment HTTP call failed, returning false");
                     _logger.LogWarning("Region containment check failed for {ParentRegionId}->{ChildRegionId} (HTTP {StatusCode})", parentRegionId, childRegionId, response.StatusCode);
                     return false;
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Response content: {content}");
                 if (bool.TryParse(content, out var result))
                 {
+                    Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Parsed result: {result}");
                     return result;
                 }
 
+                Console.WriteLine("[VALIDATION_TRACE_BACKEND]       Unexpected response format, returning false");
                 _logger.LogWarning("Unexpected response when checking region containment {ParentRegionId}->{ChildRegionId}: {Content}", parentRegionId, childRegionId, content);
                 return false;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Exception: {ex.Message}");
                 _logger.LogError(ex, "Error checking region containment {ParentRegionId}->{ChildRegionId}", parentRegionId, childRegionId);
                 throw;
             }
@@ -114,14 +142,20 @@ namespace knkwebapi_v2.Services
 
         public async Task<bool> RenameRegionAsync(string oldRegionId, string newRegionId)
         {
+            Console.WriteLine("[VALIDATION_TRACE_BACKEND]     RegionService.RenameRegionAsync started");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       oldRegionId: {oldRegionId}");
+            Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       newRegionId: {newRegionId}");
+
             if (string.IsNullOrWhiteSpace(oldRegionId) || string.IsNullOrWhiteSpace(newRegionId))
             {
+                Console.WriteLine("[VALIDATION_TRACE_BACKEND]       Validation failed: oldRegionId or newRegionId is null/empty");
                 throw new ArgumentException("Both oldRegionId and newRegionId are required.");
             }
 
             if (oldRegionId.Equals(newRegionId, StringComparison.OrdinalIgnoreCase))
             {
                 // Already the desired name
+                Console.WriteLine("[VALIDATION_TRACE_BACKEND]       Region already has desired name, returning true");
                 _logger.LogInformation($"Region already has the desired name: {oldRegionId}");
                 return true;
             }
@@ -132,17 +166,22 @@ namespace knkwebapi_v2.Services
                 using (var client = _httpClientFactory.CreateClient())
                 {
                     var url = $"{_minecraftPluginBaseUrl.TrimEnd('/')}/Regions/rename?oldRegionId={Uri.EscapeDataString(oldRegionId)}&newRegionId={Uri.EscapeDataString(newRegionId)}";
+                    Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       POST {url}");
                     var response = await client.PostAsync(url, new StringContent(""));
+                    Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Response status: {(int)response.StatusCode} ({response.StatusCode})");
 
                     if (response.IsSuccessStatusCode)
                     {
                         var content = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Response content: {content}");
                         bool result = content.Equals("true", StringComparison.OrdinalIgnoreCase);
+                        Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Parsed rename result: {result}");
                         _logger.LogInformation($"Region rename completed: {oldRegionId} -> {newRegionId}, result: {result}");
                         return result;
                     }
                     else
                     {
+                        Console.WriteLine("[VALIDATION_TRACE_BACKEND]       Region rename HTTP call failed, returning false");
                         _logger.LogWarning($"Failed to rename region: HTTP {response.StatusCode}");
                         return false;
                     }
@@ -150,6 +189,7 @@ namespace knkwebapi_v2.Services
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Exception: {ex.Message}");
                 _logger.LogError($"Error renaming region from {oldRegionId} to {newRegionId}: {ex.Message}");
                 throw;
             }

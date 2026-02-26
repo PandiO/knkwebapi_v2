@@ -185,5 +185,13 @@ if (hasHttpsListener)
 
 app.MapControllers();
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<KnKDbContext>();
+    var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+    var seedLogger = loggerFactory.CreateLogger("AbilityDefinitionCanonicalSeed");
+    await knkwebapi_v2.Models.AbilityDefinition.SeedCanonicalAsync(dbContext, seedLogger);
+}
+
 app.Run();
 

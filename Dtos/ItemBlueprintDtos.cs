@@ -10,10 +10,10 @@ namespace knkwebapi_v2.Dtos
         public int Id { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        public string? Name { get; set; } = string.Empty;
 
         [JsonPropertyName("description")]
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
 
         [JsonPropertyName("iconMaterialRefId")]
         public int? IconMaterialRefId { get; set; }
@@ -25,7 +25,7 @@ namespace knkwebapi_v2.Dtos
         public string DefaultDisplayName { get; set; } = string.Empty;
 
         [JsonPropertyName("defaultDisplayDescription")]
-        public string DefaultDisplayDescription { get; set; } = string.Empty;
+        public string? DefaultDisplayDescription { get; set; } = string.Empty;
 
         [JsonPropertyName("defaultQuantity")]
         public int DefaultQuantity { get; set; } = 1;

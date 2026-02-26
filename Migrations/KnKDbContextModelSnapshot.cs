@@ -36,7 +36,7 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("StreetId");
 
-                    b.ToTable("DistrictStreet", (string)null);
+                    b.ToTable("DistrictStreet");
                 });
 
             modelBuilder.Entity("TownStreet", b =>
@@ -51,7 +51,38 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("TownId");
 
-                    b.ToTable("TownStreet", (string)null);
+                    b.ToTable("TownStreet");
+                });
+
+            modelBuilder.Entity("knkwebapi_v2.Models.AbilityDefinition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AbilityKey")
+                        .IsRequired()
+                        .HasMaxLength(191)
+                        .HasColumnType("varchar(191)");
+
+                    b.Property<int>("EnchantmentDefinitionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FutureUserAssignmentContract")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RuntimeConfigJson")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id")
+                        .HasName("PRIMARY");
+
+                    b.HasIndex("EnchantmentDefinitionId")
+                        .IsUnique();
+
+                    b.ToTable("AbilityDefinitions", (string)null);
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.Category", b =>
@@ -131,7 +162,7 @@ namespace knkwebapi_v2.Migrations
                     b.HasIndex("EntityTypeName", "IsDefault")
                         .HasDatabaseName("IX_DisplayConfiguration_EntityType_Default");
 
-                    b.ToTable("DisplayConfigurations", (string)null);
+                    b.ToTable("DisplayConfigurations");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.DisplayField", b =>
@@ -201,7 +232,7 @@ namespace knkwebapi_v2.Migrations
                     b.HasIndex("IsReusable")
                         .HasDatabaseName("IX_DisplayField_IsReusable");
 
-                    b.ToTable("DisplayFields", (string)null);
+                    b.ToTable("DisplayFields");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.DisplaySection", b =>
@@ -274,7 +305,7 @@ namespace knkwebapi_v2.Migrations
                     b.HasIndex("ParentSectionId")
                         .HasDatabaseName("IX_DisplaySection_ParentSectionId");
 
-                    b.ToTable("DisplaySections", (string)null);
+                    b.ToTable("DisplaySections");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.Domain", b =>
@@ -353,7 +384,7 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("MinecraftEnchantmentRefId");
 
-                    b.ToTable("EnchantmentDefinitions", (string)null);
+                    b.ToTable("EnchantmentDefinitions");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.EntityTypeConfiguration", b =>
@@ -367,6 +398,9 @@ namespace knkwebapi_v2.Migrations
                     b.Property<string>("CustomIconUrl")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
+
+                    b.Property<string>("DefaultTableColumnsJson")
+                        .HasColumnType("longtext");
 
                     b.Property<string>("DisplayColor")
                         .HasMaxLength(7)
@@ -424,7 +458,7 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("FormFieldId");
 
-                    b.ToTable("FieldValidations", (string)null);
+                    b.ToTable("FieldValidations");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.FieldValidationRule", b =>
@@ -441,6 +475,9 @@ namespace knkwebapi_v2.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DependencyPath")
+                        .HasColumnType("longtext");
 
                     b.Property<int?>("DependsOnFieldId")
                         .HasColumnType("int");
@@ -471,7 +508,7 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("FormFieldId");
 
-                    b.ToTable("FieldValidationRules", (string)null);
+                    b.ToTable("FieldValidationRules");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.FormConfiguration", b =>
@@ -516,7 +553,7 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("EntityTypeName");
 
-                    b.ToTable("FormConfigurations", (string)null);
+                    b.ToTable("FormConfigurations");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.FormField", b =>
@@ -602,7 +639,7 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("SubConfigurationId");
 
-                    b.ToTable("FormFields", (string)null);
+                    b.ToTable("FormFields");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.FormStep", b =>
@@ -654,6 +691,9 @@ namespace knkwebapi_v2.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("SubConfigurationId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FormConfigurationId");
@@ -662,7 +702,9 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("ParentStepId");
 
-                    b.ToTable("FormSteps", (string)null);
+                    b.HasIndex("SubConfigurationId");
+
+                    b.ToTable("FormSteps");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.FormSubmissionProgress", b =>
@@ -720,7 +762,7 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("FormSubmissionProgresses", (string)null);
+                    b.ToTable("FormSubmissionProgresses");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.ItemBlueprint", b =>
@@ -732,7 +774,6 @@ namespace knkwebapi_v2.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("DefaultDisplayDescription")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("DefaultDisplayName")
@@ -747,7 +788,6 @@ namespace knkwebapi_v2.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<int?>("IconMaterialId")
@@ -760,14 +800,13 @@ namespace knkwebapi_v2.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
                     b.HasIndex("IconMaterialId");
 
-                    b.ToTable("ItemBlueprints", (string)null);
+                    b.ToTable("ItemBlueprints");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.ItemBlueprintDefaultEnchantment", b =>
@@ -785,47 +824,7 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("EnchantmentDefinitionId");
 
-                    b.ToTable("ItemBlueprintDefaultEnchantment", (string)null);
-                });
-
-            modelBuilder.Entity("knkwebapi_v2.Models.LinkCode", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UsedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id")
-                        .HasName("PRIMARY");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.HasIndex("ExpiresAt");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("linkcodes", (string)null);
+                    b.ToTable("ItemBlueprintDefaultEnchantment");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.LinkCode", b =>
@@ -1029,7 +1028,7 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("FormStepId");
 
-                    b.ToTable("StepConditions", (string)null);
+                    b.ToTable("StepConditions");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.StepProgress", b =>
@@ -1364,6 +1363,17 @@ namespace knkwebapi_v2.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("knkwebapi_v2.Models.AbilityDefinition", b =>
+                {
+                    b.HasOne("knkwebapi_v2.Models.EnchantmentDefinition", "EnchantmentDefinition")
+                        .WithOne("AbilityDefinition")
+                        .HasForeignKey("knkwebapi_v2.Models.AbilityDefinition", "EnchantmentDefinitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EnchantmentDefinition");
+                });
+
             modelBuilder.Entity("knkwebapi_v2.Models.Category", b =>
                 {
                     b.HasOne("knkwebapi_v2.Models.MinecraftMaterialRef", "IconMaterialRef")
@@ -1491,9 +1501,16 @@ namespace knkwebapi_v2.Migrations
                         .HasForeignKey("ParentStepId")
                         .OnDelete(DeleteBehavior.Cascade);
 
+                    b.HasOne("knkwebapi_v2.Models.FormConfiguration", "SubConfiguration")
+                        .WithMany()
+                        .HasForeignKey("SubConfigurationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("FormConfiguration");
 
                     b.Navigation("ParentStep");
+
+                    b.Navigation("SubConfiguration");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.FormSubmissionProgress", b =>
@@ -1688,6 +1705,8 @@ namespace knkwebapi_v2.Migrations
 
             modelBuilder.Entity("knkwebapi_v2.Models.EnchantmentDefinition", b =>
                 {
+                    b.Navigation("AbilityDefinition");
+
                     b.Navigation("DefaultForBlueprints");
                 });
 
