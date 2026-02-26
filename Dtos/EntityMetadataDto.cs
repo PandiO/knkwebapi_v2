@@ -11,6 +11,8 @@ namespace knkwebapi_v2.Dtos
         public string DisplayName { get; set; } = null!;
         [JsonPropertyName("fields")]
         public List<FieldMetadataDto> Fields { get; set; } = new();
+        [JsonPropertyName("defaultTableColumns")]
+        public List<string>? DefaultTableColumns { get; set; }
     }
 
     public class FieldMetadataDto
