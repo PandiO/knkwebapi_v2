@@ -33,6 +33,7 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IPasswordResetDeliveryService, PasswordResetDeliveryService>();
             services.AddScoped<ILinkCodeRepository, LinkCodeRepository>();
             services.AddScoped<ILinkCodeService, LinkCodeService>();
             services.AddScoped<ILocationRepository, LocationRepository>();
@@ -93,6 +94,10 @@ namespace knkwebapi_v2.DependencyInjection
             // Entity type configuration services
             services.AddScoped<IEntityTypeConfigurationRepository, EntityTypeConfigurationRepository>();
             services.AddScoped<IEntityTypeConfigurationService, EntityTypeConfigurationService>();
+
+            // Global game settings services
+            services.AddScoped<IGameSettingsRepository, GameSettingsRepository>();
+            services.AddScoped<IGameSettingsService, GameSettingsService>();
 
             // Add FormTemplate services for reusable step/field management
             services.AddScoped<IFormTemplateValidationService, FormTemplateValidationService>();

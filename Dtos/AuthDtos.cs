@@ -121,4 +121,54 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("message")]
         public string Message { get; set; } = null!;
     }
+
+    /// <summary>
+    /// DTO for forgot-password request.
+    /// </summary>
+    public class AuthForgotPasswordRequestDto
+    {
+        [JsonPropertyName("email")]
+        public string Email { get; set; } = null!;
+    }
+
+    /// <summary>
+    /// DTO for forgot-password response.
+    /// Response is intentionally generic to prevent account enumeration.
+    /// Debug fields are only populated in development when explicitly enabled.
+    /// </summary>
+    public class AuthForgotPasswordResponseDto
+    {
+        [JsonPropertyName("message")]
+        public string Message { get; set; } = null!;
+
+        [JsonPropertyName("debugResetToken")]
+        public string? DebugResetToken { get; set; }
+
+        [JsonPropertyName("debugResetUrl")]
+        public string? DebugResetUrl { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for reset-password request.
+    /// </summary>
+    public class AuthResetPasswordRequestDto
+    {
+        [JsonPropertyName("token")]
+        public string Token { get; set; } = null!;
+
+        [JsonPropertyName("newPassword")]
+        public string NewPassword { get; set; } = null!;
+
+        [JsonPropertyName("passwordConfirmation")]
+        public string PasswordConfirmation { get; set; } = null!;
+    }
+
+    /// <summary>
+    /// DTO for reset-password response.
+    /// </summary>
+    public class AuthResetPasswordResponseDto
+    {
+        [JsonPropertyName("message")]
+        public string Message { get; set; } = null!;
+    }
 }

@@ -50,6 +50,8 @@ string? connectionString = builder.Configuration.GetConnectionString("MySqlDbCon
 builder.Services.AddDbContext<KnKDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
+builder.Services.Configure<knkwebapi_v2.Configuration.SecuritySettings>(builder.Configuration.GetSection("Security"));
+
 // Register app services/repositories in one place
 builder.Services.AddApplicationServices(builder.Configuration);
 

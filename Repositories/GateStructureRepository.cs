@@ -15,34 +15,19 @@ namespace knkwebapi_v2.Repositories
 
         public async Task<IEnumerable<GateStructure>> GetAllAsync()
         {
-            return await _context.Set<GateStructure>()
-                .Include(gs => gs.Location)
-                .Include(gs => gs.Street)
-                .Include(gs => gs.District)
-                .Include(gs => gs.IconMaterial)
-                .Include(gs => gs.FallbackMaterial)
+            return await BuildGateQuery()
                 .ToListAsync();
         }
 
         public async Task<GateStructure?> GetByIdAsync(int id)
         {
-            return await _context.Set<GateStructure>()
-                .Include(gs => gs.Location)
-                .Include(gs => gs.Street)
-                .Include(gs => gs.District)
-                .Include(gs => gs.IconMaterial)
-                .Include(gs => gs.FallbackMaterial)
+            return await BuildGateQuery()
                 .FirstOrDefaultAsync(gs => gs.Id == id);
         }
 
         public async Task<GateStructure?> GetByIdWithSnapshotsAsync(int id)
         {
-            return await _context.Set<GateStructure>()
-                .Include(gs => gs.Location)
-                .Include(gs => gs.Street)
-                .Include(gs => gs.District)
-                .Include(gs => gs.IconMaterial)
-                .Include(gs => gs.FallbackMaterial)
+            return await BuildGateQuery()
                 .Include(gs => gs.BlockSnapshots)
                 .FirstOrDefaultAsync(gs => gs.Id == id);
         }
@@ -73,20 +58,14 @@ namespace knkwebapi_v2.Repositories
         {
             // Domain is inherited through Structure, need to query via LocationId
             // For now, return all gates (will be refined when Domain relationship is clearer)
-            return await _context.Set<GateStructure>()
-                .Include(gs => gs.Street)
-                .Include(gs => gs.District)
-                .Include(gs => gs.IconMaterial)
+            return await BuildGateQuery()
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<GateStructure>> GetActiveGatesAsync()
         {
-            return await _context.Set<GateStructure>()
+            return await BuildGateQuery()
                 .Where(gs => gs.IsActive)
-                .Include(gs => gs.Street)
-                .Include(gs => gs.District)
-                .Include(gs => gs.IconMaterial)
                 .ToListAsync();
         }
 
@@ -105,8 +84,7 @@ namespace knkwebapi_v2.Repositories
 
         public async Task<GateStructure?> FindGateByRegionAsync(string regionId)
         {
-            return await _context.Set<GateStructure>()
-                .Include(gs => gs.IconMaterial)
+            return await BuildGateQuery()
                 .FirstOrDefaultAsync(gs => 
                     gs.RegionClosedId == regionId || 
                     gs.RegionOpenedId == regionId);
@@ -193,9 +171,10 @@ namespace knkwebapi_v2.Repositories
                 {
                     queryable = queryable.Where(gs => gs.IsActive == isActive);
                 }
-                if (query.Filters.TryGetValue("gateType", out var gateType))
+                if (query.Filters.TryGetValue("gateType", out var gateType) &&
+                    System.Enum.TryParse<GateType>(gateType, true, out var parsedGateType))
                 {
-                    queryable = queryable.Where(gs => gs.GateType == gateType);
+                    queryable = queryable.Where(gs => gs.GateType == parsedGateType);
                 }
                 if (query.Filters.TryGetValue("isOpened", out var isOpenedStr) && bool.TryParse(isOpenedStr, out var isOpened))
                 {
@@ -213,6 +192,13 @@ namespace knkwebapi_v2.Repositories
                 .Include(gs => gs.District)
                 .Include(gs => gs.IconMaterial)
                 .Include(gs => gs.FallbackMaterial)
+                .Include(gs => gs.AnchorPoint)
+                .Include(gs => gs.ReferencePoint1)
+                .Include(gs => gs.ReferencePoint2)
+                .Include(gs => gs.HingeAxis)
+                .Include(gs => gs.LeftDoorSeedBlock)
+                .Include(gs => gs.RightDoorSeedBlock)
+                .Include(gs => gs.GuardSpawnLocations)
                 .Skip((query.PageNumber - 1) * query.PageSize)
                 .Take(query.PageSize)
                 .ToListAsync();
@@ -242,6 +228,23 @@ namespace knkwebapi_v2.Repositories
                 "healthcurrent" => sortDescending ? queryable.OrderByDescending(gs => gs.HealthCurrent) : queryable.OrderBy(gs => gs.HealthCurrent),
                 _ => queryable.OrderBy(gs => gs.Name)
             };
+        }
+
+        private IQueryable<GateStructure> BuildGateQuery()
+        {
+            return _context.Set<GateStructure>()
+                .Include(gs => gs.Location)
+                .Include(gs => gs.Street)
+                .Include(gs => gs.District)
+                .Include(gs => gs.IconMaterial)
+                .Include(gs => gs.FallbackMaterial)
+                .Include(gs => gs.AnchorPoint)
+                .Include(gs => gs.ReferencePoint1)
+                .Include(gs => gs.ReferencePoint2)
+                .Include(gs => gs.HingeAxis)
+                .Include(gs => gs.LeftDoorSeedBlock)
+                .Include(gs => gs.RightDoorSeedBlock)
+                .Include(gs => gs.GuardSpawnLocations);
         }
     }
 }

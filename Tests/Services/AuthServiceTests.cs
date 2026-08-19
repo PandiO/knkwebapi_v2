@@ -5,7 +5,10 @@ using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
 using knkwebapi_v2.Services;
+using knkwebapi_v2.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -20,6 +23,10 @@ namespace knkwebapi_v2.Tests.Services
         private readonly Mock<ITokenService> _tokenService;
         private readonly Mock<IPasswordService> _passwordService;
         private readonly Mock<IMapper> _mapper;
+        private readonly Mock<ILinkCodeRepository> _linkCodeRepository;
+        private readonly Mock<IPasswordResetDeliveryService> _passwordResetDeliveryService;
+        private readonly IMemoryCache _memoryCache;
+        private readonly IOptions<SecuritySettings> _securityOptions;
         private readonly Mock<ILogger<AuthService>> _logger;
         private readonly AuthService _authService;
 
@@ -29,6 +36,10 @@ namespace knkwebapi_v2.Tests.Services
             _tokenService = new Mock<ITokenService>();
             _passwordService = new Mock<IPasswordService>();
             _mapper = new Mock<IMapper>();
+            _linkCodeRepository = new Mock<ILinkCodeRepository>();
+            _passwordResetDeliveryService = new Mock<IPasswordResetDeliveryService>();
+            _memoryCache = new MemoryCache(new MemoryCacheOptions());
+            _securityOptions = Options.Create(new SecuritySettings());
             _logger = new Mock<ILogger<AuthService>>();
 
             _authService = new AuthService(
@@ -36,6 +47,10 @@ namespace knkwebapi_v2.Tests.Services
                 _tokenService.Object,
                 _passwordService.Object,
                 _mapper.Object,
+                _linkCodeRepository.Object,
+                _passwordResetDeliveryService.Object,
+                _memoryCache,
+                _securityOptions,
                 _logger.Object);
         }
 

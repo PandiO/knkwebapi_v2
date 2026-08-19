@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using knkwebapi_v2.Dtos;
+using knkwebapi_v2.Models;
 using knkwebapi_v2.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,6 @@ namespace KnKWebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Route("api/gates")]
     public class GateStructuresController : ControllerBase
     {
         private readonly IGateStructureService _service;
@@ -26,21 +26,6 @@ namespace KnKWebAPI.Controllers
             "south-west",
             "west",
             "north-west"
-        };
-
-        private static readonly HashSet<string> ValidGateTypes = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "SLIDING",
-            "TRAP",
-            "DRAWBRIDGE",
-            "DOUBLE_DOORS"
-        };
-
-        private static readonly HashSet<string> ValidMotionTypes = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "VERTICAL",
-            "LATERAL",
-            "ROTATION"
         };
 
         public GateStructuresController(IGateStructureService service)
@@ -272,16 +257,29 @@ namespace KnKWebAPI.Controllers
                 return $"Invalid FaceDirection. Must be one of: {string.Join(", ", ValidFaceDirections)}";
             }
 
-            if (!string.IsNullOrWhiteSpace(gateStructureDto.GateType) &&
-                !ValidGateTypes.Contains(gateStructureDto.GateType))
+            if (!Enum.IsDefined(typeof(GateType), gateStructureDto.GateType))
             {
-                return $"Invalid GateType. Must be one of: {string.Join(", ", ValidGateTypes)}";
+                return "Invalid GateType.";
             }
 
-            if (!string.IsNullOrWhiteSpace(gateStructureDto.MotionType) &&
-                !ValidMotionTypes.Contains(gateStructureDto.MotionType))
+            if (!Enum.IsDefined(typeof(MotionType), gateStructureDto.MotionType))
             {
-                return $"Invalid MotionType. Must be one of: {string.Join(", ", ValidMotionTypes)}";
+                return "Invalid MotionType.";
+            }
+
+            if (!Enum.IsDefined(typeof(GeometryDefinitionMode), gateStructureDto.GeometryDefinitionMode))
+            {
+                return "Invalid GeometryDefinitionMode.";
+            }
+
+            if (!Enum.IsDefined(typeof(TileEntityPolicy), gateStructureDto.TileEntityPolicy))
+            {
+                return "Invalid TileEntityPolicy.";
+            }
+
+            if (!Enum.IsDefined(typeof(HealthDisplayMode), gateStructureDto.HealthDisplayMode))
+            {
+                return "Invalid HealthDisplayMode.";
             }
 
             if (gateStructureDto.AnimationDurationTicks.HasValue && gateStructureDto.AnimationDurationTicks <= 0)

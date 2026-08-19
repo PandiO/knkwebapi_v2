@@ -170,6 +170,40 @@ namespace knkwebapi_v2.Controllers
             });
         }
 
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] AuthForgotPasswordRequestDto request)
+        {
+            // Intentionally generic to avoid account enumeration.
+            var email = request?.Email ?? string.Empty;
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var userAgent = HttpContext.Request.Headers.UserAgent.ToString();
+
+            var response = await _authService.RequestPasswordResetAsync(
+                email,
+                clientIp,
+                userAgent,
+                _environment.IsDevelopment());
+
+            return Ok(response);
+        }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] AuthResetPasswordRequestDto request)
+        {
+            var (ok, error) = await _authService.ResetPasswordAsync(request);
+            if (!ok)
+            {
+                return BadRequest(new { error = "InvalidResetToken", message = error ?? "Reset token is invalid or expired." });
+            }
+
+            return Ok(new AuthResetPasswordResponseDto
+            {
+                Message = "Password has been reset successfully."
+            });
+        }
+
         private async Task SetRefreshTokenCookieAsync(string? refreshToken)
         {
             if (string.IsNullOrWhiteSpace(refreshToken))

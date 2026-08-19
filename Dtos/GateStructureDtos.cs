@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using knkwebapi_v2.Models;
 
 namespace knkwebapi_v2.Dtos
 {
@@ -77,13 +78,16 @@ namespace knkwebapi_v2.Dtos
 
         // === Gate Type & Animation Configuration ===
         [JsonPropertyName("gateType")]
-        public string GateType { get; set; } = string.Empty;
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GateType GateType { get; set; }
 
         [JsonPropertyName("geometryDefinitionMode")]
-        public string GeometryDefinitionMode { get; set; } = string.Empty;
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GeometryDefinitionMode GeometryDefinitionMode { get; set; }
 
         [JsonPropertyName("motionType")]
-        public string MotionType { get; set; } = string.Empty;
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public MotionType MotionType { get; set; }
 
         [JsonPropertyName("animationDurationTicks")]
         public int AnimationDurationTicks { get; set; }
@@ -92,14 +96,23 @@ namespace knkwebapi_v2.Dtos
         public int AnimationTickRate { get; set; }
 
         // === Geometry Definition (PLANE_GRID mode) ===
+        [JsonPropertyName("anchorPointId")]
+        public int? AnchorPointId { get; set; }
+
         [JsonPropertyName("anchorPoint")]
-        public string AnchorPoint { get; set; } = string.Empty;
+        public LocationDto? AnchorPoint { get; set; }
+
+        [JsonPropertyName("referencePoint1Id")]
+        public int? ReferencePoint1Id { get; set; }
 
         [JsonPropertyName("referencePoint1")]
-        public string ReferencePoint1 { get; set; } = string.Empty;
+        public LocationDto? ReferencePoint1 { get; set; }
+
+        [JsonPropertyName("referencePoint2Id")]
+        public int? ReferencePoint2Id { get; set; }
 
         [JsonPropertyName("referencePoint2")]
-        public string ReferencePoint2 { get; set; } = string.Empty;
+        public LocationDto? ReferencePoint2 { get; set; }
 
         [JsonPropertyName("geometryWidth")]
         public int GeometryWidth { get; set; }
@@ -134,21 +147,31 @@ namespace knkwebapi_v2.Dtos
         public int? FallbackMaterialRefId { get; set; }
 
         [JsonPropertyName("tileEntityPolicy")]
-        public string TileEntityPolicy { get; set; } = string.Empty;
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public TileEntityPolicy TileEntityPolicy { get; set; }
 
         // === Rotation-Specific Fields ===
         [JsonPropertyName("rotationMaxAngleDegrees")]
         public int RotationMaxAngleDegrees { get; set; }
 
+        [JsonPropertyName("hingeAxisId")]
+        public int? HingeAxisId { get; set; }
+
         [JsonPropertyName("hingeAxis")]
-        public string HingeAxis { get; set; } = string.Empty;
+        public LocationDto? HingeAxis { get; set; }
 
         // === Double Doors Specific ===
+        [JsonPropertyName("leftDoorSeedBlockId")]
+        public int? LeftDoorSeedBlockId { get; set; }
+
         [JsonPropertyName("leftDoorSeedBlock")]
-        public string LeftDoorSeedBlock { get; set; } = string.Empty;
+        public LocationDto? LeftDoorSeedBlock { get; set; }
+
+        [JsonPropertyName("rightDoorSeedBlockId")]
+        public int? RightDoorSeedBlockId { get; set; }
 
         [JsonPropertyName("rightDoorSeedBlock")]
-        public string RightDoorSeedBlock { get; set; } = string.Empty;
+        public LocationDto? RightDoorSeedBlock { get; set; }
 
         [JsonPropertyName("mirrorRotation")]
         public bool MirrorRotation { get; set; }
@@ -164,8 +187,11 @@ namespace knkwebapi_v2.Dtos
         public string PassThroughConditionsJson { get; set; } = string.Empty;
 
         // === Guard & Defense System ===
-        [JsonPropertyName("guardSpawnLocationsJson")]
-        public string GuardSpawnLocationsJson { get; set; } = string.Empty;
+        [JsonPropertyName("guardSpawnLocationIds")]
+        public List<int>? GuardSpawnLocationIds { get; set; }
+
+        [JsonPropertyName("guardSpawnLocations")]
+        public List<LocationDto>? GuardSpawnLocations { get; set; }
 
         [JsonPropertyName("guardCount")]
         public int GuardCount { get; set; }
@@ -178,7 +204,8 @@ namespace knkwebapi_v2.Dtos
         public bool ShowHealthDisplay { get; set; }
 
         [JsonPropertyName("healthDisplayMode")]
-        public string HealthDisplayMode { get; set; } = string.Empty;
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public HealthDisplayMode HealthDisplayMode { get; set; }
 
         [JsonPropertyName("healthDisplayYOffset")]
         public int HealthDisplayYOffset { get; set; }
@@ -256,25 +283,37 @@ namespace knkwebapi_v2.Dtos
         public int? IconMaterialRefId { get; set; }
 
         [JsonPropertyName("gateType")]
-        public string GateType { get; set; } = "SLIDING";
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GateType GateType { get; set; } = knkwebapi_v2.Models.GateType.SLIDING;
 
         [JsonPropertyName("geometryDefinitionMode")]
-        public string GeometryDefinitionMode { get; set; } = "PLANE_GRID";
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GeometryDefinitionMode GeometryDefinitionMode { get; set; } = knkwebapi_v2.Models.GeometryDefinitionMode.PLANE_GRID;
 
         [JsonPropertyName("motionType")]
-        public string MotionType { get; set; } = "VERTICAL";
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public MotionType MotionType { get; set; } = knkwebapi_v2.Models.MotionType.VERTICAL;
 
         [JsonPropertyName("faceDirection")]
         public string FaceDirection { get; set; } = "north";
 
+        [JsonPropertyName("anchorPointId")]
+        public int? AnchorPointId { get; set; }
+
         [JsonPropertyName("anchorPoint")]
-        public string AnchorPoint { get; set; } = string.Empty;
+        public LocationDto? AnchorPoint { get; set; }
+
+        [JsonPropertyName("referencePoint1Id")]
+        public int? ReferencePoint1Id { get; set; }
 
         [JsonPropertyName("referencePoint1")]
-        public string ReferencePoint1 { get; set; } = string.Empty;
+        public LocationDto? ReferencePoint1 { get; set; }
+
+        [JsonPropertyName("referencePoint2Id")]
+        public int? ReferencePoint2Id { get; set; }
 
         [JsonPropertyName("referencePoint2")]
-        public string ReferencePoint2 { get; set; } = string.Empty;
+        public LocationDto? ReferencePoint2 { get; set; }
 
         [JsonPropertyName("geometryWidth")]
         public int GeometryWidth { get; set; }
@@ -313,19 +352,29 @@ namespace knkwebapi_v2.Dtos
         public int? FallbackMaterialRefId { get; set; }
 
         [JsonPropertyName("tileEntityPolicy")]
-        public string TileEntityPolicy { get; set; } = "DECORATIVE_ONLY";
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public TileEntityPolicy TileEntityPolicy { get; set; } = knkwebapi_v2.Models.TileEntityPolicy.DECORATIVE_ONLY;
 
         [JsonPropertyName("rotationMaxAngleDegrees")]
         public int RotationMaxAngleDegrees { get; set; } = 90;
 
+        [JsonPropertyName("hingeAxisId")]
+        public int? HingeAxisId { get; set; }
+
         [JsonPropertyName("hingeAxis")]
-        public string HingeAxis { get; set; } = string.Empty;
+        public LocationDto? HingeAxis { get; set; }
+
+        [JsonPropertyName("leftDoorSeedBlockId")]
+        public int? LeftDoorSeedBlockId { get; set; }
 
         [JsonPropertyName("leftDoorSeedBlock")]
-        public string LeftDoorSeedBlock { get; set; } = string.Empty;
+        public LocationDto? LeftDoorSeedBlock { get; set; }
+
+        [JsonPropertyName("rightDoorSeedBlockId")]
+        public int? RightDoorSeedBlockId { get; set; }
 
         [JsonPropertyName("rightDoorSeedBlock")]
-        public string RightDoorSeedBlock { get; set; } = string.Empty;
+        public LocationDto? RightDoorSeedBlock { get; set; }
 
         [JsonPropertyName("mirrorRotation")]
         public bool MirrorRotation { get; set; } = true;
@@ -403,7 +452,8 @@ namespace knkwebapi_v2.Dtos
         public string Name { get; set; } = string.Empty;
 
         [JsonPropertyName("gateType")]
-        public string GateType { get; set; } = string.Empty;
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GateType GateType { get; set; }
 
         [JsonPropertyName("isOpened")]
         public bool IsOpened { get; set; }
@@ -486,13 +536,16 @@ namespace knkwebapi_v2.Dtos
 
         // === Gate Type & Animation Configuration ===
         [JsonPropertyName("gateType")]
-        public string GateType { get; set; } = "SLIDING";
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GateType GateType { get; set; } = knkwebapi_v2.Models.GateType.SLIDING;
 
         [JsonPropertyName("geometryDefinitionMode")]
-        public string GeometryDefinitionMode { get; set; } = "PLANE_GRID";
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GeometryDefinitionMode GeometryDefinitionMode { get; set; } = knkwebapi_v2.Models.GeometryDefinitionMode.PLANE_GRID;
 
         [JsonPropertyName("motionType")]
-        public string MotionType { get; set; } = "VERTICAL";
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public MotionType MotionType { get; set; } = knkwebapi_v2.Models.MotionType.VERTICAL;
 
         [JsonPropertyName("animationDurationTicks")]
         public int? AnimationDurationTicks { get; set; }
@@ -501,14 +554,23 @@ namespace knkwebapi_v2.Dtos
         public int? AnimationTickRate { get; set; }
 
         // === Geometry Definition (PLANE_GRID mode) ===
+        [JsonPropertyName("anchorPointId")]
+        public int? AnchorPointId { get; set; }
+
         [JsonPropertyName("anchorPoint")]
-        public string AnchorPoint { get; set; } = string.Empty;
+        public LocationDto? AnchorPoint { get; set; }
+
+        [JsonPropertyName("referencePoint1Id")]
+        public int? ReferencePoint1Id { get; set; }
 
         [JsonPropertyName("referencePoint1")]
-        public string ReferencePoint1 { get; set; } = string.Empty;
+        public LocationDto? ReferencePoint1 { get; set; }
+
+        [JsonPropertyName("referencePoint2Id")]
+        public int? ReferencePoint2Id { get; set; }
 
         [JsonPropertyName("referencePoint2")]
-        public string ReferencePoint2 { get; set; } = string.Empty;
+        public LocationDto? ReferencePoint2 { get; set; }
 
         [JsonPropertyName("geometryWidth")]
         public int? GeometryWidth { get; set; }
@@ -543,21 +605,31 @@ namespace knkwebapi_v2.Dtos
         public int? FallbackMaterialRefId { get; set; }
 
         [JsonPropertyName("tileEntityPolicy")]
-        public string TileEntityPolicy { get; set; } = "DECORATIVE_ONLY";
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public TileEntityPolicy TileEntityPolicy { get; set; } = knkwebapi_v2.Models.TileEntityPolicy.DECORATIVE_ONLY;
 
         // === Rotation-Specific Fields ===
         [JsonPropertyName("rotationMaxAngleDegrees")]
         public int? RotationMaxAngleDegrees { get; set; }
 
+        [JsonPropertyName("hingeAxisId")]
+        public int? HingeAxisId { get; set; }
+
         [JsonPropertyName("hingeAxis")]
-        public string HingeAxis { get; set; } = string.Empty;
+        public LocationDto? HingeAxis { get; set; }
 
         // === Double Doors Specific ===
+        [JsonPropertyName("leftDoorSeedBlockId")]
+        public int? LeftDoorSeedBlockId { get; set; }
+
         [JsonPropertyName("leftDoorSeedBlock")]
-        public string LeftDoorSeedBlock { get; set; } = string.Empty;
+        public LocationDto? LeftDoorSeedBlock { get; set; }
+
+        [JsonPropertyName("rightDoorSeedBlockId")]
+        public int? RightDoorSeedBlockId { get; set; }
 
         [JsonPropertyName("rightDoorSeedBlock")]
-        public string RightDoorSeedBlock { get; set; } = string.Empty;
+        public LocationDto? RightDoorSeedBlock { get; set; }
 
         [JsonPropertyName("mirrorRotation")]
         public bool? MirrorRotation { get; set; }
@@ -573,8 +645,11 @@ namespace knkwebapi_v2.Dtos
         public string PassThroughConditionsJson { get; set; } = string.Empty;
 
         // === Guard & Defense System ===
-        [JsonPropertyName("guardSpawnLocationsJson")]
-        public string GuardSpawnLocationsJson { get; set; } = string.Empty;
+        [JsonPropertyName("guardSpawnLocationIds")]
+        public List<int>? GuardSpawnLocationIds { get; set; }
+
+        [JsonPropertyName("guardSpawnLocations")]
+        public List<LocationDto>? GuardSpawnLocations { get; set; }
 
         [JsonPropertyName("guardCount")]
         public int? GuardCount { get; set; }
@@ -587,7 +662,8 @@ namespace knkwebapi_v2.Dtos
         public bool? ShowHealthDisplay { get; set; }
 
         [JsonPropertyName("healthDisplayMode")]
-        public string HealthDisplayMode { get; set; } = "ALWAYS";
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public HealthDisplayMode HealthDisplayMode { get; set; } = knkwebapi_v2.Models.HealthDisplayMode.ALWAYS;
 
         [JsonPropertyName("healthDisplayYOffset")]
         public int? HealthDisplayYOffset { get; set; }
@@ -677,7 +753,8 @@ namespace knkwebapi_v2.Dtos
         public bool isOpened { get; set; }
 
         [JsonPropertyName("gateType")]
-        public string gateType { get; set; } = "SLIDING";
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GateType gateType { get; set; } = knkwebapi_v2.Models.GateType.SLIDING;
 
         [JsonPropertyName("faceDirection")]
         public string faceDirection { get; set; } = "north";

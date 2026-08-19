@@ -84,8 +84,11 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.AnimationTickRate, opt => opt.MapFrom(src => src.AnimationTickRate))
                 
                 // Geometry Definition (PLANE_GRID mode)
+                .ForMember(dest => dest.AnchorPointId, opt => opt.MapFrom(src => src.AnchorPointId))
                 .ForMember(dest => dest.AnchorPoint, opt => opt.MapFrom(src => src.AnchorPoint))
+                .ForMember(dest => dest.ReferencePoint1Id, opt => opt.MapFrom(src => src.ReferencePoint1Id))
                 .ForMember(dest => dest.ReferencePoint1, opt => opt.MapFrom(src => src.ReferencePoint1))
+                .ForMember(dest => dest.ReferencePoint2Id, opt => opt.MapFrom(src => src.ReferencePoint2Id))
                 .ForMember(dest => dest.ReferencePoint2, opt => opt.MapFrom(src => src.ReferencePoint2))
                 .ForMember(dest => dest.GeometryWidth, opt => opt.MapFrom(src => src.GeometryWidth))
                 .ForMember(dest => dest.GeometryHeight, opt => opt.MapFrom(src => src.GeometryHeight))
@@ -105,10 +108,13 @@ namespace knkwebapi_v2.Mapping
                 
                 // Rotation-Specific Fields
                 .ForMember(dest => dest.RotationMaxAngleDegrees, opt => opt.MapFrom(src => src.RotationMaxAngleDegrees))
+                .ForMember(dest => dest.HingeAxisId, opt => opt.MapFrom(src => src.HingeAxisId))
                 .ForMember(dest => dest.HingeAxis, opt => opt.MapFrom(src => src.HingeAxis))
                 
                 // Double Doors Specific
+                .ForMember(dest => dest.LeftDoorSeedBlockId, opt => opt.MapFrom(src => src.LeftDoorSeedBlockId))
                 .ForMember(dest => dest.LeftDoorSeedBlock, opt => opt.MapFrom(src => src.LeftDoorSeedBlock))
+                .ForMember(dest => dest.RightDoorSeedBlockId, opt => opt.MapFrom(src => src.RightDoorSeedBlockId))
                 .ForMember(dest => dest.RightDoorSeedBlock, opt => opt.MapFrom(src => src.RightDoorSeedBlock))
                 .ForMember(dest => dest.MirrorRotation, opt => opt.MapFrom(src => src.MirrorRotation))
                 
@@ -118,7 +124,8 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.PassThroughConditionsJson, opt => opt.MapFrom(src => src.PassThroughConditionsJson))
                 
                 // Guard & Defense System
-                .ForMember(dest => dest.GuardSpawnLocationsJson, opt => opt.MapFrom(src => src.GuardSpawnLocationsJson))
+                .ForMember(dest => dest.GuardSpawnLocationIds, opt => opt.MapFrom(src => src.GuardSpawnLocations.Select(l => l.Id).ToList()))
+                .ForMember(dest => dest.GuardSpawnLocations, opt => opt.MapFrom(src => src.GuardSpawnLocations))
                 .ForMember(dest => dest.GuardCount, opt => opt.MapFrom(src => src.GuardCount))
                 .ForMember(dest => dest.GuardNpcTemplateId, opt => opt.MapFrom(src => src.GuardNpcTemplateId))
                 
@@ -201,16 +208,16 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.RegionOpenedId, opt => opt.MapFrom(src => src.RegionOpenedId ?? string.Empty))
                 
                 // Gate Type & Animation
-                .ForMember(dest => dest.GateType, opt => opt.MapFrom(src => src.GateType ?? "SLIDING"))
-                .ForMember(dest => dest.GeometryDefinitionMode, opt => opt.MapFrom(src => src.GeometryDefinitionMode ?? "PLANE_GRID"))
-                .ForMember(dest => dest.MotionType, opt => opt.MapFrom(src => src.MotionType ?? "VERTICAL"))
+                .ForMember(dest => dest.GateType, opt => opt.MapFrom(src => src.GateType))
+                .ForMember(dest => dest.GeometryDefinitionMode, opt => opt.MapFrom(src => src.GeometryDefinitionMode))
+                .ForMember(dest => dest.MotionType, opt => opt.MapFrom(src => src.MotionType))
                 .ForMember(dest => dest.AnimationDurationTicks, opt => opt.MapFrom(src => src.AnimationDurationTicks ?? 60))
                 .ForMember(dest => dest.AnimationTickRate, opt => opt.MapFrom(src => src.AnimationTickRate ?? 1))
                 
                 // Geometry (PLANE_GRID)
-                .ForMember(dest => dest.AnchorPoint, opt => opt.MapFrom(src => src.AnchorPoint ?? string.Empty))
-                .ForMember(dest => dest.ReferencePoint1, opt => opt.MapFrom(src => src.ReferencePoint1 ?? string.Empty))
-                .ForMember(dest => dest.ReferencePoint2, opt => opt.MapFrom(src => src.ReferencePoint2 ?? string.Empty))
+                .ForMember(dest => dest.AnchorPointId, opt => opt.MapFrom(src => src.AnchorPointId))
+                .ForMember(dest => dest.ReferencePoint1Id, opt => opt.MapFrom(src => src.ReferencePoint1Id))
+                .ForMember(dest => dest.ReferencePoint2Id, opt => opt.MapFrom(src => src.ReferencePoint2Id))
                 .ForMember(dest => dest.GeometryWidth, opt => opt.MapFrom(src => src.GeometryWidth ?? 0))
                 .ForMember(dest => dest.GeometryHeight, opt => opt.MapFrom(src => src.GeometryHeight ?? 0))
                 .ForMember(dest => dest.GeometryDepth, opt => opt.MapFrom(src => src.GeometryDepth ?? 0))
@@ -225,15 +232,15 @@ namespace knkwebapi_v2.Mapping
                 
                 // Block Management
                 .ForMember(dest => dest.FallbackMaterialRefId, opt => opt.MapFrom(src => src.FallbackMaterialRefId))
-                .ForMember(dest => dest.TileEntityPolicy, opt => opt.MapFrom(src => src.TileEntityPolicy ?? "DECORATIVE_ONLY"))
+                .ForMember(dest => dest.TileEntityPolicy, opt => opt.MapFrom(src => src.TileEntityPolicy))
                 
                 // Rotation-Specific
                 .ForMember(dest => dest.RotationMaxAngleDegrees, opt => opt.MapFrom(src => src.RotationMaxAngleDegrees ?? 90))
-                .ForMember(dest => dest.HingeAxis, opt => opt.MapFrom(src => src.HingeAxis ?? string.Empty))
+                .ForMember(dest => dest.HingeAxisId, opt => opt.MapFrom(src => src.HingeAxisId))
                 
                 // Double Doors
-                .ForMember(dest => dest.LeftDoorSeedBlock, opt => opt.MapFrom(src => src.LeftDoorSeedBlock ?? string.Empty))
-                .ForMember(dest => dest.RightDoorSeedBlock, opt => opt.MapFrom(src => src.RightDoorSeedBlock ?? string.Empty))
+                .ForMember(dest => dest.LeftDoorSeedBlockId, opt => opt.MapFrom(src => src.LeftDoorSeedBlockId))
+                .ForMember(dest => dest.RightDoorSeedBlockId, opt => opt.MapFrom(src => src.RightDoorSeedBlockId))
                 .ForMember(dest => dest.MirrorRotation, opt => opt.MapFrom(src => src.MirrorRotation ?? true))
                 
                 // Pass-Through
@@ -242,13 +249,12 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.PassThroughConditionsJson, opt => opt.MapFrom(src => src.PassThroughConditionsJson ?? string.Empty))
                 
                 // Guard System
-                .ForMember(dest => dest.GuardSpawnLocationsJson, opt => opt.MapFrom(src => src.GuardSpawnLocationsJson ?? string.Empty))
                 .ForMember(dest => dest.GuardCount, opt => opt.MapFrom(src => src.GuardCount ?? 0))
                 .ForMember(dest => dest.GuardNpcTemplateId, opt => opt.MapFrom(src => src.GuardNpcTemplateId))
                 
                 // Health Display
                 .ForMember(dest => dest.ShowHealthDisplay, opt => opt.MapFrom(src => src.ShowHealthDisplay ?? true))
-                .ForMember(dest => dest.HealthDisplayMode, opt => opt.MapFrom(src => src.HealthDisplayMode ?? "ALWAYS"))
+                .ForMember(dest => dest.HealthDisplayMode, opt => opt.MapFrom(src => src.HealthDisplayMode))
                 .ForMember(dest => dest.HealthDisplayYOffset, opt => opt.MapFrom(src => src.HealthDisplayYOffset ?? 2))
                 
                 // Siege Integration
@@ -267,6 +273,13 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.Street, opt => opt.Ignore())
                 .ForMember(dest => dest.District, opt => opt.Ignore())
                 .ForMember(dest => dest.Location, opt => opt.Ignore())
+                .ForMember(dest => dest.AnchorPoint, opt => opt.Ignore())
+                .ForMember(dest => dest.ReferencePoint1, opt => opt.Ignore())
+                .ForMember(dest => dest.ReferencePoint2, opt => opt.Ignore())
+                .ForMember(dest => dest.HingeAxis, opt => opt.Ignore())
+                .ForMember(dest => dest.LeftDoorSeedBlock, opt => opt.Ignore())
+                .ForMember(dest => dest.RightDoorSeedBlock, opt => opt.Ignore())
+                .ForMember(dest => dest.GuardSpawnLocations, opt => opt.Ignore())
                 .ForMember(dest => dest.IconMaterial, opt => opt.Ignore())
                 .ForMember(dest => dest.FallbackMaterial, opt => opt.Ignore());
 

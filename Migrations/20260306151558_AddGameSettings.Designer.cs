@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using knkwebapi_v2.Properties;
 
@@ -11,9 +12,11 @@ using knkwebapi_v2.Properties;
 namespace knkwebapi_v2.Migrations
 {
     [DbContext(typeof(KnKDbContext))]
-    partial class KnKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260306151558_AddGameSettings")]
+    partial class AddGameSettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -52,21 +55,6 @@ namespace knkwebapi_v2.Migrations
                     b.HasIndex("TownId");
 
                     b.ToTable("TownStreet");
-                });
-
-            modelBuilder.Entity("gate_structure_guard_spawn_locations", b =>
-                {
-                    b.Property<int>("GateStructureId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("LocationId")
-                        .HasColumnType("int");
-
-                    b.HasKey("GateStructureId", "LocationId");
-
-                    b.HasIndex("LocationId");
-
-                    b.ToTable("gate_structure_guard_spawn_locations", (string)null);
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.AbilityDefinition", b =>
@@ -1469,8 +1457,10 @@ namespace knkwebapi_v2.Migrations
                     b.Property<bool>("AllowPassThrough")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<int?>("AnchorPointId")
-                        .HasColumnType("int");
+                    b.Property<string>("AnchorPoint")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<bool>("AnimateDuringSiege")
                         .HasColumnType("tinyint(1)");
@@ -1525,6 +1515,11 @@ namespace knkwebapi_v2.Migrations
                     b.Property<int?>("GuardNpcTemplateId")
                         .HasColumnType("int");
 
+                    b.Property<string>("GuardSpawnLocationsJson")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
                     b.Property<double>("HealthCurrent")
                         .HasColumnType("double");
 
@@ -1539,8 +1534,10 @@ namespace knkwebapi_v2.Migrations
                     b.Property<double>("HealthMax")
                         .HasColumnType("double");
 
-                    b.Property<int?>("HingeAxisId")
-                        .HasColumnType("int");
+                    b.Property<string>("HingeAxis")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<int?>("IconMaterialRefId")
                         .HasColumnType("int");
@@ -1563,8 +1560,10 @@ namespace knkwebapi_v2.Migrations
                     b.Property<bool>("IsSiegeObjective")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<int?>("LeftDoorSeedBlockId")
-                        .HasColumnType("int");
+                    b.Property<string>("LeftDoorSeedBlock")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<bool>("MirrorRotation")
                         .HasColumnType("tinyint(1)");
@@ -1582,11 +1581,15 @@ namespace knkwebapi_v2.Migrations
                     b.Property<int>("PassThroughDurationSeconds")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ReferencePoint1Id")
-                        .HasColumnType("int");
+                    b.Property<string>("ReferencePoint1")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
-                    b.Property<int?>("ReferencePoint2Id")
-                        .HasColumnType("int");
+                    b.Property<string>("ReferencePoint2")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("RegionClosedId")
                         .IsRequired()
@@ -1599,8 +1602,10 @@ namespace knkwebapi_v2.Migrations
                     b.Property<int>("RespawnRateSeconds")
                         .HasColumnType("int");
 
-                    b.Property<int?>("RightDoorSeedBlockId")
-                        .HasColumnType("int");
+                    b.Property<string>("RightDoorSeedBlock")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<int>("RotationMaxAngleDegrees")
                         .HasColumnType("int");
@@ -1637,14 +1642,10 @@ namespace knkwebapi_v2.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.HasIndex("AnchorPointId");
-
                     b.HasIndex("FallbackMaterialRefId");
 
                     b.HasIndex("GateType")
                         .HasDatabaseName("IX_GateStructure_GateType");
-
-                    b.HasIndex("HingeAxisId");
 
                     b.HasIndex("IconMaterialRefId");
 
@@ -1653,14 +1654,6 @@ namespace knkwebapi_v2.Migrations
 
                     b.HasIndex("IsOpened")
                         .HasDatabaseName("IX_GateStructure_IsOpened");
-
-                    b.HasIndex("LeftDoorSeedBlockId");
-
-                    b.HasIndex("ReferencePoint1Id");
-
-                    b.HasIndex("ReferencePoint2Id");
-
-                    b.HasIndex("RightDoorSeedBlockId");
 
                     b.ToTable("gate_structures", (string)null);
                 });
@@ -1691,21 +1684,6 @@ namespace knkwebapi_v2.Migrations
                     b.HasOne("knkwebapi_v2.Models.Town", null)
                         .WithMany()
                         .HasForeignKey("TownId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("gate_structure_guard_spawn_locations", b =>
-                {
-                    b.HasOne("knkwebapi_v2.Models.GateStructure", null)
-                        .WithMany()
-                        .HasForeignKey("GateStructureId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("knkwebapi_v2.Models.Location", null)
-                        .WithMany()
-                        .HasForeignKey("LocationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -2047,19 +2025,9 @@ namespace knkwebapi_v2.Migrations
 
             modelBuilder.Entity("knkwebapi_v2.Models.GateStructure", b =>
                 {
-                    b.HasOne("knkwebapi_v2.Models.Location", "AnchorPoint")
-                        .WithMany()
-                        .HasForeignKey("AnchorPointId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("knkwebapi_v2.Models.MinecraftMaterialRef", "FallbackMaterial")
                         .WithMany()
                         .HasForeignKey("FallbackMaterialRefId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("knkwebapi_v2.Models.Location", "HingeAxis")
-                        .WithMany()
-                        .HasForeignKey("HingeAxisId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("knkwebapi_v2.Models.MinecraftMaterialRef", "IconMaterial")
@@ -2073,41 +2041,9 @@ namespace knkwebapi_v2.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("knkwebapi_v2.Models.Location", "LeftDoorSeedBlock")
-                        .WithMany()
-                        .HasForeignKey("LeftDoorSeedBlockId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("knkwebapi_v2.Models.Location", "ReferencePoint1")
-                        .WithMany()
-                        .HasForeignKey("ReferencePoint1Id")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("knkwebapi_v2.Models.Location", "ReferencePoint2")
-                        .WithMany()
-                        .HasForeignKey("ReferencePoint2Id")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("knkwebapi_v2.Models.Location", "RightDoorSeedBlock")
-                        .WithMany()
-                        .HasForeignKey("RightDoorSeedBlockId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("AnchorPoint");
-
                     b.Navigation("FallbackMaterial");
 
-                    b.Navigation("HingeAxis");
-
                     b.Navigation("IconMaterial");
-
-                    b.Navigation("LeftDoorSeedBlock");
-
-                    b.Navigation("ReferencePoint1");
-
-                    b.Navigation("ReferencePoint2");
-
-                    b.Navigation("RightDoorSeedBlock");
                 });
 
             modelBuilder.Entity("knkwebapi_v2.Models.Category", b =>

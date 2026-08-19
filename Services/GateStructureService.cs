@@ -14,11 +14,19 @@ namespace knkwebapi_v2.Services
     public class GateStructureService : IGateStructureService
     {
         private readonly IGateStructureRepository _repo;
+        private readonly ILocationRepository _locationRepo;
+        private readonly ILocationService _locationService;
         private readonly IMapper _mapper;
 
-        public GateStructureService(IGateStructureRepository repo, IMapper mapper)
+        public GateStructureService(
+            IGateStructureRepository repo,
+            ILocationRepository locationRepo,
+            ILocationService locationService,
+            IMapper mapper)
         {
             _repo = repo;
+            _locationRepo = locationRepo;
+            _locationService = locationService;
             _mapper = mapper;
         }
 
@@ -69,22 +77,8 @@ namespace knkwebapi_v2.Services
                     throw new ArgumentException("HealthCurrent cannot exceed HealthMax.", nameof(gateStructureDto));
             }
 
-            // Validate gate type
-            var validGateTypes = new[] { "SLIDING", "TRAP", "DRAWBRIDGE", "DOUBLE_DOORS" };
-            if (!string.IsNullOrEmpty(gateStructureDto.GateType) && !validGateTypes.Contains(gateStructureDto.GateType))
-                throw new ArgumentException($"Invalid GateType. Must be one of: {string.Join(", ", validGateTypes)}", nameof(gateStructureDto));
-
-            // Validate motion type
-            var validMotionTypes = new[] { "VERTICAL", "LATERAL", "ROTATION" };
-            if (!string.IsNullOrEmpty(gateStructureDto.MotionType) && !validMotionTypes.Contains(gateStructureDto.MotionType))
-                throw new ArgumentException($"Invalid MotionType. Must be one of: {string.Join(", ", validMotionTypes)}", nameof(gateStructureDto));
-
-            // Validate geometry mode
-            var validGeometryModes = new[] { "PLANE_GRID", "FLOOD_FILL" };
-            if (!string.IsNullOrEmpty(gateStructureDto.GeometryDefinitionMode) && !validGeometryModes.Contains(gateStructureDto.GeometryDefinitionMode))
-                throw new ArgumentException($"Invalid GeometryDefinitionMode. Must be one of: {string.Join(", ", validGeometryModes)}", nameof(gateStructureDto));
-
             var gateStructure = _mapper.Map<GateStructure>(gateStructureDto);
+            await ApplyLocationReferencesAsync(gateStructure, gateStructureDto, isCreate: true);
             await _repo.AddGateStructureAsync(gateStructure);
             return _mapper.Map<GateStructureDto>(gateStructure);
         }
@@ -110,6 +104,7 @@ namespace knkwebapi_v2.Services
             }
 
             _mapper.Map(gateStructureDto, existing);
+            await ApplyLocationReferencesAsync(existing, gateStructureDto);
             await _repo.UpdateGateStructureAsync(existing);
         }
 
@@ -236,6 +231,121 @@ namespace knkwebapi_v2.Services
                 throw new ArgumentException("Invalid gateId.", nameof(gateId));
 
             await _repo.DeleteBlockSnapshotsByGateIdAsync(gateId);
+        }
+
+        private async Task ApplyLocationReferencesAsync(GateStructure gateStructure, GateStructureDto gateStructureDto, bool isCreate = false)
+        {
+            gateStructure.AnchorPointId = await ResolveLocationReferenceAsync(
+                gateStructureDto.AnchorPointId,
+                gateStructureDto.AnchorPoint,
+                "AnchorPoint");
+
+            gateStructure.ReferencePoint1Id = await ResolveLocationReferenceAsync(
+                gateStructureDto.ReferencePoint1Id,
+                gateStructureDto.ReferencePoint1,
+                "ReferencePoint1");
+
+            gateStructure.ReferencePoint2Id = await ResolveLocationReferenceAsync(
+                gateStructureDto.ReferencePoint2Id,
+                gateStructureDto.ReferencePoint2,
+                "ReferencePoint2");
+
+            gateStructure.HingeAxisId = await ResolveLocationReferenceAsync(
+                gateStructureDto.HingeAxisId,
+                gateStructureDto.HingeAxis,
+                "HingeAxis");
+
+            gateStructure.LeftDoorSeedBlockId = await ResolveLocationReferenceAsync(
+                gateStructureDto.LeftDoorSeedBlockId,
+                gateStructureDto.LeftDoorSeedBlock,
+                "LeftDoorSeedBlock");
+
+            gateStructure.RightDoorSeedBlockId = await ResolveLocationReferenceAsync(
+                gateStructureDto.RightDoorSeedBlockId,
+                gateStructureDto.RightDoorSeedBlock,
+                "RightDoorSeedBlock");
+
+            var hasGuardInput = gateStructureDto.GuardSpawnLocationIds != null || gateStructureDto.GuardSpawnLocations != null;
+            if (!isCreate && !hasGuardInput)
+            {
+                return;
+            }
+
+            var resolvedGuardLocationIds = new List<int>();
+
+            if (gateStructureDto.GuardSpawnLocationIds != null)
+            {
+                resolvedGuardLocationIds.AddRange(gateStructureDto.GuardSpawnLocationIds.Where(id => id > 0));
+            }
+
+            if (gateStructureDto.GuardSpawnLocations != null)
+            {
+                foreach (var locationDto in gateStructureDto.GuardSpawnLocations)
+                {
+                    var guardLocationId = await ResolveLocationReferenceAsync(
+                        locationDto?.Id,
+                        locationDto,
+                        "GuardSpawnLocation");
+
+                    if (guardLocationId.HasValue)
+                    {
+                        resolvedGuardLocationIds.Add(guardLocationId.Value);
+                    }
+                }
+            }
+
+            var distinctGuardIds = resolvedGuardLocationIds.Distinct().ToList();
+            var guardLocations = new List<Location>();
+            foreach (var guardLocationId in distinctGuardIds)
+            {
+                var guardLocation = await _locationRepo.GetByIdAsync(guardLocationId);
+                if (guardLocation == null)
+                {
+                    throw new ArgumentException($"Location with id {guardLocationId} not found for GuardSpawnLocations.");
+                }
+
+                guardLocations.Add(guardLocation);
+            }
+
+            gateStructure.GuardSpawnLocations = guardLocations;
+        }
+
+        private async Task<int?> ResolveLocationReferenceAsync(int? locationId, LocationDto? locationDto, string fieldName)
+        {
+            if (locationDto == null && !locationId.HasValue)
+            {
+                return null;
+            }
+
+            if (locationDto == null && locationId.HasValue)
+            {
+                var existingLocation = await _locationRepo.GetByIdAsync(locationId.Value);
+                if (existingLocation == null)
+                {
+                    throw new ArgumentException($"Location with id {locationId} not found for {fieldName}.");
+                }
+
+                return locationId.Value;
+            }
+
+            if (locationDto != null && locationId.HasValue && locationDto.Id.HasValue && locationDto.Id.Value != locationId.Value)
+            {
+                throw new ArgumentException($"Conflicting location references for {fieldName}: locationId={locationId}, location.id={locationDto.Id}.");
+            }
+
+            if (locationDto != null)
+            {
+                if (!locationDto.Id.HasValue || locationDto.Id.Value == 0)
+                {
+                    var createdLocation = await _locationService.CreateAsync(locationDto);
+                    return createdLocation.Id;
+                }
+
+                await _locationService.UpdateAsync(locationDto.Id.Value, locationDto);
+                return locationDto.Id.Value;
+            }
+
+            return null;
         }
     }
 }

@@ -65,5 +65,17 @@ namespace knkwebapi_v2.Repositories
         /// </summary>
         /// <returns>Collection of expired link codes</returns>
         Task<IEnumerable<LinkCode>> GetExpiredLinkCodesAsync();
+
+        /// <summary>
+        /// Gets an active password reset token by its hashed token value.
+        /// Password reset tokens are persisted as SHA-256 hashes in Code.
+        /// </summary>
+        Task<LinkCode?> GetActivePasswordResetTokenAsync(string hashedToken);
+
+        /// <summary>
+        /// Invalidates all active password-reset tokens for a user.
+        /// Optionally keeps a single token active.
+        /// </summary>
+        Task InvalidateActivePasswordResetTokensAsync(int userId, int? excludeLinkCodeId = null);
     }
 }

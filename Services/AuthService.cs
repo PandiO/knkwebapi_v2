@@ -1,10 +1,15 @@
 using System;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using knkwebapi_v2.Configuration;
 using knkwebapi_v2.Dtos;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace knkwebapi_v2.Services
 {
@@ -17,6 +22,10 @@ namespace knkwebapi_v2.Services
         private readonly ITokenService _tokenService;
         private readonly IPasswordService _passwordService;
         private readonly IMapper _mapper;
+        private readonly ILinkCodeRepository _linkCodeRepository;
+        private readonly IPasswordResetDeliveryService _passwordResetDeliveryService;
+        private readonly IMemoryCache _memoryCache;
+        private readonly SecuritySettings _securitySettings;
         private readonly ILogger<AuthService> _logger;
 
         public AuthService(
@@ -24,12 +33,20 @@ namespace knkwebapi_v2.Services
             ITokenService tokenService,
             IPasswordService passwordService,
             IMapper mapper,
+            ILinkCodeRepository linkCodeRepository,
+            IPasswordResetDeliveryService passwordResetDeliveryService,
+            IMemoryCache memoryCache,
+            IOptions<SecuritySettings> securitySettings,
             ILogger<AuthService> logger)
         {
             _userRepository = userRepository;
             _tokenService = tokenService;
             _passwordService = passwordService;
             _mapper = mapper;
+            _linkCodeRepository = linkCodeRepository;
+            _passwordResetDeliveryService = passwordResetDeliveryService;
+            _memoryCache = memoryCache;
+            _securitySettings = securitySettings.Value;
             _logger = logger;
         }
 
@@ -183,6 +200,8 @@ namespace knkwebapi_v2.Services
             // Handle password update
             if (hasPasswordUpdate)
             {
+                var newPassword = request.NewPassword!;
+
                 if (string.IsNullOrWhiteSpace(request.CurrentPassword))
                 {
                     return (false, null, "Current password is required to change password.");
@@ -202,13 +221,13 @@ namespace knkwebapi_v2.Services
                 }
 
                 // Validate new password
-                if (request.NewPassword.Length < 8)
+                if (newPassword.Length < 8)
                 {
                     return (false, null, "New password must be at least 8 characters long.");
                 }
 
                 // Hash and update password
-                var newPasswordHash = await _passwordService.HashPasswordAsync(request.NewPassword);
+                var newPasswordHash = await _passwordService.HashPasswordAsync(newPassword);
                 user.PasswordHash = newPasswordHash;
 
                 _logger.LogInformation("Password updated for user {UserId}", userId);
@@ -239,6 +258,114 @@ namespace knkwebapi_v2.Services
             return (true, updatedUserDto, null);
         }
 
+        /// <inheritdoc/>
+        public async Task<AuthForgotPasswordResponseDto> RequestPasswordResetAsync(string email, string? clientIp, string? userAgent, bool allowDebugPayload)
+        {
+            const string genericMessage = "If an account with that email exists, we have sent password reset instructions.";
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return new AuthForgotPasswordResponseDto { Message = genericMessage };
+            }
+
+            var normalizedEmail = email.Trim().ToLowerInvariant();
+            if (IsForgotPasswordThrottled(normalizedEmail, clientIp))
+            {
+                _logger.LogWarning("Password reset request throttled for {Email} from {Ip}", normalizedEmail, clientIp ?? "unknown");
+                return new AuthForgotPasswordResponseDto { Message = genericMessage };
+            }
+
+            var user = await _userRepository.GetByEmailAsync(normalizedEmail);
+            if (user == null || string.IsNullOrWhiteSpace(user.PasswordHash) || !user.IsActive || user.DeletedAt.HasValue)
+            {
+                _logger.LogInformation("Password reset requested for unknown/ineligible email {Email} from {Ip}", normalizedEmail, clientIp ?? "unknown");
+                return new AuthForgotPasswordResponseDto { Message = genericMessage };
+            }
+
+            await _linkCodeRepository.InvalidateActivePasswordResetTokensAsync(user.Id);
+
+            var rawToken = GenerateRawResetToken();
+            var tokenHash = HashToken(rawToken);
+            var expiresAt = DateTime.UtcNow.AddMinutes(_securitySettings.PasswordResetTokenExpirationMinutes);
+
+            await _linkCodeRepository.CreateAsync(new LinkCode
+            {
+                UserId = user.Id,
+                Code = tokenHash,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = expiresAt,
+                Status = LinkCodeStatus.Active
+            });
+
+            var resetUrl = BuildResetUrl(rawToken);
+            await _passwordResetDeliveryService.SendPasswordResetAsync(user.Email!, user.Username, resetUrl);
+
+            _logger.LogInformation(
+                "Password reset token issued for user {UserId} from {Ip} ({UserAgent})",
+                user.Id,
+                clientIp ?? "unknown",
+                string.IsNullOrWhiteSpace(userAgent) ? "unknown" : userAgent);
+
+            var includeDebug = allowDebugPayload && _securitySettings.PasswordResetExposeTokenInDevelopment;
+            return new AuthForgotPasswordResponseDto
+            {
+                Message = genericMessage,
+                DebugResetToken = includeDebug ? rawToken : null,
+                DebugResetUrl = includeDebug ? resetUrl : null
+            };
+        }
+
+        /// <inheritdoc/>
+        public async Task<(bool Ok, string? Error)> ResetPasswordAsync(AuthResetPasswordRequestDto request)
+        {
+            if (request == null)
+            {
+                return (false, "Reset payload is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Token))
+            {
+                return (false, "Reset token is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                return (false, "New password is required.");
+            }
+
+            if (request.NewPassword != request.PasswordConfirmation)
+            {
+                return (false, "Password and confirmation do not match.");
+            }
+
+            var (passwordValid, passwordError) = await _passwordService.ValidatePasswordAsync(request.NewPassword);
+            if (!passwordValid)
+            {
+                return (false, passwordError ?? "Password does not meet policy requirements.");
+            }
+
+            var tokenHash = HashToken(request.Token.Trim());
+            var resetToken = await _linkCodeRepository.GetActivePasswordResetTokenAsync(tokenHash);
+            if (resetToken == null || resetToken.User == null)
+            {
+                return (false, "Reset token is invalid or expired.");
+            }
+
+            if (!resetToken.User.IsActive || resetToken.User.DeletedAt.HasValue)
+            {
+                return (false, "Account is inactive.");
+            }
+
+            var newPasswordHash = await _passwordService.HashPasswordAsync(request.NewPassword);
+            await _userRepository.UpdatePasswordHashAsync(resetToken.User.Id, newPasswordHash);
+
+            await _linkCodeRepository.UpdateLinkCodeStatusAsync(resetToken.Id, LinkCodeStatus.Used);
+            await _linkCodeRepository.InvalidateActivePasswordResetTokensAsync(resetToken.User.Id, resetToken.Id);
+
+            _logger.LogInformation("Password reset completed for user {UserId}", resetToken.User.Id);
+            return (true, null);
+        }
+
         private async Task<int> CalculateExpiresInSecondsAsync(string accessToken)
         {
             var expiresAt = await _tokenService.ExtractExpirationAsync(accessToken);
@@ -261,6 +388,43 @@ namespace knkwebapi_v2.Services
 
             var remaining = expiresAt.Value - DateTime.UtcNow;
             return remaining > TimeSpan.FromDays(10);
+        }
+
+        private bool IsForgotPasswordThrottled(string normalizedEmail, string? clientIp)
+        {
+            var cooldown = TimeSpan.FromSeconds(Math.Max(5, _securitySettings.PasswordResetRequestCooldownSeconds));
+            var key = $"pwdreset:{normalizedEmail}:{clientIp ?? "unknown"}";
+            if (_memoryCache.TryGetValue(key, out _))
+            {
+                return true;
+            }
+
+            _memoryCache.Set(key, true, cooldown);
+            return false;
+        }
+
+        private string BuildResetUrl(string rawToken)
+        {
+            var baseUrl = string.IsNullOrWhiteSpace(_securitySettings.PasswordResetFrontendBaseUrl)
+                ? "http://localhost:3000"
+                : _securitySettings.PasswordResetFrontendBaseUrl.TrimEnd('/');
+
+            return $"{baseUrl}/auth/reset-password?token={Uri.EscapeDataString(rawToken)}";
+        }
+
+        private static string GenerateRawResetToken()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(32);
+            return Convert.ToBase64String(bytes)
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_');
+        }
+
+        private static string HashToken(string rawToken)
+        {
+            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));
+            return Convert.ToHexString(bytes).ToLowerInvariant();
         }
     }
 }

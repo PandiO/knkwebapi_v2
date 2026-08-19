@@ -84,5 +84,47 @@ namespace knkwebapi_v2.Repositories
         {
             return await GetExpiredAsync();
         }
+
+        public async Task<LinkCode?> GetActivePasswordResetTokenAsync(string hashedToken)
+        {
+            var now = DateTime.UtcNow;
+            return await _context.LinkCodes
+                .Include(lc => lc.User)
+                .FirstOrDefaultAsync(lc =>
+                    lc.Code == hashedToken &&
+                    lc.Status == LinkCodeStatus.Active &&
+                    lc.ExpiresAt > now &&
+                    lc.UserId != null &&
+                    lc.Code.Length == 64);
+        }
+
+        public async Task InvalidateActivePasswordResetTokensAsync(int userId, int? excludeLinkCodeId = null)
+        {
+            var now = DateTime.UtcNow;
+            var query = _context.LinkCodes.Where(lc =>
+                lc.UserId == userId &&
+                lc.Status == LinkCodeStatus.Active &&
+                lc.ExpiresAt > now &&
+                lc.Code.Length == 64);
+
+            if (excludeLinkCodeId.HasValue)
+            {
+                query = query.Where(lc => lc.Id != excludeLinkCodeId.Value);
+            }
+
+            var activeTokens = await query.ToListAsync();
+            if (activeTokens.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var token in activeTokens)
+            {
+                token.Status = LinkCodeStatus.Expired;
+            }
+
+            _context.LinkCodes.UpdateRange(activeTokens);
+            await _context.SaveChangesAsync();
+        }
     }
 }

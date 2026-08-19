@@ -29,27 +29,36 @@ public class GateStructure : Structure
     public string RegionOpenedId { get; set; } = string.Empty;
 
     // === Gate Type & Animation Configuration ===
-    [MaxLength(50)]
-    public string GateType { get; set; } = "SLIDING";  // SLIDING, TRAP, DRAWBRIDGE, DOUBLE_DOORS
+    public GateType GateType { get; set; } = GateType.SLIDING;
     
-    [MaxLength(50)]
-    public string GeometryDefinitionMode { get; set; } = "PLANE_GRID";  // PLANE_GRID, FLOOD_FILL
+    public GeometryDefinitionMode GeometryDefinitionMode { get; set; } = GeometryDefinitionMode.PLANE_GRID;
     
-    [MaxLength(50)]
-    public string MotionType { get; set; } = "VERTICAL";  // VERTICAL, LATERAL, ROTATION
+    public MotionType MotionType { get; set; } = MotionType.VERTICAL;
     
     public int AnimationDurationTicks { get; set; } = 60;  // Default 3 seconds @ 20 TPS
     public int AnimationTickRate { get; set; } = 1;  // Frames per tick
 
     // === Geometry Definition (PLANE_GRID mode) ===
-    [MaxLength(200)]
-    public string AnchorPoint { get; set; } = string.Empty;  // JSON: {x, y, z} - p0
+    [NavigationPair(nameof(AnchorPoint))]
+    [RelatedEntityField(typeof(Location))]
+    public int? AnchorPointId { get; set; }
+
+    [RelatedEntityField(typeof(Location))]
+    public Location? AnchorPoint { get; set; }
     
-    [MaxLength(200)]
-    public string ReferencePoint1 { get; set; } = string.Empty;  // JSON: {x, y, z} - p1
+    [NavigationPair(nameof(ReferencePoint1))]
+    [RelatedEntityField(typeof(Location))]
+    public int? ReferencePoint1Id { get; set; }
+
+    [RelatedEntityField(typeof(Location))]
+    public Location? ReferencePoint1 { get; set; }
     
-    [MaxLength(200)]
-    public string ReferencePoint2 { get; set; } = string.Empty;  // JSON: {x, y, z} - p2
+    [NavigationPair(nameof(ReferencePoint2))]
+    [RelatedEntityField(typeof(Location))]
+    public int? ReferencePoint2Id { get; set; }
+
+    [RelatedEntityField(typeof(Location))]
+    public Location? ReferencePoint2 { get; set; }
     
     public int GeometryWidth { get; set; } = 0;
     public int GeometryHeight { get; set; } = 0;
@@ -77,21 +86,32 @@ public class GateStructure : Structure
     [RelatedEntityField(typeof(MinecraftMaterialRef))]
     public MinecraftMaterialRef? FallbackMaterial { get; set; } = null;
     
-    [MaxLength(50)]
-    public string TileEntityPolicy { get; set; } = "DECORATIVE_ONLY";  // NONE, DECORATIVE_ONLY, ALL
+    public TileEntityPolicy TileEntityPolicy { get; set; } = TileEntityPolicy.DECORATIVE_ONLY;
 
     // === Rotation-Specific Fields (Drawbridge, Double Doors) ===
     public int RotationMaxAngleDegrees { get; set; } = 90;
     
-    [MaxLength(200)]
-    public string HingeAxis { get; set; } = string.Empty;  // JSON: {x,y,z} - rotation axis vector
+    [NavigationPair(nameof(HingeAxis))]
+    [RelatedEntityField(typeof(Location))]
+    public int? HingeAxisId { get; set; }
+
+    [RelatedEntityField(typeof(Location))]
+    public Location? HingeAxis { get; set; }
 
     // === Double Doors Specific ===
-    [MaxLength(200)]
-    public string LeftDoorSeedBlock { get; set; } = string.Empty;  // JSON: {x,y,z}
+    [NavigationPair(nameof(LeftDoorSeedBlock))]
+    [RelatedEntityField(typeof(Location))]
+    public int? LeftDoorSeedBlockId { get; set; }
+
+    [RelatedEntityField(typeof(Location))]
+    public Location? LeftDoorSeedBlock { get; set; }
     
-    [MaxLength(200)]
-    public string RightDoorSeedBlock { get; set; } = string.Empty;  // JSON: {x,y,z}
+    [NavigationPair(nameof(RightDoorSeedBlock))]
+    [RelatedEntityField(typeof(Location))]
+    public int? RightDoorSeedBlockId { get; set; }
+
+    [RelatedEntityField(typeof(Location))]
+    public Location? RightDoorSeedBlock { get; set; }
     
     public bool MirrorRotation { get; set; } = true;
 
@@ -103,8 +123,8 @@ public class GateStructure : Structure
     public string PassThroughConditionsJson { get; set; } = string.Empty;  // Complex conditions
 
     // === Guard & Defense System (Future Feature) ===
-    [MaxLength(2000)]
-    public string GuardSpawnLocationsJson { get; set; } = string.Empty;  // JSON: [{x,y,z,yaw,pitch}, ...]
+    [RelatedEntityField(typeof(Location))]
+    public virtual ICollection<Location> GuardSpawnLocations { get; set; } = new List<Location>();
     
     public int GuardCount { get; set; } = 0;
     public int? GuardNpcTemplateId { get; set; }  // FK to NpcTemplate (future)
@@ -112,8 +132,7 @@ public class GateStructure : Structure
     // === Health Display Configuration ===
     public bool ShowHealthDisplay { get; set; } = true;
     
-    [MaxLength(50)]
-    public string HealthDisplayMode { get; set; } = "ALWAYS";  // ALWAYS, DAMAGED_ONLY, NEVER, SIEGE_ONLY
+    public HealthDisplayMode HealthDisplayMode { get; set; } = HealthDisplayMode.ALWAYS;
     
     public int HealthDisplayYOffset { get; set; } = 2;
 

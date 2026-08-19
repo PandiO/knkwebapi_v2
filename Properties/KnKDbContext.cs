@@ -35,6 +35,9 @@ public partial class KnKDbContext : DbContext
     
     // Entity Type Configuration (admin-configurable entity display properties)
     public DbSet<EntityTypeConfiguration> EntityTypeConfigurations { get; set; }
+
+    // Singleton game settings (global + per-world server behavior)
+    public DbSet<GameSettings> GameSettings { get; set; }
     
     public virtual DbSet<Location> Locations { get; set; } = null!;
     public virtual DbSet<Street> Streets { get; set; } = null!;
@@ -328,6 +331,13 @@ public partial class KnKDbContext : DbContext
         modelBuilder.Entity<GateStructure>(entity =>
         {
             entity.ToTable("gate_structures");
+
+            // Persist enums as strings for DB readability and stable API semantics.
+            entity.Property(e => e.GateType).HasConversion<string>().HasMaxLength(50);
+            entity.Property(e => e.GeometryDefinitionMode).HasConversion<string>().HasMaxLength(50);
+            entity.Property(e => e.MotionType).HasConversion<string>().HasMaxLength(50);
+            entity.Property(e => e.TileEntityPolicy).HasConversion<string>().HasMaxLength(50);
+            entity.Property(e => e.HealthDisplayMode).HasConversion<string>().HasMaxLength(50);
             
             // Indexes
             entity.HasIndex(e => e.IsActive)
@@ -349,6 +359,56 @@ public partial class KnKDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(g => g.FallbackMaterialRefId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(g => g.AnchorPoint)
+                .WithMany()
+                .HasForeignKey(g => g.AnchorPointId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(g => g.ReferencePoint1)
+                .WithMany()
+                .HasForeignKey(g => g.ReferencePoint1Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(g => g.ReferencePoint2)
+                .WithMany()
+                .HasForeignKey(g => g.ReferencePoint2Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(g => g.HingeAxis)
+                .WithMany()
+                .HasForeignKey(g => g.HingeAxisId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(g => g.LeftDoorSeedBlock)
+                .WithMany()
+                .HasForeignKey(g => g.LeftDoorSeedBlockId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(g => g.RightDoorSeedBlock)
+                .WithMany()
+                .HasForeignKey(g => g.RightDoorSeedBlockId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(g => g.GuardSpawnLocations)
+                .WithMany()
+                .UsingEntity<Dictionary<string, object>>(
+                    "gate_structure_guard_spawn_locations",
+                    j => j
+                        .HasOne<Location>()
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Cascade),
+                    j => j
+                        .HasOne<GateStructure>()
+                        .WithMany()
+                        .HasForeignKey("GateStructureId")
+                        .OnDelete(DeleteBehavior.Cascade),
+                    j =>
+                    {
+                        j.HasKey("GateStructureId", "LocationId");
+                        j.ToTable("gate_structure_guard_spawn_locations");
+                    });
             
             // One-to-many relationship with GateBlockSnapshot
             entity.HasMany(g => g.BlockSnapshots)
@@ -456,6 +516,50 @@ public partial class KnKDbContext : DbContext
             entity.HasIndex(e => e.EntityTypeName)
                 .IsUnique()
                 .HasDatabaseName("IX_EntityTypeConfiguration_EntityTypeName");
+        });
+
+        modelBuilder.Entity<GameSettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("game_settings");
+
+            entity.Property(e => e.Id)
+                .HasMaxLength(64);
+
+            entity.Property(e => e.SettingsVersion)
+                .IsRequired()
+                .HasMaxLength(32);
+
+            entity.Property(e => e.JoinAnnouncement)
+                .HasColumnType("longtext");
+
+            entity.Property(e => e.LeaveAnnouncement)
+                .HasColumnType("longtext");
+
+            entity.Property(e => e.JoinSpawnMode)
+                .IsRequired()
+                .HasMaxLength(64);
+
+            entity.Property(e => e.JoinSpawnReferenceJson)
+                .HasColumnType("longtext");
+
+            entity.Property(e => e.DefaultRespawnPolicyJson)
+                .HasColumnType("longtext");
+
+            entity.Property(e => e.WorldSettingsJson)
+                .HasColumnType("longtext");
+
+            entity.Property(e => e.RuntimeWorldsJson)
+                .HasColumnType("longtext");
+
+            entity.Property(e => e.RuntimeWorldsLastUpdatedAt)
+                .HasColumnType("datetime");
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime");
+
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime");
         });
         // Structure-Street many-to-one (required)
         modelBuilder.Entity<Structure>()

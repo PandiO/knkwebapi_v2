@@ -44,5 +44,22 @@ namespace knkwebapi_v2.Services
         /// <param name="request">Update request DTO</param>
         /// <returns>Tuple with success flag, updated user DTO, and optional error message</returns>
         Task<(bool Ok, UserDto? Result, string? Error)> UpdateUserAsync(int userId, AuthUpdateRequestDto request);
+
+        /// <summary>
+        /// Initiate password reset flow for an email address.
+        /// Always returns a generic success message to prevent account enumeration.
+        /// </summary>
+        /// <param name="email">Account email</param>
+        /// <param name="clientIp">Caller IP for abuse controls</param>
+        /// <param name="userAgent">Caller user-agent for audit logging</param>
+        /// <param name="allowDebugPayload">Allow development-only debug payload</param>
+        Task<AuthForgotPasswordResponseDto> RequestPasswordResetAsync(string email, string? clientIp, string? userAgent, bool allowDebugPayload);
+
+        /// <summary>
+        /// Complete password reset with a one-time reset token.
+        /// </summary>
+        /// <param name="request">Reset request payload</param>
+        /// <returns>Tuple with success flag and optional error</returns>
+        Task<(bool Ok, string? Error)> ResetPasswordAsync(AuthResetPasswordRequestDto request);
     }
 }
