@@ -86,14 +86,86 @@ namespace knkwebapi_v2.Repositories
 
         /// <summary>
         /// Delete all completed form submissions older than the specified date.
+        /// Deletes the deepest descendants first so parent/child hierarchies remain valid
+        /// even when ParentProgressId is configured with Restrict delete behavior.
         /// Returns the count of deleted records.
         /// </summary>
         public async Task<int> DeleteCompletedOlderThanAsync(System.DateTime beforeDate)
         {
-            var count = await _context.FormSubmissionProgresses
+            var expiredRootIds = await _context.FormSubmissionProgresses
+                .AsNoTracking()
                 .Where(p => p.Status == "Completed" && p.CompletedAt.HasValue && p.CompletedAt < beforeDate)
-                .ExecuteDeleteAsync();
-            return count;
+                .Select(p => p.Id)
+                .ToListAsync();
+
+            if (expiredRootIds.Count == 0)
+            {
+                return 0;
+            }
+
+            var staleBranchIds = new HashSet<int>(expiredRootIds);
+            var queue = new Queue<int>(expiredRootIds);
+
+            while (queue.Count > 0)
+            {
+                var currentParentId = queue.Dequeue();
+
+                var childIds = await _context.FormSubmissionProgresses
+                    .AsNoTracking()
+                    .Where(p => p.ParentProgressId == currentParentId)
+                    .Select(p => p.Id)
+                    .ToListAsync();
+
+                foreach (var childId in childIds)
+                {
+                    if (staleBranchIds.Add(childId))
+                    {
+                        queue.Enqueue(childId);
+                    }
+                }
+            }
+
+            var descendantsByParent = await _context.FormSubmissionProgresses
+                .AsNoTracking()
+                .Where(p => p.ParentProgressId.HasValue && staleBranchIds.Contains(p.ParentProgressId.Value))
+                .Select(p => new { ParentId = p.ParentProgressId!.Value, ChildId = p.Id })
+                .GroupBy(x => x.ParentId)
+                .ToDictionaryAsync(g => g.Key, g => g.Select(x => x.ChildId).ToHashSet());
+
+            var deleteOrder = new List<int>();
+            var remaining = new HashSet<int>(staleBranchIds);
+
+            while (remaining.Count > 0)
+            {
+                var leafIds = remaining
+                    .Where(id => !descendantsByParent.TryGetValue(id, out var childIds) || childIds.All(childId => !remaining.Contains(childId)))
+                    .ToList();
+
+                if (leafIds.Count == 0)
+                {
+                    leafIds = remaining.ToList();
+                }
+
+                foreach (var id in leafIds)
+                {
+                    remaining.Remove(id);
+                    deleteOrder.Add(id);
+                }
+            }
+
+            var rowsToDelete = await _context.FormSubmissionProgresses
+                .Where(p => deleteOrder.Contains(p.Id))
+                .ToListAsync();
+
+            if (rowsToDelete.Count == 0)
+            {
+                return 0;
+            }
+
+            _context.FormSubmissionProgresses.RemoveRange(rowsToDelete);
+            await _context.SaveChangesAsync();
+
+            return rowsToDelete.Count;
         }
     }
 }

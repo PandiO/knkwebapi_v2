@@ -214,6 +214,12 @@ public partial class KnKDbContext : DbContext
             .WithMany()
             .HasForeignKey(p => p.ParentProgressId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<FormSubmissionProgress>()
+            .HasIndex(p => p.ParentProgressId);
+
+        modelBuilder.Entity<FormSubmissionProgress>()
+            .HasIndex(p => new { p.Status, p.CompletedAt });
         
         // Indexes for performance
         modelBuilder.Entity<FormConfiguration>()
