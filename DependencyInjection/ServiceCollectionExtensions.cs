@@ -33,7 +33,21 @@ namespace knkwebapi_v2.DependencyInjection
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IPasswordResetDeliveryService, PasswordResetDeliveryService>();
+
+            var emailSection = configuration?.GetSection("Email");
+            if (emailSection != null)
+            {
+                services.Configure<knkwebapi_v2.Configuration.EmailSettings>(emailSection);
+            }
+            var emailProvider = emailSection?["Provider"];
+            if (string.Equals(emailProvider, "Smtp", System.StringComparison.OrdinalIgnoreCase))
+            {
+                services.AddScoped<IPasswordResetDeliveryService, SmtpPasswordResetDeliveryService>();
+            }
+            else
+            {
+                services.AddScoped<IPasswordResetDeliveryService, PasswordResetDeliveryService>();
+            }
             services.AddScoped<ILinkCodeRepository, LinkCodeRepository>();
             services.AddScoped<ILinkCodeService, LinkCodeService>();
             services.AddScoped<ILocationRepository, LocationRepository>();
