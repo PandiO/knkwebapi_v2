@@ -361,7 +361,7 @@ namespace knkwebapi_v2.Services
 
                 case FieldType.Enum:
                     // Enum types: verify entity field is also an enum
-                    if (!metadataField.FieldType.Equals("Enum", StringComparison.OrdinalIgnoreCase))
+                    if (!metadataField.IsEnum && !metadataField.FieldType.Equals("Enum", StringComparison.OrdinalIgnoreCase))
                     {
                         result.Issues.Add($"Field '{field.FieldName}' is Enum in form but '{metadataField.FieldType}' on entity.");
                     }

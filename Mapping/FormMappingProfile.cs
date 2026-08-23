@@ -237,7 +237,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.IsActive, o => o.Ignore())
                 .ForMember(d => d.CreatedAt, o => o.MapFrom(s => s.CreatedAt.ToString("O")))
                 .ForMember(d => d.UpdatedAt, o => o.MapFrom(s => s.UpdatedAt.HasValue ? s.UpdatedAt.Value.ToString("O") : null))
-                .ForMember(d => d.Steps, o => o.MapFrom(s => s.Steps));
+                .ForMember(d => d.Steps, o => o.MapFrom(s => OrderSteps(s.Steps, s.StepOrderJson)));
 
             // FormSubmissionProgress
             CreateMap<FormSubmissionProgressDto, FormSubmissionProgress>()
@@ -289,6 +289,29 @@ namespace knkwebapi_v2.Mapping
         }
 
         private static int? ToInt(string? s) => int.TryParse(s, out var v) ? v : (int?)null;
+        private static IEnumerable<FormStep> OrderSteps(IEnumerable<FormStep> steps, string? stepOrderJson)
+        {
+            var items = steps.ToList();
+            if (string.IsNullOrWhiteSpace(stepOrderJson)) return items;
+
+            try
+            {
+                var order = JsonSerializer.Deserialize<List<string>>(stepOrderJson);
+                if (order == null || order.Count == 0) return items;
+
+                var indexByGuid = order
+                    .Select((value, index) => new { value, index })
+                    .Where(x => Guid.TryParse(x.value, out _))
+                    .ToDictionary(x => Guid.Parse(x.value), x => x.index);
+
+                return items.OrderBy(step =>
+                    indexByGuid.TryGetValue(step.StepGuid, out var index) ? index : int.MaxValue);
+            }
+            catch (JsonException)
+            {
+                return items;
+            }
+        }
         private static DateTime ParseDateOrDefault(string? s) => DateTime.TryParse(s, out var d) ? d : DateTime.UtcNow;
         private static DateTime? ParseNullableDate(string? s) => DateTime.TryParse(s, out var d) ? d : (DateTime?)null;
         private static FormSubmissionStatus ParseStatus(string s) => Enum.TryParse<FormSubmissionStatus>(s, out var st) ? st : FormSubmissionStatus.InProgress;
