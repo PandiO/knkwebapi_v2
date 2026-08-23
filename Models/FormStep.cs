@@ -151,5 +151,10 @@ namespace knkwebapi_v2.Models
         // Navigation properties
         public List<FormField> Fields { get; set; } = new();
         public List<StepCondition> StepConditions { get; set; } = new();
+
+        /// <summary>
+        /// Visibility rules for this step. Empty means the step is always shown.
+        /// </summary>
+        public List<DisplayConditionGroup> DisplayConditionGroups { get; set; } = new();
     }
 }

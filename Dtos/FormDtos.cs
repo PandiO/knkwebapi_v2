@@ -94,6 +94,10 @@ namespace knkwebapi_v2.Dtos
         public int? MaxSelection { get; set; }
         [JsonPropertyName("canCreate")]
         public bool? CanCreate { get; set; }
+        [JsonPropertyName("enumType")]
+        public string? EnumType { get; set; }
+        [JsonPropertyName("displayConditionGroups")]
+        public List<DisplayConditionGroupDto> DisplayConditionGroups { get; set; } = new();
     }
 
     public class FormStepDto
@@ -138,6 +142,8 @@ namespace knkwebapi_v2.Dtos
         public List<FormFieldDto> Fields { get; set; } = new();
         [JsonPropertyName("conditions")]
         public List<StepConditionDto> Conditions { get; set; } = new();
+        [JsonPropertyName("displayConditionGroups")]
+        public List<DisplayConditionGroupDto> DisplayConditionGroups { get; set; } = new();
     }
 
     public class FormConfigurationDto

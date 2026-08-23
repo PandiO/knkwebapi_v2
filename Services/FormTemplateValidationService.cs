@@ -226,6 +226,8 @@ namespace knkwebapi_v2.Services
                     .Where(f => !f.IsCompatible)
                     .ToList();
 
+                var conditionIssues = ValidateDisplayConditions(config);
+
                 if (incompatibleFields.Count > 0)
                 {
                     // Build a detailed message listing each incompatible field with its specific issues
@@ -239,8 +241,85 @@ namespace knkwebapi_v2.Services
                     result.Summary = "All fields are compatible with entity metadata.";
                 }
 
+                if (conditionIssues.Count > 0)
+                {
+                    result.IsValid = false;
+                    result.Summary += $" Display condition problems: {string.Join("; ", conditionIssues)}";
+                }
+
                 return result;
             });
+        }
+
+        /// <summary>
+        /// A display condition may only read a field the user has already passed, otherwise the
+        /// target's visibility would depend on input that does not exist yet.
+        /// </summary>
+        private static List<string> ValidateDisplayConditions(FormConfiguration config)
+        {
+            var issues = new List<string>();
+
+            var orderedSteps = FormOrdering.OrderSteps(config);
+            var stepIndexByGuid = new Dictionary<Guid, int>();
+            var fieldPositionByGuid = new Dictionary<Guid, (int Step, int Field)>();
+            var fieldLabelByGuid = new Dictionary<Guid, string>();
+
+            for (int s = 0; s < orderedSteps.Count; s++)
+            {
+                stepIndexByGuid[orderedSteps[s].StepGuid] = s;
+                var orderedFields = FormOrdering.OrderFields(orderedSteps[s]);
+                for (int f = 0; f < orderedFields.Count; f++)
+                {
+                    fieldPositionByGuid[orderedFields[f].FieldGuid] = (s, f);
+                    fieldLabelByGuid[orderedFields[f].FieldGuid] = orderedFields[f].Label ?? orderedFields[f].FieldName;
+                }
+            }
+
+            foreach (var step in orderedSteps)
+            {
+                var targetStepIndex = stepIndexByGuid[step.StepGuid];
+
+                foreach (var condition in step.DisplayConditionGroups.SelectMany(g => g.Conditions))
+                {
+                    if (!fieldPositionByGuid.TryGetValue(condition.SourceFormFieldGuid, out var source))
+                    {
+                        issues.Add($"step '{step.StepName}' references a source field that is not part of this configuration");
+                        continue;
+                    }
+
+                    if (source.Step >= targetStepIndex)
+                    {
+                        issues.Add($"step '{step.StepName}' depends on '{fieldLabelByGuid[condition.SourceFormFieldGuid]}', which is not in an earlier step");
+                    }
+                }
+
+                foreach (var field in step.Fields)
+                {
+                    if (!fieldPositionByGuid.TryGetValue(field.FieldGuid, out var target)) continue;
+
+                    foreach (var condition in field.DisplayConditionGroups.SelectMany(g => g.Conditions))
+                    {
+                        if (condition.SourceFormFieldGuid == field.FieldGuid)
+                        {
+                            issues.Add($"field '{field.Label ?? field.FieldName}' cannot depend on itself");
+                            continue;
+                        }
+
+                        if (!fieldPositionByGuid.TryGetValue(condition.SourceFormFieldGuid, out var source))
+                        {
+                            issues.Add($"field '{field.Label ?? field.FieldName}' references a source field that is not part of this configuration");
+                            continue;
+                        }
+
+                        if (source.Step > target.Step || (source.Step == target.Step && source.Field >= target.Field))
+                        {
+                            issues.Add($"field '{field.Label ?? field.FieldName}' depends on '{fieldLabelByGuid[condition.SourceFormFieldGuid]}', which does not come earlier in the form");
+                        }
+                    }
+                }
+            }
+
+            return issues;
         }
 
         /// <summary>

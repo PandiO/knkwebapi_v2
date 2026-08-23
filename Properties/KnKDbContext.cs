@@ -26,6 +26,8 @@ public partial class KnKDbContext : DbContext
     public DbSet<FieldValidation> FieldValidations { get; set; }
     public DbSet<FieldValidationRule> FieldValidationRules { get; set; }
     public DbSet<StepCondition> StepConditions { get; set; }
+    public DbSet<DisplayConditionGroup> DisplayConditionGroups { get; set; }
+    public DbSet<DisplayCondition> DisplayConditions { get; set; }
     public DbSet<FormSubmissionProgress> FormSubmissionProgresses { get; set; }
     
     // DisplayConfiguration DbSets
@@ -234,6 +236,48 @@ public partial class KnKDbContext : DbContext
         
         modelBuilder.Entity<FormField>()
             .HasIndex(f => f.IsReusable);
+
+        // DisplayCondition relationships
+        modelBuilder.Entity<DisplayConditionGroup>()
+            .HasOne(g => g.TargetStep)
+            .WithMany(s => s.DisplayConditionGroups)
+            .HasForeignKey(g => g.TargetStepId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DisplayConditionGroup>()
+            .HasOne(g => g.TargetField)
+            .WithMany(f => f.DisplayConditionGroups)
+            .HasForeignKey(g => g.TargetFieldId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DisplayConditionGroup>()
+            .HasMany(g => g.ChildGroups)
+            .WithOne(g => g.ParentGroup)
+            .HasForeignKey(g => g.ParentGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<DisplayConditionGroup>()
+            .HasMany(g => g.Conditions)
+            .WithOne(c => c.DisplayConditionGroup)
+            .HasForeignKey(c => c.DisplayConditionGroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Restrict: removing a field that other conditions read must fail loudly
+        // instead of silently making dependent steps permanently visible.
+        modelBuilder.Entity<DisplayCondition>()
+            .HasOne(c => c.SourceFormField)
+            .WithMany(f => f.UsedInDisplayConditions)
+            .HasForeignKey(c => c.SourceFormFieldId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<DisplayConditionGroup>()
+            .HasIndex(g => g.TargetStepId);
+
+        modelBuilder.Entity<DisplayConditionGroup>()
+            .HasIndex(g => g.TargetFieldId);
+
+        modelBuilder.Entity<DisplayCondition>()
+            .HasIndex(c => c.SourceFormFieldId);
 
         // DisplayConfiguration relationships
         modelBuilder.Entity<DisplayConfiguration>()

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Repositories;
@@ -12,11 +14,19 @@ namespace knkwebapi_v2.Services
     {
         private readonly IFormSubmissionProgressRepository _repo;
         private readonly IMapper _mapper;
+        private readonly IFormConfigurationRepository _configRepo;
+        private readonly IDisplayConditionEvaluator _displayConditionEvaluator;
 
-        public FormSubmissionProgressService(IFormSubmissionProgressRepository repo, IMapper mapper)
+        public FormSubmissionProgressService(
+            IFormSubmissionProgressRepository repo,
+            IMapper mapper,
+            IFormConfigurationRepository configRepo,
+            IDisplayConditionEvaluator displayConditionEvaluator)
         {
             _repo = repo;
             _mapper = mapper;
+            _configRepo = configRepo;
+            _displayConditionEvaluator = displayConditionEvaluator;
         }
 
         public async Task<IEnumerable<FormSubmissionProgressDto>> GetByEntityTypeNameAsync(string entityTypeName, int? userId)
@@ -86,10 +96,56 @@ namespace knkwebapi_v2.Services
             if (string.Equals(incoming.Status, "Completed", StringComparison.OrdinalIgnoreCase))
             {
                 existing.CompletedAt = DateTime.UtcNow;
+                existing.AllStepsDataJson = await StripHiddenValuesAsync(
+                    existing.FormConfigurationId, existing.AllStepsDataJson);
             }
 
             await _repo.UpdateAsync(existing);
             return _mapper.Map<FormSubmissionProgressDto>(existing);
+        }
+
+        /// <summary>
+        /// Removes values that belong to a step or field the display conditions hide. The client
+        /// already does this, but a completed submission is the last point where the server can
+        /// guarantee a toggled-away branch does not end up in the stored result.
+        /// </summary>
+        private async Task<string> StripHiddenValuesAsync(int formConfigurationId, string? allStepsDataJson)
+        {
+            if (string.IsNullOrWhiteSpace(allStepsDataJson)) return allStepsDataJson ?? "{}";
+
+            var config = await _configRepo.GetByIdAsync(formConfigurationId);
+            if (config == null) return allStepsDataJson;
+
+            Dictionary<string, Dictionary<string, JsonElement>>? perStep;
+            try
+            {
+                perStep = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, JsonElement>>>(allStepsDataJson);
+            }
+            catch (JsonException)
+            {
+                return allStepsDataJson;
+            }
+
+            if (perStep == null) return allStepsDataJson;
+
+            var flattened = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var stepValues in perStep.Values)
+            {
+                foreach (var pair in stepValues)
+                {
+                    flattened[pair.Key] = pair.Value;
+                }
+            }
+
+            var visible = _displayConditionEvaluator.FilterVisibleValues(config, flattened);
+
+            var filtered = perStep.ToDictionary(
+                stepEntry => stepEntry.Key,
+                stepEntry => stepEntry.Value
+                    .Where(pair => visible.ContainsKey(pair.Key))
+                    .ToDictionary(pair => pair.Key, pair => pair.Value));
+
+            return JsonSerializer.Serialize(filtered);
         }
 
         public async Task DeleteAsync(int id)

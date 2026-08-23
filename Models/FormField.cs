@@ -271,5 +271,15 @@ namespace knkwebapi_v2.Models
         /// This provides extensibility without requiring schema changes for every new field configuration option.
         /// </summary>
         public string? SettingsJson { get; set; }
+
+        /// <summary>
+        /// Visibility rules for this field. Empty means the field is always shown.
+        /// </summary>
+        public List<DisplayConditionGroup> DisplayConditionGroups { get; set; } = new();
+
+        /// <summary>
+        /// Display conditions elsewhere in the configuration that read this field's value.
+        /// </summary>
+        public List<DisplayCondition> UsedInDisplayConditions { get; set; } = new();
     }
 }

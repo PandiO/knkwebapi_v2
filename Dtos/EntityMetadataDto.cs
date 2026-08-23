@@ -40,5 +40,18 @@ namespace knkwebapi_v2.Dtos
         /// </summary>
         [JsonPropertyName("defaultValue")]
         public string? DefaultValue { get; set; }
+
+        [JsonPropertyName("isEnum")]
+        public bool IsEnum { get; set; }
+
+        [JsonPropertyName("enumTypeName")]
+        public string? EnumTypeName { get; set; }
+
+        /// <summary>
+        /// The names of the enum members, in declaration order. Lets the form builder offer real
+        /// options instead of a hand-typed list.
+        /// </summary>
+        [JsonPropertyName("enumValues")]
+        public List<string>? EnumValues { get; set; }
     }
 }

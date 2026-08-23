@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using knkwebapi_v2.Enums;
 using knkwebapi_v2.Models;
 using knkwebapi_v2.Properties;
 using Microsoft.EntityFrameworkCore;
@@ -16,48 +18,41 @@ namespace knkwebapi_v2.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<FormConfiguration>> GetAllAsync()
+        private static IQueryable<FormConfiguration> WithFullGraph(IQueryable<FormConfiguration> query)
         {
-            return await _context.FormConfigurations
+            return query
                 .Include(fc => fc.Steps)
                     .ThenInclude(s => s.Fields)
                         .ThenInclude(f => f.Validations)
                 .Include(fc => fc.Steps)
+                    .ThenInclude(s => s.Fields)
+                        .ThenInclude(f => f.DisplayConditionGroups)
+                            .ThenInclude(g => g.Conditions)
+                .Include(fc => fc.Steps)
                     .ThenInclude(s => s.StepConditions)
+                .Include(fc => fc.Steps)
+                    .ThenInclude(s => s.DisplayConditionGroups)
+                        .ThenInclude(g => g.Conditions)
                 .Include(fc => fc.Steps)
                     .ThenInclude(s => s.ChildFormSteps)
                         .ThenInclude(cs => cs.Fields)
-                            .ThenInclude(f => f.Validations)
-                .ToListAsync();
+                            .ThenInclude(f => f.Validations);
+        }
+
+        public async Task<IEnumerable<FormConfiguration>> GetAllAsync()
+        {
+            return await WithFullGraph(_context.FormConfigurations).ToListAsync();
         }
 
         public async Task<FormConfiguration?> GetByIdAsync(int id)
         {
-            return await _context.FormConfigurations
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.Fields)
-                        .ThenInclude(f => f.Validations)
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.StepConditions)
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.ChildFormSteps)
-                        .ThenInclude(cs => cs.Fields)
-                            .ThenInclude(f => f.Validations)
+            return await WithFullGraph(_context.FormConfigurations)
                 .FirstOrDefaultAsync(fc => fc.Id == id);
         }
 
         public async Task<IEnumerable<FormConfiguration>> GetAllByEntityTypeNameAsync(string entityName, bool defaultOnly = false)
         {
-            var query = _context.FormConfigurations
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.Fields)
-                        .ThenInclude(f => f.Validations)
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.StepConditions)
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.ChildFormSteps)
-                        .ThenInclude(cs => cs.Fields)
-                            .ThenInclude(f => f.Validations)
+            var query = WithFullGraph(_context.FormConfigurations)
                 .Where(fc => fc.EntityTypeName == entityName);
 
             if (defaultOnly)
@@ -70,54 +65,33 @@ namespace knkwebapi_v2.Repositories
 
         public async Task<IEnumerable<FormConfiguration>> GetAllByEntityTypeNameAllAsync(string entityName)
         {
-            return await _context.FormConfigurations
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.Fields)
-                        .ThenInclude(f => f.Validations)
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.StepConditions)
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.ChildFormSteps)
-                        .ThenInclude(cs => cs.Fields)
-                            .ThenInclude(f => f.Validations)
+            return await WithFullGraph(_context.FormConfigurations)
                 .Where(fc => fc.EntityTypeName == entityName)
                 .ToListAsync();
         }
 
         public async Task<FormConfiguration?> GetDefaultByEntityTypeNameAsync(string entityName)
         {
-            return await _context.FormConfigurations
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.Fields)
-                        .ThenInclude(f => f.Validations)
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.StepConditions)
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.ChildFormSteps)
-                        .ThenInclude(cs => cs.Fields)
-                            .ThenInclude(f => f.Validations)
+            return await WithFullGraph(_context.FormConfigurations)
                 .FirstOrDefaultAsync(fc => fc.EntityTypeName == entityName && fc.IsDefault);
         }
 
         public async Task AddAsync(FormConfiguration config)
         {
+            var pendingGroups = DetachDisplayConditionGroups(config);
+
             await _context.FormConfigurations.AddAsync(config);
+            await _context.SaveChangesAsync();
+
+            RestoreDisplayConditionGroups(pendingGroups);
+            ResolveDisplayConditionSourceFields(config);
             await _context.SaveChangesAsync();
         }
 
         public async Task UpdateAsync(FormConfiguration config)
         {
             // Load existing tracked graph
-            var existing = await _context.FormConfigurations
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.Fields)
-                        .ThenInclude(f => f.Validations)
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.StepConditions)
-                .Include(fc => fc.Steps)
-                    .ThenInclude(s => s.ChildFormSteps)
-                        .ThenInclude(cs => cs.Fields)
-                            .ThenInclude(f => f.Validations)
+            var existing = await WithFullGraph(_context.FormConfigurations)
                 .FirstOrDefaultAsync(fc => fc.Id == config.Id);
 
             if (existing == null)
@@ -430,6 +404,155 @@ namespace knkwebapi_v2.Repositories
             }
 
             await _context.SaveChangesAsync();
+
+            // Second pass: display conditions reference fields by GUID, so they can only be
+            // resolved once every field in this save has a database id.
+            SyncDisplayConditionGroups(existing, config);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Temporarily removes the condition groups from a brand new graph so EF does not try to
+        /// insert them with an unresolved SourceFormFieldId.
+        /// </summary>
+        private static List<(FormStep? Step, FormField? Field, List<DisplayConditionGroup> Groups)> DetachDisplayConditionGroups(FormConfiguration config)
+        {
+            var pending = new List<(FormStep?, FormField?, List<DisplayConditionGroup>)>();
+
+            foreach (var step in config.Steps)
+            {
+                if (step.DisplayConditionGroups.Count > 0)
+                {
+                    pending.Add((step, null, step.DisplayConditionGroups.ToList()));
+                    step.DisplayConditionGroups.Clear();
+                }
+
+                foreach (var field in step.Fields)
+                {
+                    if (field.DisplayConditionGroups.Count > 0)
+                    {
+                        pending.Add((null, field, field.DisplayConditionGroups.ToList()));
+                        field.DisplayConditionGroups.Clear();
+                    }
+                }
+            }
+
+            return pending;
+        }
+
+        private static void RestoreDisplayConditionGroups(List<(FormStep? Step, FormField? Field, List<DisplayConditionGroup> Groups)> pending)
+        {
+            foreach (var (step, field, groups) in pending)
+            {
+                foreach (var group in groups)
+                {
+                    if (step != null)
+                    {
+                        group.TargetType = DisplayConditionTargetType.FormStep;
+                        group.TargetStepId = step.Id;
+                        group.TargetFieldId = null;
+                        step.DisplayConditionGroups.Add(group);
+                    }
+                    else if (field != null)
+                    {
+                        group.TargetType = DisplayConditionTargetType.FormField;
+                        group.TargetFieldId = field.Id;
+                        group.TargetStepId = null;
+                        field.DisplayConditionGroups.Add(group);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Replaces the persisted condition groups of every step and field with the incoming set.
+        /// Groups are cheap value-like configuration, so a clear-and-rebuild keeps the merge simple
+        /// and avoids stale rows pointing at removed fields.
+        /// </summary>
+        private void SyncDisplayConditionGroups(FormConfiguration existing, FormConfiguration incoming)
+        {
+            var incomingStepsByGuid = incoming.Steps.ToDictionary(s => s.StepGuid);
+
+            foreach (var step in existing.Steps)
+            {
+                if (!incomingStepsByGuid.TryGetValue(step.StepGuid, out var incomingStep)) continue;
+
+                ReplaceGroups(step.DisplayConditionGroups, incomingStep.DisplayConditionGroups,
+                    DisplayConditionTargetType.FormStep, step.Id, null);
+
+                var incomingFieldsByGuid = incomingStep.Fields
+                    .GroupBy(f => f.FieldGuid)
+                    .ToDictionary(g => g.Key, g => g.First());
+
+                foreach (var field in step.Fields)
+                {
+                    if (!incomingFieldsByGuid.TryGetValue(field.FieldGuid, out var incomingField)) continue;
+
+                    ReplaceGroups(field.DisplayConditionGroups, incomingField.DisplayConditionGroups,
+                        DisplayConditionTargetType.FormField, null, field.Id);
+                }
+            }
+
+            ResolveDisplayConditionSourceFields(existing);
+        }
+
+        private void ReplaceGroups(
+            List<DisplayConditionGroup> current,
+            List<DisplayConditionGroup> incoming,
+            DisplayConditionTargetType targetType,
+            int? targetStepId,
+            int? targetFieldId)
+        {
+            foreach (var stale in current.ToList())
+            {
+                _context.DisplayConditionGroups.Remove(stale);
+            }
+            current.Clear();
+
+            foreach (var group in incoming)
+            {
+                current.Add(new DisplayConditionGroup
+                {
+                    TargetType = targetType,
+                    TargetStepId = targetStepId,
+                    TargetFieldId = targetFieldId,
+                    InnerLogic = group.InnerLogic,
+                    CombineWithPreviousLogic = group.CombineWithPreviousLogic,
+                    Order = group.Order,
+                    IsActive = group.IsActive,
+                    Conditions = group.Conditions.Select(c => new DisplayCondition
+                    {
+                        SourceFormFieldGuid = c.SourceFormFieldGuid,
+                        Operator = c.Operator,
+                        ValueJson = c.ValueJson,
+                        Order = c.Order
+                    }).ToList()
+                });
+            }
+        }
+
+        private static void ResolveDisplayConditionSourceFields(FormConfiguration config)
+        {
+            var fieldIdByGuid = config.Steps
+                .SelectMany(s => s.Fields)
+                .GroupBy(f => f.FieldGuid)
+                .ToDictionary(g => g.Key, g => g.First().Id);
+
+            var groups = config.Steps.SelectMany(s => s.DisplayConditionGroups)
+                .Concat(config.Steps.SelectMany(s => s.Fields).SelectMany(f => f.DisplayConditionGroups));
+
+            foreach (var condition in groups.SelectMany(g => g.Conditions))
+            {
+                if (fieldIdByGuid.TryGetValue(condition.SourceFormFieldGuid, out var fieldId))
+                {
+                    condition.SourceFormFieldId = fieldId;
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        $"Display condition references unknown source field '{condition.SourceFormFieldGuid}'.");
+                }
+            }
         }
 
         public async Task DeleteAsync(int id)

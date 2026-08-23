@@ -46,6 +46,53 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.ErrorMessage, o => o.MapFrom(s => s.ErrorMessage))
                 .ForMember(d => d.IsActive, o => o.Ignore());
 
+            // DisplayCondition
+            CreateMap<DisplayConditionDto, DisplayCondition>()
+                .ForMember(d => d.Id, o => o.MapFrom(s => ToInt(s.Id)))
+                .ForMember(d => d.DisplayConditionGroupId, o => o.MapFrom(s => ToInt(s.DisplayConditionGroupId) ?? 0))
+                .ForMember(d => d.SourceFormFieldGuid, o => o.MapFrom(s => string.IsNullOrWhiteSpace(s.SourceFieldGuid) ? Guid.Empty : Guid.Parse(s.SourceFieldGuid)))
+                .ForMember(d => d.SourceFormFieldId, o => o.MapFrom(s => ToInt(s.SourceFormFieldId) ?? 0))
+                .ForMember(d => d.Operator, o => o.MapFrom(s => s.Operator))
+                .ForMember(d => d.ValueJson, o => o.MapFrom(s => string.IsNullOrWhiteSpace(s.ValueJson) ? "null" : s.ValueJson))
+                .ForMember(d => d.Order, o => o.MapFrom(s => s.Order))
+                .ForMember(d => d.DisplayConditionGroup, o => o.Ignore())
+                .ForMember(d => d.SourceFormField, o => o.Ignore());
+
+            CreateMap<DisplayCondition, DisplayConditionDto>()
+                .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.ToString()))
+                .ForMember(d => d.DisplayConditionGroupId, o => o.MapFrom(s => s.DisplayConditionGroupId.ToString()))
+                .ForMember(d => d.SourceFormFieldId, o => o.MapFrom(s => s.SourceFormFieldId.ToString()))
+                .ForMember(d => d.SourceFieldGuid, o => o.MapFrom(s => s.SourceFormFieldGuid.ToString()))
+                .ForMember(d => d.Operator, o => o.MapFrom(s => s.Operator))
+                .ForMember(d => d.ValueJson, o => o.MapFrom(s => s.ValueJson))
+                .ForMember(d => d.Order, o => o.MapFrom(s => s.Order));
+
+            // DisplayConditionGroup
+            CreateMap<DisplayConditionGroupDto, DisplayConditionGroup>()
+                .ForMember(d => d.Id, o => o.MapFrom(s => ToInt(s.Id)))
+                .ForMember(d => d.TargetType, o => o.MapFrom(s => s.TargetType))
+                .ForMember(d => d.InnerLogic, o => o.MapFrom(s => s.InnerLogic))
+                .ForMember(d => d.CombineWithPreviousLogic, o => o.MapFrom(s => s.CombineWithPreviousLogic))
+                .ForMember(d => d.Order, o => o.MapFrom(s => s.Order))
+                .ForMember(d => d.IsActive, o => o.MapFrom(s => s.IsActive))
+                .ForMember(d => d.Conditions, o => o.MapFrom(s => s.Conditions.OrderBy(c => c.Order)))
+                .ForMember(d => d.TargetStepId, o => o.Ignore())
+                .ForMember(d => d.TargetStep, o => o.Ignore())
+                .ForMember(d => d.TargetFieldId, o => o.Ignore())
+                .ForMember(d => d.TargetField, o => o.Ignore())
+                .ForMember(d => d.ParentGroupId, o => o.Ignore())
+                .ForMember(d => d.ParentGroup, o => o.Ignore())
+                .ForMember(d => d.ChildGroups, o => o.Ignore());
+
+            CreateMap<DisplayConditionGroup, DisplayConditionGroupDto>()
+                .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.ToString()))
+                .ForMember(d => d.TargetType, o => o.MapFrom(s => s.TargetType))
+                .ForMember(d => d.InnerLogic, o => o.MapFrom(s => s.InnerLogic))
+                .ForMember(d => d.CombineWithPreviousLogic, o => o.MapFrom(s => s.CombineWithPreviousLogic))
+                .ForMember(d => d.Order, o => o.MapFrom(s => s.Order))
+                .ForMember(d => d.IsActive, o => o.MapFrom(s => s.IsActive))
+                .ForMember(d => d.Conditions, o => o.MapFrom(s => s.Conditions.OrderBy(c => c.Order)));
+
             // FormField
             CreateMap<FormFieldDto, FormField>()
                 .ForMember(d => d.Id, o => o.MapFrom(s => ToInt(s.Id)))
@@ -68,6 +115,9 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.SourceFieldId, o => o.MapFrom(s => ToInt(s.SourceFieldId)))
                 .ForMember(d => d.IsLinkedToSource, o => o.MapFrom(s => s.IsLinkedToSource))
                 .ForMember(d => d.Validations, o => o.MapFrom(s => s.Validations))
+                .ForMember(d => d.EnumType, o => o.MapFrom(s => s.EnumType))
+                .ForMember(d => d.DisplayConditionGroups, o => o.MapFrom(s => s.DisplayConditionGroups.OrderBy(g => g.Order)))
+                .ForMember(d => d.UsedInDisplayConditions, o => o.Ignore())
                 // ignore DTO.Order here; handled at step mapping level via FieldOrderJson
                 // ignore compatibility issues; calculated at runtime
                 .ForMember(d => d.DependentFields, o => o.Ignore());
@@ -93,6 +143,8 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.SourceFieldId, o => o.MapFrom(s => s.SourceFieldId.HasValue ? s.SourceFieldId.Value.ToString() : null))
                 .ForMember(d => d.IsLinkedToSource, o => o.MapFrom(s => s.IsLinkedToSource))
                 .ForMember(d => d.Validations, o => o.MapFrom(s => s.Validations))
+                .ForMember(d => d.EnumType, o => o.MapFrom(s => s.EnumType))
+                .ForMember(d => d.DisplayConditionGroups, o => o.MapFrom(s => s.DisplayConditionGroups.OrderBy(g => g.Order)))
                 .ForMember(d => d.Order, o => o.Ignore())
                 // compatibility issues handled at runtime by service
                 .ForMember(d => d.HasCompatibilityIssues, o => o.MapFrom(s => false))
@@ -116,6 +168,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.ChildFormSteps, o => o.MapFrom(s => s.ChildFormSteps))
                 .ForMember(d => d.Fields, o => o.MapFrom(s => s.Fields.OrderBy(f => f.Order)))
                 .ForMember(d => d.StepConditions, o => o.MapFrom(s => s.Conditions))
+                .ForMember(d => d.DisplayConditionGroups, o => o.MapFrom(s => s.DisplayConditionGroups.OrderBy(g => g.Order)))
                 .AfterMap((src, dest) =>
                 {
                     if (!string.IsNullOrWhiteSpace(src.FieldOrderJson))
@@ -148,6 +201,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(d => d.ChildFormSteps, o => o.MapFrom(s => s.ChildFormSteps))
                 .ForMember(d => d.Fields, o => o.MapFrom(s => s.Fields))
                 .ForMember(d => d.Conditions, o => o.MapFrom(s => s.StepConditions))
+                .ForMember(d => d.DisplayConditionGroups, o => o.MapFrom(s => s.DisplayConditionGroups.OrderBy(g => g.Order)))
                 // compatibility issues handled at runtime
                 .ForMember(d => d.HasCompatibilityIssues, o => o.MapFrom(s => false))
                 .ForMember(d => d.StepLevelIssues, o => o.MapFrom(s => (List<string>?)null));

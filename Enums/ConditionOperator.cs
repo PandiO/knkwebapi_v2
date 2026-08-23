@@ -11,6 +11,10 @@ namespace knkwebapi_v2.Enums
         In,
         NotIn,
         And,
-        Or
+        Or,
+        // Appended so existing ordinal values stay stable.
+        Contains,
+        IsEmpty,
+        IsNotEmpty
     }
 }

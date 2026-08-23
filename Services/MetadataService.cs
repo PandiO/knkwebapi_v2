@@ -364,6 +364,14 @@ namespace knkwebapi_v2.Services
                     DefaultValue = defaultValueStr
                 };
 
+                var enumType = underlyingType ?? fieldType;
+                if (enumType.IsEnum)
+                {
+                    fieldMetadata.IsEnum = true;
+                    fieldMetadata.EnumTypeName = enumType.Name;
+                    fieldMetadata.EnumValues = Enum.GetNames(enumType).ToList();
+                }
+
                 fields.Add(fieldMetadata);
             }
 
