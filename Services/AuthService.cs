@@ -298,7 +298,18 @@ namespace knkwebapi_v2.Services
             });
 
             var resetUrl = BuildResetUrl(rawToken);
-            await _passwordResetDeliveryService.SendPasswordResetAsync(user.Email!, user.Username, resetUrl);
+            try
+            {
+                await _passwordResetDeliveryService.SendPasswordResetAsync(user.Email!, user.Username, resetUrl);
+            }
+            catch (Exception ex)
+            {
+                // Let this bubble up as a 500 so the frontend reports a real failure instead of a
+                // false "reset instructions sent" message - the token is already persisted above,
+                // but the user was never notified, so masking the failure would be misleading.
+                _logger.LogError(ex, "Failed to deliver password reset email for user {UserId} ({Email})", user.Id, normalizedEmail);
+                throw;
+            }
 
             _logger.LogInformation(
                 "Password reset token issued for user {UserId} from {Ip} ({UserAgent})",
