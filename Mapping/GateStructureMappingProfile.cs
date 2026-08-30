@@ -187,7 +187,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.AllowEntry, opt => opt.MapFrom(src => src.AllowEntry))
                 .ForMember(dest => dest.AllowExit, opt => opt.MapFrom(src => src.AllowExit))
-                .ForMember(dest => dest.WgRegionId, opt => opt.MapFrom(src => src.WgRegionId))
+                .ForMember(dest => dest.WgRegionId, opt => opt.MapFrom(src => src.WgRegionId ?? string.Empty))
                 .ForMember(dest => dest.LocationId, opt => opt.MapFrom(src => src.LocationId))
                 .ForMember(dest => dest.StreetId, opt => opt.MapFrom(src => src.StreetId))
                 .ForMember(dest => dest.DistrictId, opt => opt.MapFrom(src => src.DistrictId))
