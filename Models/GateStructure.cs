@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using knkwebapi_v2.Attributes;
 
@@ -25,7 +26,10 @@ public class GateStructure : Structure
     [RelatedEntityField(typeof(MinecraftMaterialRef))]
     public MinecraftMaterialRef? IconMaterial { get; set; } = null;
     
+    [DefaultValue("")]
     public string RegionClosedId { get; set; } = string.Empty;
+
+    [DefaultValue("")]
     public string RegionOpenedId { get; set; } = string.Empty;
 
     // === Gate Type & Animation Configuration ===

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -440,6 +441,12 @@ namespace knkwebapi_v2.Services
         /// </summary>
         private (bool HasDefault, string? DefaultValue) ExtractDefaultValue(PropertyInfo property, Type declaringType)
         {
+            var explicitDefault = property.GetCustomAttribute<DefaultValueAttribute>();
+            if (explicitDefault != null)
+            {
+                return (true, explicitDefault.Value?.ToString());
+            }
+
             try
             {
                 // Try to instantiate the type and check if the property has a value
