@@ -123,6 +123,12 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("geometryDepth")]
         public int GeometryDepth { get; set; }
 
+        [JsonPropertyName("motionDistanceBlocks")]
+        public int MotionDistanceBlocks { get; set; }
+
+        [JsonPropertyName("clipToGeometryBounds")]
+        public bool ClipToGeometryBounds { get; set; }
+
         // === Geometry Definition (FLOOD_FILL mode) ===
         [JsonPropertyName("seedBlocks")]
         public string SeedBlocks { get; set; } = string.Empty;
@@ -323,6 +329,12 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("geometryDepth")]
         public int GeometryDepth { get; set; }
+
+        [JsonPropertyName("motionDistanceBlocks")]
+        public int MotionDistanceBlocks { get; set; }
+
+        [JsonPropertyName("clipToGeometryBounds")]
+        public bool ClipToGeometryBounds { get; set; }
 
         [JsonPropertyName("seedBlocks")]
         public string SeedBlocks { get; set; } = string.Empty;
@@ -589,6 +601,12 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("geometryDepth")]
         public int? GeometryDepth { get; set; }
+
+        [JsonPropertyName("motionDistanceBlocks")]
+        public int? MotionDistanceBlocks { get; set; }
+
+        [JsonPropertyName("clipToGeometryBounds")]
+        public bool? ClipToGeometryBounds { get; set; }
 
         // === Geometry Definition (FLOOD_FILL mode) ===
         [JsonPropertyName("seedBlocks")]

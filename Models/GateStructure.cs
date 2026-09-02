@@ -68,6 +68,13 @@ public class GateStructure : Structure
     public int GeometryHeight { get; set; } = 0;
     public int GeometryDepth { get; set; } = 0;
 
+    // Blocks travelled between closed and open. 0 falls back to the axis matching MotionType.
+    public int MotionDistanceBlocks { get; set; } = 0;
+
+    // Hides blocks that animate outside the Width/Height/Depth box, so a door can retract
+    // into a housing and appear smaller when open than when closed.
+    public bool ClipToGeometryBounds { get; set; } = false;
+
     // === Geometry Definition (FLOOD_FILL mode) ===
     [MaxLength(2000)]
     public string SeedBlocks { get; set; } = string.Empty;  // JSON array: [{x,y,z}, ...]

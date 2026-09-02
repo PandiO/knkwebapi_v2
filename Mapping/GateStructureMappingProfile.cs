@@ -93,6 +93,8 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.GeometryWidth, opt => opt.MapFrom(src => src.GeometryWidth))
                 .ForMember(dest => dest.GeometryHeight, opt => opt.MapFrom(src => src.GeometryHeight))
                 .ForMember(dest => dest.GeometryDepth, opt => opt.MapFrom(src => src.GeometryDepth))
+                .ForMember(dest => dest.MotionDistanceBlocks, opt => opt.MapFrom(src => src.MotionDistanceBlocks))
+                .ForMember(dest => dest.ClipToGeometryBounds, opt => opt.MapFrom(src => src.ClipToGeometryBounds))
                 
                 // Geometry Definition (FLOOD_FILL mode)
                 .ForMember(dest => dest.SeedBlocks, opt => opt.MapFrom(src => src.SeedBlocks))
@@ -221,6 +223,8 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.GeometryWidth, opt => opt.MapFrom(src => src.GeometryWidth ?? 0))
                 .ForMember(dest => dest.GeometryHeight, opt => opt.MapFrom(src => src.GeometryHeight ?? 0))
                 .ForMember(dest => dest.GeometryDepth, opt => opt.MapFrom(src => src.GeometryDepth ?? 0))
+                .ForMember(dest => dest.MotionDistanceBlocks, opt => opt.MapFrom(src => src.MotionDistanceBlocks ?? 0))
+                .ForMember(dest => dest.ClipToGeometryBounds, opt => opt.MapFrom(src => src.ClipToGeometryBounds ?? false))
                 
                 // Geometry (FLOOD_FILL)
                 .ForMember(dest => dest.SeedBlocks, opt => opt.MapFrom(src => src.SeedBlocks ?? string.Empty))
