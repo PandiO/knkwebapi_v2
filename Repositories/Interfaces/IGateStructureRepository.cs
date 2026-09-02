@@ -19,6 +19,7 @@ namespace knkwebapi_v2.Repositories
         Task<GateStructure?> FindGateByRegionAsync(string regionId);
         Task UpdateGateHealthAsync(int id, double newHealth);
         Task UpdateGateStateAsync(int id, bool isOpened, bool isDestroyed);
+        Task UpdateGateOperationalSettingsAsync(int id, bool isActive, bool isInvincible);
         
         // Block snapshot operations
         Task<IEnumerable<GateBlockSnapshot>> GetBlockSnapshotsByGateIdAsync(int gateId);

@@ -115,6 +115,17 @@ namespace knkwebapi_v2.Repositories
             }
         }
 
+        public async Task UpdateGateOperationalSettingsAsync(int id, bool isActive, bool isInvincible)
+        {
+            var gate = await _context.Set<GateStructure>().FindAsync(id);
+            if (gate != null)
+            {
+                gate.IsActive = isActive;
+                gate.IsInvincible = isInvincible;
+                await _context.SaveChangesAsync();
+            }
+        }
+
         // Block snapshot operations
         public async Task<IEnumerable<GateBlockSnapshot>> GetBlockSnapshotsByGateIdAsync(int gateId)
         {

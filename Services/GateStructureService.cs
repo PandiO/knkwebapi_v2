@@ -173,6 +173,18 @@ namespace knkwebapi_v2.Services
             await _repo.UpdateGateStateAsync(id, isOpened, isDestroyed);
         }
 
+        public async Task UpdateOperationalSettingsAsync(int id, bool isActive, bool isInvincible)
+        {
+            if (id <= 0)
+                throw new ArgumentException("Invalid id.", nameof(id));
+
+            var existing = await _repo.GetByIdAsync(id);
+            if (existing == null)
+                throw new KeyNotFoundException($"GateStructure with id {id} not found.");
+
+            await _repo.UpdateGateOperationalSettingsAsync(id, isActive, isInvincible);
+        }
+
         public async Task<IEnumerable<GateBlockSnapshotDto>> GetBlockSnapshotsAsync(int gateId)
         {
             if (gateId <= 0)

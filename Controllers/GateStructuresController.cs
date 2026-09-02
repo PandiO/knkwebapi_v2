@@ -198,6 +198,27 @@ namespace KnKWebAPI.Controllers
             }
         }
 
+        [HttpPut("{id:int}/operational-settings")]
+        public async Task<IActionResult> UpdateOperationalSettings(int id, [FromBody] GateOperationalSettingsUpdateDto request)
+        {
+            if (id <= 0) return BadRequest("Invalid id.");
+            if (request == null) return BadRequest();
+
+            try
+            {
+                await _service.UpdateOperationalSettingsAsync(id, request.IsActive, request.IsInvincible);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("{id:int}/snapshots")]
         public async Task<IActionResult> GetSnapshots(int id)
         {

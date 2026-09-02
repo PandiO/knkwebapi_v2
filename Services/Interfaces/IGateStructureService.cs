@@ -19,6 +19,7 @@ namespace knkwebapi_v2.Services
         Task<IEnumerable<GateStructureDto>> GetActiveGatesAsync();
         Task UpdateHealthAsync(int id, double newHealth);
         Task UpdateStateAsync(int id, bool isOpened, bool isDestroyed);
+        Task UpdateOperationalSettingsAsync(int id, bool isActive, bool isInvincible);
         
         // Block snapshot operations
         Task<IEnumerable<GateBlockSnapshotDto>> GetBlockSnapshotsAsync(int gateId);

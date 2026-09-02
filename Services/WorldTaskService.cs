@@ -13,12 +13,18 @@ namespace knkwebapi_v2.Services
     {
         private readonly IWorldTaskRepository _taskRepo;
         private readonly IWorkflowRepository _workflowRepo;
+        private readonly IGateStructureService _gateStructureService;
         private readonly IMapper _mapper;
 
-        public WorldTaskService(IWorldTaskRepository taskRepo, IWorkflowRepository workflowRepo, IMapper mapper)
+        public WorldTaskService(
+            IWorldTaskRepository taskRepo,
+            IWorkflowRepository workflowRepo,
+            IGateStructureService gateStructureService,
+            IMapper mapper)
         {
             _taskRepo = taskRepo;
             _workflowRepo = workflowRepo;
+            _gateStructureService = gateStructureService;
             _mapper = mapper;
         }
 
@@ -198,6 +204,20 @@ namespace knkwebapi_v2.Services
                 throw new InvalidOperationException($"Task validation failed: {validationResult.Message}");
             }
 
+            if (entity.TaskType == WorldTaskTypes.GateBlockScan)
+            {
+                var scanError = await TryApplyGateBlockScanResultAsync(entity, dto.OutputJson);
+                if (scanError != null)
+                {
+                    entity.Status = "Failed";
+                    entity.ErrorMessage = scanError;
+                    entity.UpdatedAt = DateTime.UtcNow;
+                    await _taskRepo.UpdateAsync(entity);
+
+                    throw new InvalidOperationException($"Gate block scan result could not be applied: {scanError}");
+                }
+            }
+
             entity.Status = "Completed";
             entity.OutputJson = dto.OutputJson;
             entity.CompletedAt = DateTime.UtcNow;
@@ -314,6 +334,76 @@ namespace knkwebapi_v2.Services
             {
                 var value = TryParseFieldName(candidate);
                 if (!string.IsNullOrWhiteSpace(value)) return value;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Parses a GateBlockScan result and persists the scanned snapshots on the target gate.
+        /// Returns null on success, or an error message if the result should fail the task instead.
+        /// </summary>
+        private async Task<string?> TryApplyGateBlockScanResultAsync(WorldTask entity, string? outputJson)
+        {
+            if (string.IsNullOrWhiteSpace(outputJson))
+                return "GateBlockScan task completed without an output payload.";
+
+            GateBlockScanResultDto? result;
+            try
+            {
+                result = JsonSerializer.Deserialize<GateBlockScanResultDto>(outputJson);
+            }
+            catch (JsonException ex)
+            {
+                return $"Could not parse GateBlockScan result: {ex.Message}";
+            }
+
+            if (result == null)
+                return "GateBlockScan result payload was empty.";
+
+            if (result.Status == GateBlockScanStatus.Failed)
+                return result.ErrorMessage ?? "Gate block scan reported failure.";
+
+            var gateStructureId = ExtractGateStructureId(entity.InputJson);
+            if (gateStructureId is null || gateStructureId <= 0)
+                return "GateBlockScan task InputJson did not contain a valid gateStructureId.";
+
+            if (result.Snapshots.Count > 0)
+            {
+                try
+                {
+                    await _gateStructureService.ClearBlockSnapshotsAsync(gateStructureId.Value);
+                    await _gateStructureService.AddBlockSnapshotsAsync(gateStructureId.Value, result.Snapshots);
+                }
+                catch (Exception ex) when (ex is ArgumentException or KeyNotFoundException)
+                {
+                    return $"Could not persist gate block snapshots: {ex.Message}";
+                }
+            }
+
+            return null;
+        }
+
+        private static int? ExtractGateStructureId(string? inputJson)
+        {
+            if (string.IsNullOrWhiteSpace(inputJson)) return null;
+
+            try
+            {
+                using var doc = JsonDocument.Parse(inputJson);
+                if (doc.RootElement.ValueKind != JsonValueKind.Object) return null;
+
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                {
+                    if (string.Equals(prop.Name, "gateStructureId", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return prop.Value.TryGetInt32(out var value) ? value : null;
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+                // Ignore malformed InputJson; caller treats this as "not found".
             }
 
             return null;

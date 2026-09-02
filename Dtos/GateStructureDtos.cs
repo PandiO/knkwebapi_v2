@@ -443,6 +443,15 @@ namespace knkwebapi_v2.Dtos
         public bool IsDestroyed { get; set; }
     }
 
+    public class GateOperationalSettingsUpdateDto
+    {
+        [JsonPropertyName("isActive")]
+        public bool IsActive { get; set; }
+
+        [JsonPropertyName("isInvincible")]
+        public bool IsInvincible { get; set; }
+    }
+
     public class GateStructureNavDto
     {
         [JsonPropertyName("id")]
