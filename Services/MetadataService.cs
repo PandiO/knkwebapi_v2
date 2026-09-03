@@ -368,6 +368,10 @@ namespace knkwebapi_v2.Services
                 var enumType = underlyingType ?? fieldType;
                 if (enumType.IsEnum)
                 {
+                    // GetFriendlyTypeName has no enum branch, so it would otherwise return the raw
+                    // CLR enum name (e.g. "GateInfoDisplayMode"), which the frontend's mapFieldType
+                    // doesn't recognize and FormTemplateValidationService doesn't treat as an enum.
+                    fieldMetadata.FieldType = "Enum";
                     fieldMetadata.IsEnum = true;
                     fieldMetadata.EnumTypeName = enumType.Name;
                     fieldMetadata.EnumValues = Enum.GetNames(enumType).ToList();
