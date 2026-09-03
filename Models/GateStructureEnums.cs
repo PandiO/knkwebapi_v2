@@ -35,3 +35,10 @@ public enum HealthDisplayMode
     NEVER,
     SIEGE_ONLY
 }
+
+public enum GateInfoDisplayMode
+{
+    ALWAYS,
+    NEVER,
+    SIEGE_ONLY
+}

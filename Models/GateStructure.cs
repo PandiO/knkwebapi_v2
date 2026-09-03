@@ -144,8 +144,12 @@ public class GateStructure : Structure
     public bool ShowHealthDisplay { get; set; } = true;
     
     public HealthDisplayMode HealthDisplayMode { get; set; } = HealthDisplayMode.ALWAYS;
-    
+
     public int HealthDisplayYOffset { get; set; } = 2;
+
+    public GateInfoDisplayMode GateNameDisplayMode { get; set; } = GateInfoDisplayMode.ALWAYS;
+
+    public GateInfoDisplayMode StatusDisplayMode { get; set; } = GateInfoDisplayMode.ALWAYS;
 
     // === Siege Integration ===
     public bool IsOverridable { get; set; } = true;

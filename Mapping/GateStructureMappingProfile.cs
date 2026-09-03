@@ -135,7 +135,9 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.ShowHealthDisplay, opt => opt.MapFrom(src => src.ShowHealthDisplay))
                 .ForMember(dest => dest.HealthDisplayMode, opt => opt.MapFrom(src => src.HealthDisplayMode))
                 .ForMember(dest => dest.HealthDisplayYOffset, opt => opt.MapFrom(src => src.HealthDisplayYOffset))
-                
+                .ForMember(dest => dest.GateNameDisplayMode, opt => opt.MapFrom(src => src.GateNameDisplayMode))
+                .ForMember(dest => dest.StatusDisplayMode, opt => opt.MapFrom(src => src.StatusDisplayMode))
+
                 // Siege Integration
                 .ForMember(dest => dest.IsOverridable, opt => opt.MapFrom(src => src.IsOverridable))
                 .ForMember(dest => dest.AnimateDuringSiege, opt => opt.MapFrom(src => src.AnimateDuringSiege))
@@ -260,7 +262,9 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.ShowHealthDisplay, opt => opt.MapFrom(src => src.ShowHealthDisplay ?? true))
                 .ForMember(dest => dest.HealthDisplayMode, opt => opt.MapFrom(src => src.HealthDisplayMode))
                 .ForMember(dest => dest.HealthDisplayYOffset, opt => opt.MapFrom(src => src.HealthDisplayYOffset ?? 2))
-                
+                .ForMember(dest => dest.GateNameDisplayMode, opt => opt.MapFrom(src => src.GateNameDisplayMode))
+                .ForMember(dest => dest.StatusDisplayMode, opt => opt.MapFrom(src => src.StatusDisplayMode))
+
                 // Siege Integration
                 .ForMember(dest => dest.IsOverridable, opt => opt.MapFrom(src => src.IsOverridable ?? true))
                 .ForMember(dest => dest.AnimateDuringSiege, opt => opt.MapFrom(src => src.AnimateDuringSiege ?? true))

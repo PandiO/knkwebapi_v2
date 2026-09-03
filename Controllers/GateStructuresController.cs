@@ -303,6 +303,16 @@ namespace KnKWebAPI.Controllers
                 return "Invalid HealthDisplayMode.";
             }
 
+            if (!Enum.IsDefined(typeof(GateInfoDisplayMode), gateStructureDto.GateNameDisplayMode))
+            {
+                return "Invalid GateNameDisplayMode.";
+            }
+
+            if (!Enum.IsDefined(typeof(GateInfoDisplayMode), gateStructureDto.StatusDisplayMode))
+            {
+                return "Invalid StatusDisplayMode.";
+            }
+
             if (gateStructureDto.AnimationDurationTicks.HasValue && gateStructureDto.AnimationDurationTicks <= 0)
             {
                 return "AnimationDurationTicks must be greater than 0.";

@@ -216,6 +216,14 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("healthDisplayYOffset")]
         public int HealthDisplayYOffset { get; set; }
 
+        [JsonPropertyName("gateNameDisplayMode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GateInfoDisplayMode GateNameDisplayMode { get; set; }
+
+        [JsonPropertyName("statusDisplayMode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GateInfoDisplayMode StatusDisplayMode { get; set; }
+
         // === Siege Integration ===
         [JsonPropertyName("isOverridable")]
         public bool IsOverridable { get; set; }
@@ -694,6 +702,14 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("healthDisplayYOffset")]
         public int? HealthDisplayYOffset { get; set; }
+
+        [JsonPropertyName("gateNameDisplayMode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GateInfoDisplayMode GateNameDisplayMode { get; set; } = knkwebapi_v2.Models.GateInfoDisplayMode.ALWAYS;
+
+        [JsonPropertyName("statusDisplayMode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public GateInfoDisplayMode StatusDisplayMode { get; set; } = knkwebapi_v2.Models.GateInfoDisplayMode.ALWAYS;
 
         // === Siege Integration ===
         [JsonPropertyName("isOverridable")]
