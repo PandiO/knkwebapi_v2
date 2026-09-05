@@ -186,12 +186,18 @@ public class FieldValidationService : IFieldValidationService
             var formContextData = placeholders?.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value);
             
             var result = await validator.ValidateAsync(fieldValue, dependencyFieldValue, rule.ConfigJson, formContextData);
+            var failureReason = result.Metadata != null && result.Metadata.TryGetValue("failureReason", out var reasonObj)
+                ? reasonObj?.ToString()
+                : null;
             return new ValidationResultDto
             {
                 IsValid = result.IsValid,
                 IsBlocking = rule.IsBlocking,
-                Message = result.IsValid ? (rule.SuccessMessage ?? result.Message) : rule.ErrorMessage,
-                Placeholders = result.Placeholders ?? placeholders
+                Message = result.IsValid
+                    ? (rule.SuccessMessage ?? result.Message)
+                    : (failureReason != null ? result.Message : rule.ErrorMessage),
+                Placeholders = result.Placeholders ?? placeholders,
+                Metadata = failureReason != null ? new ValidationMetadataDto { ValidationType = rule.ValidationType, ExecutedAt = DateTime.UtcNow.ToString("o"), FailureReason = failureReason } : null
             };
         }
 
@@ -221,12 +227,18 @@ public class FieldValidationService : IFieldValidationService
             var formContextData = placeholders?.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value);
             
             var result = await validator.ValidateAsync(fieldValue, dependencyFieldValue, rule.ConfigJson, formContextData);
+            var failureReason = result.Metadata != null && result.Metadata.TryGetValue("failureReason", out var reasonObj)
+                ? reasonObj?.ToString()
+                : null;
             return new ValidationResultDto
             {
                 IsValid = result.IsValid,
                 IsBlocking = rule.IsBlocking,
-                Message = result.IsValid ? (rule.SuccessMessage ?? result.Message) : rule.ErrorMessage,
-                Placeholders = result.Placeholders ?? placeholders
+                Message = result.IsValid
+                    ? (rule.SuccessMessage ?? result.Message)
+                    : (failureReason != null ? result.Message : rule.ErrorMessage),
+                Placeholders = result.Placeholders ?? placeholders,
+                Metadata = failureReason != null ? new ValidationMetadataDto { ValidationType = rule.ValidationType, ExecutedAt = DateTime.UtcNow.ToString("o"), FailureReason = failureReason } : null
             };
         }
 

@@ -327,25 +327,51 @@ namespace knkwebapi_v2.Services
                     rule.ConfigJson,
                     formContextData);
 
+                // A validator can flag that it couldn't complete the check (e.g. the Minecraft
+                // plugin is unreachable) rather than reaching a genuine pass/fail verdict. In
+                // that case the validator's own message must be shown as-is — overwriting it
+                // with the rule's configured ErrorMessage would misrepresent a system/connectivity
+                // problem as a business-rule violation.
+                var failureReason = result.Metadata != null && result.Metadata.TryGetValue("failureReason", out var reasonObj)
+                    ? reasonObj?.ToString()
+                    : null;
+
                 var dto = new ValidationResultDto
                 {
                     IsValid = result.IsValid,
                     IsBlocking = rule.IsBlocking,
-                    Message = result.IsValid 
-                        ? (rule.SuccessMessage ?? result.Message) 
-                        : (rule.ErrorMessage ?? result.Message),
+                    Message = result.IsValid
+                        ? (rule.SuccessMessage ?? result.Message)
+                        : (failureReason != null ? result.Message : (rule.ErrorMessage ?? result.Message)),
                     Placeholders = MergePlaceholders(result.Placeholders, resolvedPlaceholders),
                     Metadata = new ValidationMetadataDto
                     {
                         ValidationType = rule.ValidationType,
                         ExecutedAt = DateTime.UtcNow.ToString("o"),
                         DependencyFieldName = rule.DependsOnField?.FieldName,
-                        DependencyValue = dependencyValue
+                        DependencyValue = dependencyValue,
+                        FailureReason = failureReason
                     }
                 };
-                
+
                 Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Validation method returned: isValid={dto.IsValid}, placeholders={dto.Placeholders?.Count ?? 0}");
                 return dto;
+            }
+            catch (RegionServiceUnavailableException ex)
+            {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Region service unavailable: {ex.Message}");
+                return new ValidationResultDto
+                {
+                    IsValid = false,
+                    IsBlocking = rule.IsBlocking,
+                    Message = $"Cannot verify this rule right now: {ex.Message}",
+                    Metadata = new ValidationMetadataDto
+                    {
+                        ValidationType = rule.ValidationType,
+                        ExecutedAt = DateTime.UtcNow.ToString("o"),
+                        FailureReason = "PluginUnreachable"
+                    }
+                };
             }
             catch (Exception ex)
             {

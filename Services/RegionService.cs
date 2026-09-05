@@ -30,6 +30,19 @@ namespace knkwebapi_v2.Services
         Task<bool> IsRegionContainedAsync(string parentRegionId, string childRegionId, bool requireFullContainment = true);
     }
 
+    /// <summary>
+    /// Thrown when the Minecraft plugin's region HTTP endpoint cannot be reached at all
+    /// (server/plugin offline, network unreachable, or request timed out) — distinct from
+    /// a definitive "not contained" result returned by a reachable plugin.
+    /// </summary>
+    public class RegionServiceUnavailableException : Exception
+    {
+        public RegionServiceUnavailableException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
+    }
+
     public class RegionService : IRegionService
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -84,6 +97,20 @@ namespace knkwebapi_v2.Services
                 _logger.LogWarning("Unexpected response when checking region containment for {RegionId}: {Content}", regionId, content);
                 return false;
             }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Plugin unreachable: {ex.Message}");
+                _logger.LogError(ex, "Minecraft plugin unreachable while checking if location is inside region {RegionId}", regionId);
+                throw new RegionServiceUnavailableException(
+                    $"Could not reach the Minecraft plugin at {_minecraftPluginBaseUrl}. Make sure the Minecraft server and knk-plugin-v2 are running.", ex);
+            }
+            catch (TaskCanceledException ex)
+            {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Plugin request timed out: {ex.Message}");
+                _logger.LogError(ex, "Minecraft plugin request timed out while checking if location is inside region {RegionId}", regionId);
+                throw new RegionServiceUnavailableException(
+                    $"Timed out waiting for the Minecraft plugin at {_minecraftPluginBaseUrl}. Make sure the Minecraft server and knk-plugin-v2 are running and responsive.", ex);
+            }
             catch (Exception ex)
             {
                 Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Exception: {ex.Message}");
@@ -131,6 +158,20 @@ namespace knkwebapi_v2.Services
                 Console.WriteLine("[VALIDATION_TRACE_BACKEND]       Unexpected response format, returning false");
                 _logger.LogWarning("Unexpected response when checking region containment {ParentRegionId}->{ChildRegionId}: {Content}", parentRegionId, childRegionId, content);
                 return false;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Plugin unreachable: {ex.Message}");
+                _logger.LogError(ex, "Minecraft plugin unreachable while checking region containment {ParentRegionId}->{ChildRegionId}", parentRegionId, childRegionId);
+                throw new RegionServiceUnavailableException(
+                    $"Could not reach the Minecraft plugin at {_minecraftPluginBaseUrl}. Make sure the Minecraft server and knk-plugin-v2 are running.", ex);
+            }
+            catch (TaskCanceledException ex)
+            {
+                Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Plugin request timed out: {ex.Message}");
+                _logger.LogError(ex, "Minecraft plugin request timed out while checking region containment {ParentRegionId}->{ChildRegionId}", parentRegionId, childRegionId);
+                throw new RegionServiceUnavailableException(
+                    $"Timed out waiting for the Minecraft plugin at {_minecraftPluginBaseUrl}. Make sure the Minecraft server and knk-plugin-v2 are running and responsive.", ex);
             }
             catch (Exception ex)
             {

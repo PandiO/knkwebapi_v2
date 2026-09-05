@@ -291,6 +291,14 @@ namespace knkwebapi_v2.Dtos
         
         [JsonPropertyName("dependencyValue")]
         public object? DependencyValue { get; set; }
+
+        /// <summary>
+        /// Set when validation could not be completed due to a system/infrastructure problem
+        /// (e.g. "PluginUnreachable") rather than a genuine business-rule failure. The frontend
+        /// uses this to distinguish "this value is invalid" from "we couldn't check this value".
+        /// </summary>
+        [JsonPropertyName("failureReason")]
+        public string? FailureReason { get; set; }
     }
     
     /// <summary>

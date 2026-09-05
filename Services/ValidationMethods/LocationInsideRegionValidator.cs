@@ -143,11 +143,25 @@ namespace knkwebapi_v2.Services.ValidationMethods
 
                 // Check if location is inside region
                 Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Checking region boundary: regionId={regionId}, x={location.X ?? 0}, z={location.Z ?? 0}, allowBoundary={config.AllowBoundary}");
-                var isInside = await _regionService.IsLocationInsideRegionAsync(
-                    regionId.ToString(),
-                    location.X ?? 0,
-                    location.Z ?? 0,
-                    config.AllowBoundary);
+                bool isInside;
+                try
+                {
+                    isInside = await _regionService.IsLocationInsideRegionAsync(
+                        regionId.ToString(),
+                        location.X ?? 0,
+                        location.Z ?? 0,
+                        config.AllowBoundary);
+                }
+                catch (RegionServiceUnavailableException ex)
+                {
+                    Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Region service unavailable: {ex.Message}");
+                    return new ValidationMethodResult
+                    {
+                        IsValid = false,
+                        Message = "Cannot verify the location's region boundary right now: the Minecraft server or knk-plugin-v2 is not running or unreachable. Start the server and plugin, then use \"Re-run validation\".",
+                        Metadata = new Dictionary<string, object> { { "failureReason", "PluginUnreachable" } }
+                    };
+                }
                 Console.WriteLine($"[VALIDATION_TRACE_BACKEND]       Region check result: isInside={isInside}");
 
                 if (isInside)

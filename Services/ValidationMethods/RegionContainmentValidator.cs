@@ -122,10 +122,25 @@ namespace knkwebapi_v2.Services.ValidationMethods
 
                 // Check if child region is fully contained in parent region
                 Console.WriteLine($"[REGIONCONTAINMENT]   calling IsRegionContainedAsync with parentRegionId={parentRegionId}, childRegionId={childRegionId}, requireFull={config.RequireFullContainment}");
-                var isContained = await _regionService.IsRegionContainedAsync(
-                    parentRegionId.ToString(),
-                    childRegionId.ToString(),
-                    config.RequireFullContainment);
+                bool isContained;
+                try
+                {
+                    isContained = await _regionService.IsRegionContainedAsync(
+                        parentRegionId.ToString(),
+                        childRegionId.ToString(),
+                        config.RequireFullContainment);
+                }
+                catch (RegionServiceUnavailableException ex)
+                {
+                    Console.WriteLine($"[REGIONCONTAINMENT]   Region service unavailable: {ex.Message}");
+                    return new ValidationMethodResult
+                    {
+                        IsValid = false,
+                        Message = "Cannot verify region containment right now: the Minecraft server or knk-plugin-v2 is not running or unreachable. Start the server and plugin, then use \"Re-run validation\".",
+                        Metadata = new Dictionary<string, object> { { "failureReason", "PluginUnreachable" } },
+                        Placeholders = new Dictionary<string, string>()
+                    };
+                }
                 Console.WriteLine($"[REGIONCONTAINMENT]   IsRegionContainedAsync returned: {isContained}");
 
                 if (isContained)
