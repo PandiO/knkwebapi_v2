@@ -12,9 +12,10 @@ public class GateStructure : Structure
     // === Core Gate State & Health System ===
     public bool IsActive { get; set; } = false;
     public bool CanRespawn { get; set; } = true;
-    public bool IsDestroyed { get; set; } = false; 
+    public bool IsDestroyed { get; set; } = false;
     public bool IsInvincible { get; set; } = true;
     public bool IsOpened { get; set; } = false;
+    public bool IsJammed { get; set; } = false;
     public double HealthCurrent { get; set; } = 500.0;
     public double HealthMax { get; set; } = 500.0;
     public string FaceDirection { get; set; } = "north";

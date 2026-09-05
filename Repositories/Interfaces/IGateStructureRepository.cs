@@ -18,7 +18,7 @@ namespace knkwebapi_v2.Repositories
         Task<bool> IsGateNameUniqueAsync(string name, int domainId, int? excludeId = null);
         Task<GateStructure?> FindGateByRegionAsync(string regionId);
         Task UpdateGateHealthAsync(int id, double newHealth);
-        Task UpdateGateStateAsync(int id, bool isOpened, bool isDestroyed);
+        Task UpdateGateStateAsync(int id, bool isOpened, bool isDestroyed, bool isJammed);
         Task UpdateGateOperationalSettingsAsync(int id, bool isActive, bool isInvincible);
         
         // Block snapshot operations

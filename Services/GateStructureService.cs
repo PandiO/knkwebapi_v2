@@ -161,7 +161,7 @@ namespace knkwebapi_v2.Services
             await _repo.UpdateGateHealthAsync(id, newHealth);
         }
 
-        public async Task UpdateStateAsync(int id, bool isOpened, bool isDestroyed)
+        public async Task UpdateStateAsync(int id, bool isOpened, bool isDestroyed, bool isJammed)
         {
             if (id <= 0)
                 throw new ArgumentException("Invalid id.", nameof(id));
@@ -170,7 +170,7 @@ namespace knkwebapi_v2.Services
             if (existing == null)
                 throw new KeyNotFoundException($"GateStructure with id {id} not found.");
 
-            await _repo.UpdateGateStateAsync(id, isOpened, isDestroyed);
+            await _repo.UpdateGateStateAsync(id, isOpened, isDestroyed, isJammed);
         }
 
         public async Task UpdateOperationalSettingsAsync(int id, bool isActive, bool isInvincible)
@@ -247,6 +247,11 @@ namespace knkwebapi_v2.Services
 
         private async Task ApplyLocationReferencesAsync(GateStructure gateStructure, GateStructureDto gateStructureDto, bool isCreate = false)
         {
+            gateStructure.LocationId = await ResolveLocationReferenceAsync(
+                gateStructureDto.LocationId,
+                gateStructureDto.Location,
+                "Location");
+
             gateStructure.AnchorPointId = await ResolveLocationReferenceAsync(
                 gateStructureDto.AnchorPointId,
                 gateStructureDto.AnchorPoint,

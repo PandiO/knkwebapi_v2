@@ -56,6 +56,9 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("isOpened")]
         public bool IsOpened { get; set; }
 
+        [JsonPropertyName("isJammed")]
+        public bool IsJammed { get; set; }
+
         [JsonPropertyName("healthCurrent")]
         public double HealthCurrent { get; set; }
 
@@ -468,6 +471,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("isDestroyed")]
         public bool IsDestroyed { get; set; }
+
+        [JsonPropertyName("isJammed")]
+        public bool IsJammed { get; set; }
     }
 
     public class GateOperationalSettingsUpdateDto
@@ -477,6 +483,12 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("isInvincible")]
         public bool IsInvincible { get; set; }
+    }
+
+    public class GateHealthUpdateDto
+    {
+        [JsonPropertyName("healthCurrent")]
+        public double HealthCurrent { get; set; }
     }
 
     public class GateStructureNavDto
@@ -493,6 +505,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("isOpened")]
         public bool IsOpened { get; set; }
+
+        [JsonPropertyName("isJammed")]
+        public bool IsJammed { get; set; }
 
         [JsonPropertyName("healthCurrent")]
         public double HealthCurrent { get; set; }
@@ -560,6 +575,10 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("isOpened")]
         [JsonConverter(typeof(NullableBoolConverter))]
         public bool? IsOpened { get; set; }
+
+        [JsonPropertyName("isJammed")]
+        [JsonConverter(typeof(NullableBoolConverter))]
+        public bool? IsJammed { get; set; }
 
         [JsonPropertyName("healthCurrent")]
         [JsonConverter(typeof(NullableDoubleConverter))]
@@ -856,6 +875,9 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("isOpened")]
         public bool isOpened { get; set; }
+
+        [JsonPropertyName("isJammed")]
+        public bool isJammed { get; set; }
 
         [JsonPropertyName("gateType")]
         [JsonConverter(typeof(JsonStringEnumConverter))]

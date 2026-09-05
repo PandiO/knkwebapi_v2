@@ -104,13 +104,14 @@ namespace knkwebapi_v2.Repositories
             }
         }
 
-        public async Task UpdateGateStateAsync(int id, bool isOpened, bool isDestroyed)
+        public async Task UpdateGateStateAsync(int id, bool isOpened, bool isDestroyed, bool isJammed)
         {
             var gate = await _context.Set<GateStructure>().FindAsync(id);
             if (gate != null)
             {
                 gate.IsOpened = isOpened;
                 gate.IsDestroyed = isDestroyed;
+                gate.IsJammed = isJammed;
                 await _context.SaveChangesAsync();
             }
         }

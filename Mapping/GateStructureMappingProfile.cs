@@ -69,6 +69,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.IsDestroyed, opt => opt.MapFrom(src => src.IsDestroyed))
                 .ForMember(dest => dest.IsInvincible, opt => opt.MapFrom(src => src.IsInvincible))
                 .ForMember(dest => dest.IsOpened, opt => opt.MapFrom(src => src.IsOpened))
+                .ForMember(dest => dest.IsJammed, opt => opt.MapFrom(src => src.IsJammed))
                 .ForMember(dest => dest.HealthCurrent, opt => opt.MapFrom(src => src.HealthCurrent))
                 .ForMember(dest => dest.HealthMax, opt => opt.MapFrom(src => src.HealthMax))
                 .ForMember(dest => dest.FaceDirection, opt => opt.MapFrom(src => src.FaceDirection))
@@ -206,6 +207,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.IsDestroyed, opt => opt.MapFrom(src => src.IsDestroyed ?? false))
                 .ForMember(dest => dest.IsInvincible, opt => opt.MapFrom(src => src.IsInvincible ?? true))
                 .ForMember(dest => dest.IsOpened, opt => opt.MapFrom(src => src.IsOpened ?? false))
+                .ForMember(dest => dest.IsJammed, opt => opt.MapFrom(src => src.IsJammed ?? false))
                 .ForMember(dest => dest.HealthCurrent, opt => opt.MapFrom(src => src.HealthCurrent ?? 500.0))
                 .ForMember(dest => dest.HealthMax, opt => opt.MapFrom(src => src.HealthMax ?? 500.0))
                 .ForMember(dest => dest.FaceDirection, opt => opt.MapFrom(src => src.FaceDirection ?? "north"))
@@ -312,6 +314,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.healthMax, opt => opt.MapFrom(src => src.HealthMax))
                 .ForMember(dest => dest.isDestroyed, opt => opt.MapFrom(src => src.IsDestroyed))
                 .ForMember(dest => dest.isOpened, opt => opt.MapFrom(src => src.IsOpened))
+                .ForMember(dest => dest.isJammed, opt => opt.MapFrom(src => src.IsJammed))
                 .ForMember(dest => dest.gateType, opt => opt.MapFrom(src => src.GateType))
                 .ForMember(dest => dest.faceDirection, opt => opt.MapFrom(src => src.FaceDirection));
 

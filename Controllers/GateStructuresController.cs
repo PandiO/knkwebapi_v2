@@ -185,7 +185,28 @@ namespace KnKWebAPI.Controllers
 
             try
             {
-                await _service.UpdateStateAsync(id, request.IsOpened, request.IsDestroyed);
+                await _service.UpdateStateAsync(id, request.IsOpened, request.IsDestroyed, request.IsJammed);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("{id:int}/health")]
+        public async Task<IActionResult> UpdateHealth(int id, [FromBody] GateHealthUpdateDto request)
+        {
+            if (id <= 0) return BadRequest("Invalid id.");
+            if (request == null) return BadRequest();
+
+            try
+            {
+                await _service.UpdateHealthAsync(id, request.HealthCurrent);
                 return NoContent();
             }
             catch (KeyNotFoundException)
