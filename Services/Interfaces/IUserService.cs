@@ -14,6 +14,7 @@ namespace knkwebapi_v2.Services
         Task UpdateAsync(int id, UserDto user);
         Task UpdateCoinsAsync(int id, int coins);
         Task UpdateCoinsByUuidAsync(string uuid, int coins);
+        Task UpdateGatePassThroughMethodAsync(int id, GatePassThroughMethod method);
         Task DeleteAsync(int id);
         Task<PagedResultDto<UserListDto>> SearchAsync(PagedQueryDto query);
 

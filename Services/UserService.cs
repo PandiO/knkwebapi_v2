@@ -99,15 +99,26 @@ namespace knkwebapi_v2.Services
             var existing = await _repo.GetByIdAsync(id);
             if (existing == null) throw new KeyNotFoundException($"User with id {id} not found.");
 
-            existing.Username = userDto.Username;
-            existing.Email = userDto.Email;
-            existing.Coins = userDto.Coins;
-            
-                // Update UUID if provided (for web app first linking)
-                if (!string.IsNullOrEmpty(userDto.Uuid))
-                {
-                    existing.Uuid = userDto.Uuid;
-                }
+            var originalUuid = existing.Uuid;
+            var originalCreatedAt = existing.CreatedAt;
+
+            // Apply all editable UserDto fields onto the tracked entity. The mapping profile
+            // (UserMappingProfile: UserDto -> User) already ignores fields that must never be
+            // set from this endpoint (PasswordHash, LastPasswordChangeAt, LastEmailChangeAt,
+            // DeletedAt, DeletedReason, ArchiveUntil, LinkCodes).
+            _mapper.Map(userDto, existing);
+
+            // CreatedAt is an immutable audit field: a generic edit form that doesn't include
+            // it would otherwise submit UserDto's constructor default (DateTime.UtcNow at
+            // serialization time) and silently overwrite the real creation date on every save.
+            existing.CreatedAt = originalCreatedAt;
+
+            // Preserve the existing UUID unless the caller explicitly supplied a new one
+            // (used for web-app-first account linking).
+            if (string.IsNullOrEmpty(userDto.Uuid))
+            {
+                existing.Uuid = originalUuid;
+            }
 
             await _repo.UpdateUserAsync(existing);
         }
@@ -128,6 +139,15 @@ namespace knkwebapi_v2.Services
             if (existing == null) throw new KeyNotFoundException($"User with uuid {uuid} not found.");
 
             await _repo.UpdateUserCoinsByUuidAsync(uuid, coins);
+        }
+
+        public async Task UpdateGatePassThroughMethodAsync(int id, GatePassThroughMethod method)
+        {
+            if (id <= 0) throw new ArgumentException("Invalid id.", nameof(id));
+            var existing = await _repo.GetByIdAsync(id);
+            if (existing == null) throw new KeyNotFoundException($"User with id {id} not found.");
+
+            await _repo.UpdateGatePassThroughMethodAsync(id, method);
         }
 
         public async Task DeleteAsync(int id)

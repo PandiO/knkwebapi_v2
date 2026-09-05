@@ -72,7 +72,8 @@ namespace knkwebapi_v2.Controllers
                 Gems = item.Gems,
                 ExperiencePoints = item.ExperiencePoints,
                 Uuid = item.Uuid,
-                IsFullAccount = item.IsFullAccount
+                IsFullAccount = item.IsFullAccount,
+                GatePassThroughMethodDefault = item.GatePassThroughMethodDefault
             };
             return Ok(dto);
         }
@@ -97,7 +98,8 @@ namespace knkwebapi_v2.Controllers
                 Gems = item.Gems,
                 ExperiencePoints = item.ExperiencePoints,
                 Uuid = item.Uuid,
-                IsFullAccount = item.IsFullAccount
+                IsFullAccount = item.IsFullAccount,
+                GatePassThroughMethodDefault = item.GatePassThroughMethodDefault
             };
             return Ok(dto);
         }
@@ -355,6 +357,36 @@ namespace knkwebapi_v2.Controllers
             catch (KeyNotFoundException)
             {
                 return NotFound(new { error = "UserNotFound", message = $"User with UUID {uuid} not found" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = "ValidationFailed", message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Update a user's preferred gate pass-through method
+        /// </summary>
+        /// <remarks>
+        /// Used by the Minecraft plugin's /knk gate passthrough &lt;mode&gt; command so a player
+        /// can choose how they pass through AllowPassThrough-enabled gates.
+        /// </remarks>
+        /// <param name="id">User ID</param>
+        /// <param name="request">New default pass-through method</param>
+        /// <returns>No content</returns>
+        /// <response code="204">Updated successfully</response>
+        /// <response code="404">User not found</response>
+        [HttpPut("{id:int}/gate-passthrough-method")]
+        public async Task<IActionResult> UpdateGatePassThroughMethod(int id, [FromBody] UpdateGatePassThroughMethodDto request)
+        {
+            try
+            {
+                await _service.UpdateGatePassThroughMethodAsync(id, request.GatePassThroughMethodDefault);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { error = "UserNotFound", message = $"User with ID {id} not found" });
             }
             catch (ArgumentException ex)
             {

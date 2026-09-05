@@ -83,6 +83,9 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("accountCreatedVia")]
         public AccountCreationMethod AccountCreatedVia { get; set; }
 
+        [JsonPropertyName("gatePassThroughMethodDefault")]
+        public GatePassThroughMethod GatePassThroughMethodDefault { get; set; }
+
         [JsonPropertyName("isFullAccount")]
         public bool IsFullAccount { get; set; }
 
@@ -118,6 +121,19 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("isFullAccount")]
         public bool IsFullAccount { get; set; }
+
+        [JsonPropertyName("gatePassThroughMethodDefault")]
+        public GatePassThroughMethod GatePassThroughMethodDefault { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for updating a user's preferred gate pass-through method (set via /knk gate passthrough
+    /// in-game). Mirrors the single-field update pattern used for coins.
+    /// </summary>
+    public class UpdateGatePassThroughMethodDto
+    {
+        [JsonPropertyName("gatePassThroughMethodDefault")]
+        public GatePassThroughMethod GatePassThroughMethodDefault { get; set; }
     }
 
     /// <summary>

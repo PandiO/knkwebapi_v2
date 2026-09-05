@@ -102,6 +102,13 @@ public class User
     /// </summary>
     public AccountCreationMethod AccountCreatedVia { get; set; } = AccountCreationMethod.WebApp;
 
+    /// <summary>
+    /// This user's preferred gate pass-through method, used by the Minecraft plugin when the
+    /// player right-clicks a closed, pass-through-enabled gate. Player-configurable in-game via
+    /// /knk gate passthrough &lt;mode&gt;.
+    /// </summary>
+    public GatePassThroughMethod GatePassThroughMethodDefault { get; set; } = GatePassThroughMethod.Default;
+
     // ===== AUDIT TRAIL (MINIMAL - MVP) =====
 
     /// <summary>
@@ -174,4 +181,27 @@ public enum AccountCreationMethod
     /// Minimal data: UUID + Username only.
     /// </summary>
     MinecraftServer = 1
+}
+
+/// <summary>
+/// A player's preferred method for passing through a closed, pass-through-enabled gate.
+/// See GateStructure.AllowPassThrough / PassThroughDurationSeconds.
+/// </summary>
+public enum GatePassThroughMethod
+{
+    /// <summary>
+    /// The gate opens, stays open for GateStructure.PassThroughDurationSeconds, then auto-closes.
+    /// </summary>
+    Default = 0,
+
+    /// <summary>
+    /// Only the door blocks in the player's path are instantly removed, then restored once the
+    /// player has passed through. Requires the knk.gate.passthrough.instant permission in-game.
+    /// </summary>
+    InstantOpen = 1,
+
+    /// <summary>
+    /// The player is teleported directly to the other side of the gate. The gate never animates.
+    /// </summary>
+    Teleport = 2
 }

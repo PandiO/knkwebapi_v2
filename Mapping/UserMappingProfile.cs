@@ -19,6 +19,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.ExperiencePoints, src => src.MapFrom(src => src.ExperiencePoints))
                 .ForMember(dest => dest.EmailVerified, src => src.MapFrom(src => src.EmailVerified))
                 .ForMember(dest => dest.AccountCreatedVia, src => src.MapFrom(src => src.AccountCreatedVia))
+                .ForMember(dest => dest.GatePassThroughMethodDefault, src => src.MapFrom(src => src.GatePassThroughMethodDefault))
                 .ForMember(dest => dest.IsFullAccount, src => src.MapFrom(src => src.IsFullAccount))
                 .ForMember(dest => dest.IsActive, src => src.MapFrom(src => src.IsActive))
                 .ForMember(dest => dest.CreatedAt, src => src.MapFrom(src => src.CreatedAt.ToString("O")));
@@ -35,6 +36,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.ExperiencePoints, src => src.MapFrom(src => src.ExperiencePoints))
                 .ForMember(dest => dest.EmailVerified, src => src.MapFrom(src => src.EmailVerified))
                 .ForMember(dest => dest.AccountCreatedVia, src => src.MapFrom(src => src.AccountCreatedVia))
+                .ForMember(dest => dest.GatePassThroughMethodDefault, src => src.MapFrom(src => src.GatePassThroughMethodDefault))
                 .ForMember(dest => dest.IsActive, src => src.MapFrom(src => src.IsActive))
                 .ForMember(dest => dest.CreatedAt, src => src.MapFrom(src => DateTime.Parse(src.CreatedAt)))
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
@@ -52,7 +54,8 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.Uuid, src => src.MapFrom(src => src.Uuid))
                 .ForMember(dest => dest.Coins, src => src.MapFrom(src => src.Coins))
                 .ForMember(dest => dest.Gems, src => src.MapFrom(src => src.Gems))
-                .ForMember(dest => dest.ExperiencePoints, src => src.MapFrom(src => src.ExperiencePoints));
+                .ForMember(dest => dest.ExperiencePoints, src => src.MapFrom(src => src.ExperiencePoints))
+                .ForMember(dest => dest.GatePassThroughMethodDefault, src => src.MapFrom(src => src.GatePassThroughMethodDefault));
 
             // ===== User → UserListDto =====
             CreateMap<User, UserListDto>()
@@ -79,6 +82,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())  // Hashed in service layer
                 .ForMember(dest => dest.EmailVerified, opt => opt.Ignore())
                 .ForMember(dest => dest.AccountCreatedVia, opt => opt.Ignore())
+                .ForMember(dest => dest.GatePassThroughMethodDefault, opt => opt.Ignore())
                 .ForMember(dest => dest.LastPasswordChangeAt, opt => opt.Ignore())
                 .ForMember(dest => dest.LastEmailChangeAt, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.Ignore())
