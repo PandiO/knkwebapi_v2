@@ -109,9 +109,18 @@ namespace knkwebapi_v2.Repositories
             var gate = await _context.Set<GateStructure>().FindAsync(id);
             if (gate != null)
             {
+                // Respawning is the destroyed -> not destroyed transition; restore full health.
+                bool isRespawning = gate.IsDestroyed && !isDestroyed;
+
                 gate.IsOpened = isOpened;
                 gate.IsDestroyed = isDestroyed;
                 gate.IsJammed = isJammed;
+
+                if (isRespawning)
+                {
+                    gate.HealthCurrent = gate.HealthMax;
+                }
+
                 await _context.SaveChangesAsync();
             }
         }
