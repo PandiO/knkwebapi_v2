@@ -56,3 +56,50 @@ public class NullableFloatConverter : JsonConverter<float?>
         else writer.WriteNullValue();
     }
 }
+
+/// <summary>Same tolerance as <see cref="NullableDoubleConverter"/>, for nullable int fields (e.g. FK ids, counts).</summary>
+public class NullableIntConverter : JsonConverter<int?>
+{
+    public override int? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null) return null;
+        if (reader.TokenType == JsonTokenType.Number) return reader.GetInt32();
+        if (reader.TokenType == JsonTokenType.String)
+        {
+            var text = reader.GetString();
+            if (string.IsNullOrWhiteSpace(text)) return null;
+            return int.Parse(text, CultureInfo.InvariantCulture);
+        }
+        throw new JsonException($"Unexpected token {reader.TokenType} when reading a nullable int.");
+    }
+
+    public override void Write(Utf8JsonWriter writer, int? value, JsonSerializerOptions options)
+    {
+        if (value.HasValue) writer.WriteNumberValue(value.Value);
+        else writer.WriteNullValue();
+    }
+}
+
+/// <summary>Same tolerance as <see cref="NullableDoubleConverter"/>, for nullable bool fields (e.g. untouched checkboxes).</summary>
+public class NullableBoolConverter : JsonConverter<bool?>
+{
+    public override bool? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null) return null;
+        if (reader.TokenType == JsonTokenType.True) return true;
+        if (reader.TokenType == JsonTokenType.False) return false;
+        if (reader.TokenType == JsonTokenType.String)
+        {
+            var text = reader.GetString();
+            if (string.IsNullOrWhiteSpace(text)) return null;
+            return bool.Parse(text);
+        }
+        throw new JsonException($"Unexpected token {reader.TokenType} when reading a nullable bool.");
+    }
+
+    public override void Write(Utf8JsonWriter writer, bool? value, JsonSerializerOptions options)
+    {
+        if (value.HasValue) writer.WriteBooleanValue(value.Value);
+        else writer.WriteNullValue();
+    }
+}

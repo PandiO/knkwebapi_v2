@@ -107,7 +107,7 @@ namespace KnKWebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] GateStructureDto gateStructureDto)
         {
-            if (gateStructureDto == null) return BadRequest();
+            if (gateStructureDto == null) return BadRequest(ModelState);
 
             var validationError = ValidateGatePayload(gateStructureDto);
             if (!string.IsNullOrWhiteSpace(validationError))
@@ -127,7 +127,7 @@ namespace KnKWebAPI.Controllers
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] GateStructureDto gateStructureDto)
         {
-            if (gateStructureDto == null) return BadRequest();
+            if (gateStructureDto == null) return BadRequest(ModelState);
 
             var validationError = ValidateGatePayload(gateStructureDto);
             if (!string.IsNullOrWhiteSpace(validationError))

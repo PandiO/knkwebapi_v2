@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using knkwebapi_v2.Json;
 using knkwebapi_v2.Models;
 
 namespace knkwebapi_v2.Dtos
@@ -500,6 +501,7 @@ namespace knkwebapi_v2.Dtos
     public class GateStructureDto
     {
         [JsonPropertyName("id")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? Id { get; set; }
 
         [JsonPropertyName("name")]
@@ -512,15 +514,18 @@ namespace knkwebapi_v2.Dtos
         public DateTime? CreatedAt { get; set; }
 
         [JsonPropertyName("allowEntry")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? AllowEntry { get; set; }
 
         [JsonPropertyName("allowExit")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? AllowExit { get; set; }
 
         [JsonPropertyName("wgRegionId")]
         public string WgRegionId { get; set; } = null!;
 
         [JsonPropertyName("locationId")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? LocationId { get; set; }
 
         [JsonPropertyName("location")]
@@ -537,33 +542,42 @@ namespace knkwebapi_v2.Dtos
 
         // === Core Gate State & Health System ===
         [JsonPropertyName("isActive")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? IsActive { get; set; }
 
         [JsonPropertyName("canRespawn")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? CanRespawn { get; set; }
 
         [JsonPropertyName("isDestroyed")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? IsDestroyed { get; set; }
 
         [JsonPropertyName("isInvincible")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? IsInvincible { get; set; }
 
         [JsonPropertyName("isOpened")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? IsOpened { get; set; }
 
         [JsonPropertyName("healthCurrent")]
+        [JsonConverter(typeof(NullableDoubleConverter))]
         public double? HealthCurrent { get; set; }
 
         [JsonPropertyName("healthMax")]
+        [JsonConverter(typeof(NullableDoubleConverter))]
         public double? HealthMax { get; set; }
 
         [JsonPropertyName("faceDirection")]
         public string FaceDirection { get; set; } = "north";
 
         [JsonPropertyName("respawnRateSeconds")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? RespawnRateSeconds { get; set; }
 
         [JsonPropertyName("iconMaterialRefId")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? IconMaterialRefId { get; set; }
 
         [JsonPropertyName("regionClosedId")]
@@ -586,43 +600,53 @@ namespace knkwebapi_v2.Dtos
         public MotionType MotionType { get; set; } = knkwebapi_v2.Models.MotionType.VERTICAL;
 
         [JsonPropertyName("animationDurationTicks")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? AnimationDurationTicks { get; set; }
 
         [JsonPropertyName("animationTickRate")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? AnimationTickRate { get; set; }
 
         // === Geometry Definition (PLANE_GRID mode) ===
         [JsonPropertyName("anchorPointId")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? AnchorPointId { get; set; }
 
         [JsonPropertyName("anchorPoint")]
         public LocationDto? AnchorPoint { get; set; }
 
         [JsonPropertyName("referencePoint1Id")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? ReferencePoint1Id { get; set; }
 
         [JsonPropertyName("referencePoint1")]
         public LocationDto? ReferencePoint1 { get; set; }
 
         [JsonPropertyName("referencePoint2Id")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? ReferencePoint2Id { get; set; }
 
         [JsonPropertyName("referencePoint2")]
         public LocationDto? ReferencePoint2 { get; set; }
 
         [JsonPropertyName("geometryWidth")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? GeometryWidth { get; set; }
 
         [JsonPropertyName("geometryHeight")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? GeometryHeight { get; set; }
 
         [JsonPropertyName("geometryDepth")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? GeometryDepth { get; set; }
 
         [JsonPropertyName("motionDistanceBlocks")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? MotionDistanceBlocks { get; set; }
 
         [JsonPropertyName("clipToGeometryBounds")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? ClipToGeometryBounds { get; set; }
 
         // === Geometry Definition (FLOOD_FILL mode) ===
@@ -630,9 +654,11 @@ namespace knkwebapi_v2.Dtos
         public string SeedBlocks { get; set; } = string.Empty;
 
         [JsonPropertyName("scanMaxBlocks")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? ScanMaxBlocks { get; set; }
 
         [JsonPropertyName("scanMaxRadius")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? ScanMaxRadius { get; set; }
 
         [JsonPropertyName("scanMaterialWhitelist")]
@@ -642,10 +668,12 @@ namespace knkwebapi_v2.Dtos
         public string ScanMaterialBlacklist { get; set; } = string.Empty;
 
         [JsonPropertyName("scanPlaneConstraint")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? ScanPlaneConstraint { get; set; }
 
         // === Block Management ===
         [JsonPropertyName("fallbackMaterialRefId")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? FallbackMaterialRefId { get; set; }
 
         [JsonPropertyName("tileEntityPolicy")]
@@ -654,9 +682,11 @@ namespace knkwebapi_v2.Dtos
 
         // === Rotation-Specific Fields ===
         [JsonPropertyName("rotationMaxAngleDegrees")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? RotationMaxAngleDegrees { get; set; }
 
         [JsonPropertyName("hingeAxisId")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? HingeAxisId { get; set; }
 
         [JsonPropertyName("hingeAxis")]
@@ -664,25 +694,30 @@ namespace knkwebapi_v2.Dtos
 
         // === Double Doors Specific ===
         [JsonPropertyName("leftDoorSeedBlockId")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? LeftDoorSeedBlockId { get; set; }
 
         [JsonPropertyName("leftDoorSeedBlock")]
         public LocationDto? LeftDoorSeedBlock { get; set; }
 
         [JsonPropertyName("rightDoorSeedBlockId")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? RightDoorSeedBlockId { get; set; }
 
         [JsonPropertyName("rightDoorSeedBlock")]
         public LocationDto? RightDoorSeedBlock { get; set; }
 
         [JsonPropertyName("mirrorRotation")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? MirrorRotation { get; set; }
 
         // === Pass-Through System ===
         [JsonPropertyName("allowPassThrough")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? AllowPassThrough { get; set; }
 
         [JsonPropertyName("passThroughDurationSeconds")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? PassThroughDurationSeconds { get; set; }
 
         [JsonPropertyName("passThroughConditionsJson")]
@@ -696,13 +731,16 @@ namespace knkwebapi_v2.Dtos
         public List<LocationDto>? GuardSpawnLocations { get; set; }
 
         [JsonPropertyName("guardCount")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? GuardCount { get; set; }
 
         [JsonPropertyName("guardNpcTemplateId")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? GuardNpcTemplateId { get; set; }
 
         // === Health Display Configuration ===
         [JsonPropertyName("showHealthDisplay")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? ShowHealthDisplay { get; set; }
 
         [JsonPropertyName("healthDisplayMode")]
@@ -710,9 +748,11 @@ namespace knkwebapi_v2.Dtos
         public HealthDisplayMode HealthDisplayMode { get; set; } = knkwebapi_v2.Models.HealthDisplayMode.ALWAYS;
 
         [JsonPropertyName("healthDisplayYOffset")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? HealthDisplayYOffset { get; set; }
 
         [JsonPropertyName("infoDisplayLocationId")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? InfoDisplayLocationId { get; set; }
 
         [JsonPropertyName("infoDisplayLocation")]
@@ -728,25 +768,32 @@ namespace knkwebapi_v2.Dtos
 
         // === Siege Integration ===
         [JsonPropertyName("isOverridable")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? IsOverridable { get; set; }
 
         [JsonPropertyName("animateDuringSiege")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? AnimateDuringSiege { get; set; }
 
         [JsonPropertyName("currentSiegeId")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? CurrentSiegeId { get; set; }
 
         [JsonPropertyName("isSiegeObjective")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? IsSiegeObjective { get; set; }
 
         // === Combat System: Continuous Damage ===
         [JsonPropertyName("allowContinuousDamage")]
+        [JsonConverter(typeof(NullableBoolConverter))]
         public bool? AllowContinuousDamage { get; set; }
 
         [JsonPropertyName("continuousDamageMultiplier")]
+        [JsonConverter(typeof(NullableDoubleConverter))]
         public double? ContinuousDamageMultiplier { get; set; }
 
         [JsonPropertyName("continuousDamageDurationSeconds")]
+        [JsonConverter(typeof(NullableIntConverter))]
         public int? ContinuousDamageDurationSeconds { get; set; }
 
         // === Navigation Properties ===
