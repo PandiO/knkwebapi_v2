@@ -37,8 +37,10 @@ namespace knkwebapi_v2.Services
             if (locationDto == null) throw new ArgumentNullException(nameof(locationDto));
             if (string.IsNullOrWhiteSpace(locationDto.Name)) 
                 throw new ArgumentException("Location name is required.", nameof(locationDto));
-            if (string.IsNullOrWhiteSpace(locationDto.World)) 
+            if (string.IsNullOrWhiteSpace(locationDto.World))
                 throw new ArgumentException("World is required.", nameof(locationDto));
+            if (!locationDto.X.HasValue || !locationDto.Y.HasValue || !locationDto.Z.HasValue)
+                throw new ArgumentException("X, Y, and Z coordinates are required to create a Location.", nameof(locationDto));
 
             var location = _mapper.Map<Location>(locationDto);
             location.X = locationDto.X ?? location.X;

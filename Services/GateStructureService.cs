@@ -277,6 +277,11 @@ namespace knkwebapi_v2.Services
                 gateStructureDto.RightDoorSeedBlock,
                 "RightDoorSeedBlock");
 
+            gateStructure.InfoDisplayLocationId = await ResolveLocationReferenceAsync(
+                gateStructureDto.InfoDisplayLocationId,
+                gateStructureDto.InfoDisplayLocation,
+                "InfoDisplayLocation");
+
             var hasGuardInput = gateStructureDto.GuardSpawnLocationIds != null || gateStructureDto.GuardSpawnLocations != null;
             if (!isCreate && !hasGuardInput)
             {

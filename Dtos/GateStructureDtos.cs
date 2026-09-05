@@ -216,6 +216,12 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("healthDisplayYOffset")]
         public int HealthDisplayYOffset { get; set; }
 
+        [JsonPropertyName("infoDisplayLocationId")]
+        public int? InfoDisplayLocationId { get; set; }
+
+        [JsonPropertyName("infoDisplayLocation")]
+        public LocationDto? InfoDisplayLocation { get; set; }
+
         [JsonPropertyName("gateNameDisplayMode")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public GateInfoDisplayMode GateNameDisplayMode { get; set; }
@@ -517,6 +523,9 @@ namespace knkwebapi_v2.Dtos
         [JsonPropertyName("locationId")]
         public int? LocationId { get; set; }
 
+        [JsonPropertyName("location")]
+        public LocationDto? Location { get; set; }
+
         [JsonPropertyName("streetId")]
         public int StreetId { get; set; }
 
@@ -702,6 +711,12 @@ namespace knkwebapi_v2.Dtos
 
         [JsonPropertyName("healthDisplayYOffset")]
         public int? HealthDisplayYOffset { get; set; }
+
+        [JsonPropertyName("infoDisplayLocationId")]
+        public int? InfoDisplayLocationId { get; set; }
+
+        [JsonPropertyName("infoDisplayLocation")]
+        public LocationDto? InfoDisplayLocation { get; set; }
 
         [JsonPropertyName("gateNameDisplayMode")]
         [JsonConverter(typeof(JsonStringEnumConverter))]

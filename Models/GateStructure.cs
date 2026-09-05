@@ -147,6 +147,16 @@ public class GateStructure : Structure
 
     public int HealthDisplayYOffset { get; set; } = 2;
 
+    // Optional manual override for where the info hover (name/health/status) renders in the world.
+    // When set, the plugin uses this position as-is instead of computing one from the gate's
+    // geometry/FaceDirection.
+    [NavigationPair(nameof(InfoDisplayLocation))]
+    [RelatedEntityField(typeof(Location))]
+    public int? InfoDisplayLocationId { get; set; }
+
+    [RelatedEntityField(typeof(Location))]
+    public Location? InfoDisplayLocation { get; set; }
+
     public GateInfoDisplayMode GateNameDisplayMode { get; set; } = GateInfoDisplayMode.ALWAYS;
 
     public GateInfoDisplayMode StatusDisplayMode { get; set; } = GateInfoDisplayMode.ALWAYS;

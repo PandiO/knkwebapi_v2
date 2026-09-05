@@ -209,6 +209,7 @@ namespace knkwebapi_v2.Repositories
                 .Include(gs => gs.HingeAxis)
                 .Include(gs => gs.LeftDoorSeedBlock)
                 .Include(gs => gs.RightDoorSeedBlock)
+                .Include(gs => gs.InfoDisplayLocation)
                 .Include(gs => gs.GuardSpawnLocations)
                 .Skip((query.PageNumber - 1) * query.PageSize)
                 .Take(query.PageSize)
@@ -255,6 +256,7 @@ namespace knkwebapi_v2.Repositories
                 .Include(gs => gs.HingeAxis)
                 .Include(gs => gs.LeftDoorSeedBlock)
                 .Include(gs => gs.RightDoorSeedBlock)
+                .Include(gs => gs.InfoDisplayLocation)
                 .Include(gs => gs.GuardSpawnLocations);
         }
     }

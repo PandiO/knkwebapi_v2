@@ -58,6 +58,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.AllowExit, opt => opt.MapFrom(src => src.AllowExit))
                 .ForMember(dest => dest.WgRegionId, opt => opt.MapFrom(src => src.WgRegionId))
                 .ForMember(dest => dest.LocationId, opt => opt.MapFrom(src => src.LocationId))
+                .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location))
                 .ForMember(dest => dest.StreetId, opt => opt.MapFrom(src => src.StreetId))
                 .ForMember(dest => dest.DistrictId, opt => opt.MapFrom(src => src.DistrictId))
                 .ForMember(dest => dest.HouseNumber, opt => opt.MapFrom(src => src.HouseNumber))
@@ -135,6 +136,8 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.ShowHealthDisplay, opt => opt.MapFrom(src => src.ShowHealthDisplay))
                 .ForMember(dest => dest.HealthDisplayMode, opt => opt.MapFrom(src => src.HealthDisplayMode))
                 .ForMember(dest => dest.HealthDisplayYOffset, opt => opt.MapFrom(src => src.HealthDisplayYOffset))
+                .ForMember(dest => dest.InfoDisplayLocationId, opt => opt.MapFrom(src => src.InfoDisplayLocationId))
+                .ForMember(dest => dest.InfoDisplayLocation, opt => opt.MapFrom(src => src.InfoDisplayLocation))
                 .ForMember(dest => dest.GateNameDisplayMode, opt => opt.MapFrom(src => src.GateNameDisplayMode))
                 .ForMember(dest => dest.StatusDisplayMode, opt => opt.MapFrom(src => src.StatusDisplayMode))
 
@@ -143,12 +146,12 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.AnimateDuringSiege, opt => opt.MapFrom(src => src.AnimateDuringSiege))
                 .ForMember(dest => dest.CurrentSiegeId, opt => opt.MapFrom(src => src.CurrentSiegeId))
                 .ForMember(dest => dest.IsSiegeObjective, opt => opt.MapFrom(src => src.IsSiegeObjective))
-                
+
                 // Combat System: Continuous Damage
                 .ForMember(dest => dest.AllowContinuousDamage, opt => opt.MapFrom(src => src.AllowContinuousDamage))
                 .ForMember(dest => dest.ContinuousDamageMultiplier, opt => opt.MapFrom(src => src.ContinuousDamageMultiplier))
                 .ForMember(dest => dest.ContinuousDamageDurationSeconds, opt => opt.MapFrom(src => src.ContinuousDamageDurationSeconds))
-                
+
                 // Navigation Properties
                 .ForMember(dest => dest.BlockSnapshots, opt => opt.MapFrom(src => src.BlockSnapshots))
                 .ForMember(dest => dest.Street, opt => opt.MapFrom(s => s.Street == null ? null : new GateStructureStreetDto
@@ -262,6 +265,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.ShowHealthDisplay, opt => opt.MapFrom(src => src.ShowHealthDisplay ?? true))
                 .ForMember(dest => dest.HealthDisplayMode, opt => opt.MapFrom(src => src.HealthDisplayMode))
                 .ForMember(dest => dest.HealthDisplayYOffset, opt => opt.MapFrom(src => src.HealthDisplayYOffset ?? 2))
+                .ForMember(dest => dest.InfoDisplayLocationId, opt => opt.MapFrom(src => src.InfoDisplayLocationId))
                 .ForMember(dest => dest.GateNameDisplayMode, opt => opt.MapFrom(src => src.GateNameDisplayMode))
                 .ForMember(dest => dest.StatusDisplayMode, opt => opt.MapFrom(src => src.StatusDisplayMode))
 
@@ -287,6 +291,7 @@ namespace knkwebapi_v2.Mapping
                 .ForMember(dest => dest.HingeAxis, opt => opt.Ignore())
                 .ForMember(dest => dest.LeftDoorSeedBlock, opt => opt.Ignore())
                 .ForMember(dest => dest.RightDoorSeedBlock, opt => opt.Ignore())
+                .ForMember(dest => dest.InfoDisplayLocation, opt => opt.Ignore())
                 .ForMember(dest => dest.GuardSpawnLocations, opt => opt.Ignore())
                 .ForMember(dest => dest.IconMaterial, opt => opt.Ignore())
                 .ForMember(dest => dest.FallbackMaterial, opt => opt.Ignore());
